@@ -124,9 +124,9 @@ def show_video(img):
     # video = cv2.VideoWriter('output.mp4', fourcc, 10, (width,height))
     # for im in video_frames:
     #     video.write(np.array(im))
-    video_file = open(video_frames, 'rb')
     video_bytes = BytesIO(video_file.read())
-    return video_bytes
+    video_file_1 = open(video_bytes, 'rb')
+    return video_file_1
     
 def main():
     # selected_box = st.sidebar.selectbox(
