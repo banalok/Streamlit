@@ -121,10 +121,10 @@ def show_video(img):
     #command = 'ffmpeg -framerate 30 -i frame_%d.tif -c:v libx264 -preset slow -crf 22 output.mp4'
     #video_file = subprocess.call(command, shell=True)
     fourcc = cv2.VideoWriter_fourcc(*'H264')
-    video = cv2.VideoWriter('output.mp4', fourcc, 10, (width,height))
+    video = cv2.VideoWriter(video_frames, fourcc, 10, (width,height))
     for im in video_frames:
         video.write(np.array(im))
-    video_file = open('output.mp4', 'rb')
+    video_file = open(video_frames, 'rb')
     video_bytes = BytesIO(video_file.read())
     return video_bytes
     
