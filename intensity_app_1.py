@@ -113,20 +113,27 @@ def stardist_seg(im,model):
 @st.cache(allow_output_mutation=True)
 def show_video(img):
     video_frames = []
+
+    # Add each video frame to the list as a PIL Image object
     for i in range(img.shape[0]):
         img_arr = img[i]
         img_v = Image.fromarray(img_arr)
         video_frames.append(img_v)
-        height, width = video_frames[0].size
-        command = 'ffmpeg -framerate 30 -i frame_%d.tif -c:v libx264 -preset slow -crf 22 /app/output.mp4'
-        video_file = subprocess.call(command, shell=True)
-    # fourcc = cv2.VideoWriter_fourcc(*'H264')
-    # video = cv2.VideoWriter('output.mp4', fourcc, 10, (width,height))
-    # for im in video_frames:
-    #     video.write(np.array(im))
-    video_file = open('/app/output.mp4', 'rb')
-    video_bytes =video_file.read()
-    return  video_bytes
+
+    # Convert the video frames to an MP4 video using FFmpeg
+    with io.BytesIO() as video_buffer:
+        command = 'ffmpeg -framerate 30 -f image2pipe -i pipe: -c:v libx264 -preset slow -crf 22 -pix_fmt yuv420p -movflags +faststart pipe:1'
+        process = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        for frame in video_frames:
+            frame.save(process.stdin, 'TIFF')
+        process.stdin.close()
+        output, err = process.communicate()
+        if err:
+            st.error(f'Error during video conversion: {err}')
+            return
+
+        # Display the video in the app
+        return output
     
 def main():
     # selected_box = st.sidebar.selectbox(
