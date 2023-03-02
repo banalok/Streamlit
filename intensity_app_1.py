@@ -119,18 +119,13 @@ def show_video(img):
         img_arr = img[i]
         img_v = Image.fromarray(img_arr)
         video_frames.append(img_v)
-
-    # Convert the video frames to an MP4 video using FFmpeg
-   
-    command = ["ffmpeg", "-y", "-f", "image2pipe", "-r", "30", "-i", "-", "-vcodec", "libx264", "-preset", "slow", "-crf", "22", "-pix_fmt", "yuv420p", output_file_path]
-    process = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE)
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    video_writer = cv2.VideoWriter(output_file_path, fourcc, 30.0, (video_frames[0].width, video_frames[0].height))
+    
     for frame in video_frames:
-        frame.save(process.stdin, format="jpeg")
-       
-    # Close the process's stdin file object
-    process.stdin.close()
-    process.wait()
-   # Read the output video file
+        video_writer.write(frame) 
+    video_writer.release()
+  # Read the output video file
     with open(output_file_path, "rb") as f:
         video_bytes = f.read()
     return video_bytes
