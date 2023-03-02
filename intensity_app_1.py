@@ -125,7 +125,10 @@ def show_video(img):
         command = 'ffmpeg -framerate 30 -f image2pipe -i pipe: -c:v libx264 -preset slow -crf 22 -pix_fmt yuv420p -movflags +faststart pipe:1'
         process = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         for frame in video_frames:
-            frame.save(process.stdin, 'TIFF')
+            np_array = np.array(frame)
+            # Write the NumPy array to the FFmpeg process's stdin file object
+            process.stdin.write(np_array.tobytes())
+        # Close the process's stdin file object
         process.stdin.close()
         output, err = process.communicate()
         if err:
