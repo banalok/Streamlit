@@ -117,16 +117,16 @@ def show_video(img):
         img_arr = img[i]
         img_v = Image.fromarray(img_arr)
         video_frames.append(img_v)
-    height, width = video_frames[0].size
-    command = 'ffmpeg -framerate 30 -i frame_%d.tif -c:v libx264 -preset slow -crf 22 /app/output.mp4'
-    video_file = subprocess.call(command, shell=True)
+        height, width = video_frames[0].size
+        command = 'ffmpeg -framerate 30 -i frame_%d.tif -c:v libx264 -preset slow -crf 22 /app/output.mp4'
+        video_file = subprocess.call(command, shell=True)
     # fourcc = cv2.VideoWriter_fourcc(*'H264')
     # video = cv2.VideoWriter('output.mp4', fourcc, 10, (width,height))
     # for im in video_frames:
     #     video.write(np.array(im))
     video_file = open('/app/output.mp4', 'rb')
-    #video_bytes = BytesIO(video_file.read())
-    return  video_file
+    video_bytes =video_file.read()
+    return  video_bytes
     
 def main():
     # selected_box = st.sidebar.selectbox(
