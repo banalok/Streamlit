@@ -124,8 +124,8 @@ def show_video(img):
     video = cv2.VideoWriter('output.mp4', fourcc, 10, (width,height))
     for im in video_frames:
         video.write(np.array(im))
-    #video_file = open('output.mp4', 'rb')
-    video_bytes = BytesIO(video.read())
+    video_file = open('output.mp4', 'rb')
+    video_bytes = BytesIO(video_file.read())
     return video_bytes
     
 def main():
