@@ -123,6 +123,7 @@ def show_video(img):
     video_writer = cv2.VideoWriter(output_file_path, fourcc, 30.0, (video_frames[0].width, video_frames[0].height))
     
     for frame in video_frames:
+        frame = np.array(frame)
         video_writer.write(frame) 
     video_writer.release()
   # Read the output video file
