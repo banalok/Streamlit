@@ -113,7 +113,7 @@ def stardist_seg(im,model):
 @st.cache(allow_output_mutation=True)
 def show_video(img):
     video_frames = []
-
+    output_file_path = "/app/output.mp4"
     # Add each video frame to the list as a PIL Image object
     for i in range(img.shape[0]):
         img_arr = img[i]
@@ -121,24 +121,19 @@ def show_video(img):
         video_frames.append(img_v)
 
     # Convert the video frames to an MP4 video using FFmpeg
-    with BytesIO() as video_buffer:
-        command = 'ffmpeg -framerate 30 -f image2pipe -i pipe: -c:v libx264 -preset slow -crf 22 -pix_fmt yuv420p -movflags +faststart pipe:1'
-        process = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        for frame in video_frames:
-            np_array = np.array(frame)
-            # Write the NumPy array to the FFmpeg process's stdin file object
-            process.stdin.write(np_array.tobytes())
-        # Close the process's stdin file object
-        process.stdin.close()
-        output, err = process.communicate()
-        if err:
-            st.error(f'Error during video conversion: {err}')
-            return
-
-        # Display the video in the app
-        video_buffer.write(output)
-        video_bytes = video_buffer.getvalue()
-        return video_bytes
+   
+    command = ["ffmpeg", "-y", "-f", "image2pipe", "-r", "30", "-i", "-", "-vcodec", "libx264", "-preset", "slow", "-crf", "22", "-pix_fmt", "yuv420p", output_file_path]
+    process = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE)
+    for frame in video_frames:
+        frame.save(process.stdin, format="jpeg")
+       
+    # Close the process's stdin file object
+    process.stdin.close()
+    process.wait()
+   # Read the output video file
+    with open(output_file_path, "rb") as f:
+        video_bytes = f.read()
+    return video_bytes
     
 def main():
     # selected_box = st.sidebar.selectbox(
