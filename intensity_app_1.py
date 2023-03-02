@@ -125,7 +125,7 @@ def show_video(img):
     # for im in video_frames:
     #     video.write(np.array(im))
     video_file = open('output.mp4', 'rb')
-    video_bytes = video_file.read()
+    video_bytes = BytesIO(video_file.read())
     return video_bytes
     
 def main():
