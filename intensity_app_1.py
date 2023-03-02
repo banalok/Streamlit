@@ -125,8 +125,8 @@ def show_video(img):
     # for im in video_frames:
     #     video.write(np.array(im))
     video_bytes = BytesIO(video_file.read())
-    video_file_1 = open(video_bytes, 'rb')
-    return video_file_1
+    #video_file_1 = open(video_bytes, 'rb')
+    return video_bytes
     
 def main():
     # selected_box = st.sidebar.selectbox(
