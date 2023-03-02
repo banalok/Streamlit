@@ -121,7 +121,7 @@ def show_video(img):
         video_frames.append(img_v)
 
     # Convert the video frames to an MP4 video using FFmpeg
-    with io.BytesIO() as video_buffer:
+    with BytesIO() as video_buffer:
         command = 'ffmpeg -framerate 30 -f image2pipe -i pipe: -c:v libx264 -preset slow -crf 22 -pix_fmt yuv420p -movflags +faststart pipe:1'
         process = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         for frame in video_frames:
@@ -133,7 +133,9 @@ def show_video(img):
             return
 
         # Display the video in the app
-        return output
+        video_buffer.write(output)
+        video_bytes = video_buffer.getvalue()
+        return video_bytes
     
 def main():
     # selected_box = st.sidebar.selectbox(
