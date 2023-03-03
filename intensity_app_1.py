@@ -113,7 +113,7 @@ def stardist_seg(im,model):
 @st.cache(allow_output_mutation=True)
 def show_video(img):
     video_frames = []
-    output_file_path = "/app/output.mp4"
+    output_file_path = "/app/output.mkv"
     # Add each video frame to the list as a PIL Image object
     for i in range(img.shape[0]):
         img_arr = img[i]
