@@ -1,0 +1,10 @@
+[theme]
+# shades of purple
+primaryColor="#fad000"
+backgroundColor="#28284e"
+secondaryBackgroundColor="#222145"
+textColor="#ffffff"
+font="sans serif"
+
+[server]
+maxUploadSize = 1000
