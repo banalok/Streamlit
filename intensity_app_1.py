@@ -112,22 +112,25 @@ def stardist_seg(im,model):
 
 @st.cache(allow_output_mutation=True)
 def show_video(img):
-    video_frames = []
-    output_file_path = "/app/output.avi"
+    #video_frames = []
+    output_file = "output.mp4"
     # Add each video frame to the list as a PIL Image object
-    for i in range(img.shape[0]):
-        img_arr = img[i]
-        img_v = Image.fromarray(img_arr)
-        video_frames.append(img_v)
-    fourcc = cv2.VideoWriter_fourcc(*'DIB ')
-    video_writer = cv2.VideoWriter(output_file_path, fourcc, 30.0, (video_frames[0].width, video_frames[0].height))
+    for i, name in enumerate(range(img.shape[0])):
+        #img_arr = img[i]
+        img_arr_name = f"frame_{i}.tif"
+        Image.fromarray(img[name]).save(img_arr_name)
+        #video_frames.append(img_v)
+    command = f"ffmpeg -r 30 -i frame_%d.tif -c:v libx264 -preset slow -crf 22 {output_file}"
+    subprocess.call(command, shell=True)
+    # fourcc = cv2.VideoWriter_fourcc(*'DIB ')
+    # video_writer = cv2.VideoWriter(output_file_path, fourcc, 30.0, (video_frames[0].width, video_frames[0].height))
     
-    for frame in video_frames:
-        frame = np.array(frame)
-        video_writer.write(frame) 
-    video_writer.release()
+    # for frame in video_frames:
+    #     frame = np.array(frame)
+    #     video_writer.write(frame) 
+    # video_writer.release()
   # Read the output video file
-    with open(output_file_path, "rb") as f:
+    with open(output_file, "rb") as f:
         video_bytes = f.read()
     return video_bytes
     
