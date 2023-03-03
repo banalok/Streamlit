@@ -172,10 +172,11 @@ def Segment():
         # if raw_file.name.split(".")[1] == 'tif':
         raw_image_ani = raw_image
         st.write(raw_image_ani.shape)
+        st.image(raw_image_ani[0],use_column_width=True,clamp = True)
         if extension == 'tif' and len(raw_image_ani.shape)==4:
             image_frame_num = st.number_input(f"Show frames({raw_image_ani.shape[0]})", min_value = 0,max_value = raw_image_ani.shape[0], value = 0, step = 1)
             if image_frame_num:
-                st.image(raw_image_ani[image_frame_num])
+                st.image(raw_image_ani[image_frame_num],use_column_width=True,clamp = True)
             
             #btn_clk = st.form('Show Frmaes', clear_on_submit=False)
             #if (st.button("Show frames", on_click=callback_frame) or st.session_state.button_clicked):
