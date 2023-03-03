@@ -430,7 +430,9 @@ def Segment():
                             # Display the color image with the selected regions highlighted
                             st.image(labels_rgbb,use_column_width=True,clamp = True)
                             df_selected = df_selected.drop(columns = ['_selectedRowNodeInfo'])
-                            st.write(df_selected) 
+                            st.write(df_selected)
+                            get_data = convert_df(df_selected)
+                            st.download_button("Press to Download", get_data, 'intensity_data.csv', "text/csv", key='download-csv')
                 
                             plot_df, _ = intensity(df_selected, raw_image_ani)
                             
