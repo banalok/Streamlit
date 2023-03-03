@@ -118,7 +118,8 @@ def show_video(img):
     for i, name in enumerate(range(img.shape[0])):
         #img_arr = img[i]
         img_arr_name = f"frame_{i}.tif"
-        Image.fromarray(img[name], mode='L').save(img_arr_name)
+        image = cv2.cvtColor(img[name],cv2.COLOR_RGB2GRAY)
+        Image.fromarray(image).save(img_arr_name)
         #video_frames.append(img_v)
     command = f"ffmpeg -r 30 -i frame_%d.tif -c:v libx264 -preset slow -crf 22 {output_file}"
     subprocess.call(command, shell=True)
