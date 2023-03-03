@@ -167,8 +167,7 @@ def Segment():
             raw_image = cv2.cvtColor(img_as_ubyte(raw_image), cv2.COLOR_GRAY2RGB)
            
         st.write(raw_image.dtype)
-        model = load_model()
-        raw_image_name = raw_file.name.split(".")[0]
+        model = load_model()        
         extension = raw_file.name.split(".")[1]
         # if raw_file.name.split(".")[1] == 'tif':
         raw_image_ani = raw_image
@@ -177,11 +176,11 @@ def Segment():
             
             #btn_clk = st.form('Show Frmaes', clear_on_submit=False)
             #if (st.button("Show frames", on_click=callback_frame) or st.session_state.button_clicked):
-            with st.form("my_form"):  
-                submitted = st.form_submit_button("Show video")
-                if submitted:  
-                   video_bytes = show_video(raw_image_ani) 
-                   st.video(video_bytes)
+            # with st.form("my_form"):  
+            #     submitted = st.form_submit_button("Show video")
+            #     if submitted:  
+            #        video_bytes = show_video(raw_image_ani) 
+            #        st.video(video_bytes)
                 # if btn_clk:# or st.session_state.show_frames:                
                 #     st.subheader("Image frames")             
                 #     show_ani(raw_image_ani) 
