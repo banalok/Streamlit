@@ -432,7 +432,7 @@ def Segment():
                             df_selected = df_selected.drop(columns = ['_selectedRowNodeInfo'])
                             st.write(df_selected)
                             get_data = convert_df(df_selected)
-                            st.download_button("Press to Download", get_data, 'intensity_data.csv', "text/csv", key='download-csv')
+                            st.download_button("Press to Download", get_data, 'intensity_data.csv', "text/csv", key='download-get_data')
                 
                             plot_df, _ = intensity(df_selected, raw_image_ani)
                             
