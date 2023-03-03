@@ -173,7 +173,7 @@ def Segment():
         raw_image_ani = raw_image
         st.write(raw_image_ani.shape)
         if extension == 'tif' and len(raw_image_ani.shape)==4:
-            image_frame_num = st.slider("Show frames", min_value = 0,max_value = raw_image_ani.shape[0]-1, step = 1)
+            image_frame_num = st.number_input("Show frames", min_value = 0,max_value = raw_image_ani.shape[0]-1, step = 1)
             if image_frame_num:
                 st.image(raw_image_ani[image_frame_num])
             
