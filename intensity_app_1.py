@@ -113,13 +113,13 @@ def stardist_seg(im,model):
 @st.cache(allow_output_mutation=True)
 def show_video(img):
     video_frames = []
-    output_file_path = "/app/output.mkv"
+    output_file_path = "/app/output.mp4"
     # Add each video frame to the list as a PIL Image object
     for i in range(img.shape[0]):
         img_arr = img[i]
         img_v = Image.fromarray(img_arr)
         video_frames.append(img_v)
-    fourcc = cv2.VideoWriter_fourcc(*'x264')
+    fourcc = cv2.VideoWriter_fourcc('m','p','4','v')
     video_writer = cv2.VideoWriter(output_file_path, fourcc, 30.0, (video_frames[0].width, video_frames[0].height))
     
     for frame in video_frames:
