@@ -82,19 +82,19 @@ def callback():
 def callback_table():
    st.session_state.display_table = True
     
-@st.cache(allow_output_mutation=True)
+@st.cache(allow_output_mutation=True, max_entries=1)
 def load_model():
     model = StarDist2D.from_pretrained('2D_versatile_fluo')
     return model
 
-@st.cache(allow_output_mutation=True)
+@st.cache(allow_output_mutation=True, max_entries=1)
 def load_image(images):
      img = io.imread(images)
      # re, img = cv2.imreadmulti(images, flags=cv2.IMREAD_UNCHANGED)
      # img = np.array(img)
      return img
 
-@st.cache(allow_output_mutation=True)
+@st.cache(allow_output_mutation=True, max_entries=1)
 def stardist_seg(im,model):
     img_labels, img_det = model.predict_instances(normalize(im))
     return img_labels
@@ -110,30 +110,30 @@ def stardist_seg(im,model):
 #     #chart = st. plotly_chart(fig, use_container_width=False, sharing="streamlit", theme="streamlit")
 #     return st.plotly_chart(fig, use_container_width=True, sharing="streamlit", theme="streamlit")
 
-@st.cache(allow_output_mutation=True)
-def show_video(img):
-    #video_frames = []
-    output_file = "output.mp4"
-    # Add each video frame to the list as a PIL Image object
-    for i, name in enumerate(range(img.shape[0])):
-        #img_arr = img[i]
-        img_arr_name = f"frame_{i}.tif"
-        image = cv2.cvtColor(img[name],cv2.COLOR_RGB2GRAY)
-        Image.fromarray(image).save(img_arr_name)
-        #video_frames.append(img_v)
-    command = f"ffmpeg -r 30 -i frame_%d.tif -c:v libx264 -preset slow -crf 22 {output_file}"
-    subprocess.call(command, shell=True)
-    # fourcc = cv2.VideoWriter_fourcc(*'DIB ')
-    # video_writer = cv2.VideoWriter(output_file_path, fourcc, 30.0, (video_frames[0].width, video_frames[0].height))
+# @st.cache(allow_output_mutation=True)
+# def show_video(img):
+#     #video_frames = []
+#     output_file = "output.mp4"
+#     # Add each video frame to the list as a PIL Image object
+#     for i, name in enumerate(range(img.shape[0])):
+#         #img_arr = img[i]
+#         img_arr_name = f"frame_{i}.tif"
+#         image = cv2.cvtColor(img[name],cv2.COLOR_RGB2GRAY)
+#         Image.fromarray(image).save(img_arr_name)
+#         #video_frames.append(img_v)
+#     command = f"ffmpeg -r 30 -i frame_%d.tif -c:v libx264 -preset slow -crf 22 {output_file}"
+#     subprocess.call(command, shell=True)
+#     # fourcc = cv2.VideoWriter_fourcc(*'DIB ')
+#     # video_writer = cv2.VideoWriter(output_file_path, fourcc, 30.0, (video_frames[0].width, video_frames[0].height))
     
-    # for frame in video_frames:
-    #     frame = np.array(frame)
-    #     video_writer.write(frame) 
-    # video_writer.release()
-  # Read the output video file
-    with open(output_file, "rb") as f:
-        video_bytes = f.read()
-    return video_bytes
+#     # for frame in video_frames:
+#     #     frame = np.array(frame)
+#     #     video_writer.write(frame) 
+#     # video_writer.release()
+#   # Read the output video file
+#     with open(output_file, "rb") as f:
+#         video_bytes = f.read()
+#     return video_bytes
     
 def main():
     # selected_box = st.sidebar.selectbox(
