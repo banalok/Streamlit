@@ -324,26 +324,26 @@ def Segment():
         # #rgb_image = seg_im.convert("RGB")
         # rgb_image = np.array(rgba_image)
         # get_image_download_link(rgb_image,"segmented.png")
-                    # final_label_rgb = cv2.cvtColor(final_label, cv2.COLOR_GRAY2RGB)
-                    # for label in np.unique(label_list):
-                  	 # #if the label is zero, we are examining the 'background'
-                    #   #so simply ignore it
-                    #     if label == 0:
-                    #         continue                
-                    #     mask = np.zeros(CLAHE_img.shape, dtype="uint8")
-                    #     mask[final_label == label] = 255
-                    #     #detect contours in the mask and grab the largest one
-                    #     cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
-                    #         cv2.CHAIN_APPROX_SIMPLE)
-                    #     cnts = imutils.grab_contours(cnts)
-                    #     c = max(cnts, key=cv2.contourArea)
-                    #     # draw a circle enclosing the object
-                    #     ((x, y), r) = cv2.minEnclosingCircle(c)
-                    #     cv2.circle(final_label_rgb, (int(x), int(y)), int(r), (255, 0, 0), 1)
-                    #     cv2.putText(final_label_rgb, "{}".format(label), (int(x) - 10, int(y)),
-                    #      	cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)
+                    final_label_rgb = cv2.cvtColor(final_label, cv2.COLOR_GRAY2RGB)
+                    for label in np.unique(label_list):
+                  	 #if the label is zero, we are examining the 'background'
+                      #so simply ignore it
+                        if label == 0:
+                            continue                
+                        mask = np.zeros(CLAHE_img.shape, dtype="uint8")
+                        mask[final_label == label] = 255
+                        #detect contours in the mask and grab the largest one
+                        cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
+                            cv2.CHAIN_APPROX_SIMPLE)
+                        cnts = imutils.grab_contours(cnts)
+                        c = max(cnts, key=cv2.contourArea)
+                        # draw a circle enclosing the object
+                        ((x, y), r) = cv2.minEnclosingCircle(c)
+                        cv2.circle(final_label_rgb, (int(x), int(y)), int(r), (255, 0, 0), 1)
+                        cv2.putText(final_label_rgb, "{}".format(label), (int(x) - 10, int(y)),
+                         	cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)
                     
-                    # st.image(final_label_rgb,use_column_width=True,clamp = True)
+                    st.image(final_label_rgb,use_column_width=True,clamp = True)
                         
                     if st.button("Show intensity table", on_click = callback_table) or st.session_state.display_table:
                         
