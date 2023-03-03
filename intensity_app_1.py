@@ -484,6 +484,7 @@ def apply_brightness_contrast(input_img, brightness = 0, contrast = 0):
 
    return buf 
 
+@st.cache(allow_output_mutation=True, max_entries=1)
 def get_image_download_link(img,filename_with_extension):
     result = Image.fromarray(img.astype(np.uint8))
     buffered = BytesIO()
@@ -494,6 +495,7 @@ def get_image_download_link(img,filename_with_extension):
     st.download_button("Press to Download", byte_im_2, filename_with_extension, "image/JPEG")
     #return href   
 
+@st.cache(allow_output_mutation=True, max_entries=1)
 def intensity(df_1, multi_tif_img):
     img_frames_list = list(range(0,multi_tif_img.shape[0]))
     img_frames = pd.DataFrame(img_frames_list, columns = ['Frame'])
