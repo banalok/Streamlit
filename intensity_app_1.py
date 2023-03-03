@@ -89,9 +89,9 @@ def load_model():
 
 @st.cache(allow_output_mutation=True, max_entries=1)
 def load_image(images):
-     #img = io.imread(images)
-     re, img = cv2.imreadmulti(images, flags=cv2.IMREAD_UNCHANGED)
-     img = np.array(img)
+     img = io.imread(images)
+     # re, img = cv2.imreadmulti(images, flags=cv2.IMREAD_UNCHANGED)
+     # img = np.array(img)
      return img
 
 @st.cache(allow_output_mutation=True, max_entries=1)
