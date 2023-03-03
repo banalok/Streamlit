@@ -174,7 +174,7 @@ def Segment():
         st.write(raw_image_ani.shape)
         
         if extension == 'tif' and len(raw_image_ani.shape)==4:
-            image_frame_num = st.number_input(f"Show frames({raw_image_ani.shape[0]})", min_value = 0,max_value = raw_image_ani.shape[0], value = 0, step = 1)
+            image_frame_num = st.number_input(f"Show frames (0 - {raw_image_ani.shape[0]})", min_value = 0,max_value = raw_image_ani.shape[0], value = 0, step = 1)
             if image_frame_num==0:
                 st.image(raw_image_ani[0],use_column_width=True,clamp = True)
             elif image_frame_num >= 1:
