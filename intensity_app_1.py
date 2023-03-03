@@ -119,7 +119,7 @@ def show_video(img):
         img_arr = img[i]
         img_v = Image.fromarray(img_arr)
         video_frames.append(img_v)
-    fourcc = -1#cv2.VideoWriter_fourcc('m','p','4','v')
+    fourcc = cv2.VideoWriter_fourcc(*'IYUV')
     video_writer = cv2.VideoWriter(output_file_path, fourcc, 30.0, (video_frames[0].width, video_frames[0].height))
     
     for frame in video_frames:
