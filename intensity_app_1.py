@@ -118,6 +118,7 @@ def show_video(img):
     for i, name in enumerate(range(img.shape[0])):
         #img_arr = img[i]
         img_arr_name = f"frame_{i}.tif"
+        img[name] = img[name][:,:,0]
         Image.fromarray(img[name]).save(img_arr_name)
         #video_frames.append(img_v)
     command = f"ffmpeg -r 30 -i frame_%d.tif -c:v libx264 -preset slow -crf 22 {output_file}"
