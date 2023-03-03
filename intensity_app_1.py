@@ -434,8 +434,8 @@ def Segment():
                             get_data = convert_df(df_selected)
                             st.download_button("Press to Download", get_data, 'intensity_data.csv', "text/csv", key='download-get_data')
                 
-                            plot_df, _ = intensity(df_selected, raw_image_ani)
-                            
+                            plot_df = intensity(df_selected, raw_image_ani)
+                            st.write(plot_df)
                             figure = px.scatter(
                                                 plot_df,
                                                 x="Frame",
@@ -509,7 +509,7 @@ def intensity(df_1, multi_tif_img):
     mean_inten_df = pd.DataFrame(mean_intensity)
     new_d = pd.concat([img_frames, mean_inten_df],axis=1)
     new_d.rename(columns = {0 : 'Mean Intensity'}, inplace=True)
-    return new_d, st.write(new_d)    
+    return new_d   
 
 if __name__ == "__main__":
     main()      
