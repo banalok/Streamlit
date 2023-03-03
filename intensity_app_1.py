@@ -134,7 +134,12 @@ def stardist_seg(im,model):
 #     with open(output_file, "rb") as f:
 #         video_bytes = f.read()
 #     return video_bytes
-    
+
+@st.cache(allow_output_mutation=True)
+def upload_file():
+     file = st.file_uploader("Choose an image file") 
+     return file
+ 
 def main():
     # selected_box = st.sidebar.selectbox(
     #     'Segment the images',
@@ -146,7 +151,8 @@ def main():
 
 def Segment():
     st.title('Segmentation')
-    raw_file = st.file_uploader("Choose an image file")
+    raw_file = upload_file()
+    #raw_file = st.file_uploader("Choose an image file")
     st.write(raw_file)
     if raw_file is not None:
         
