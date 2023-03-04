@@ -82,19 +82,19 @@ def callback():
 def callback_table():
    st.session_state.display_table = True
     
-@st.cache(allow_output_mutation=True, max_entries=1)
+@st.cache(allow_output_mutation=True, max_entries=1, show_spinner=False)
 def load_model():
     model = StarDist2D.from_pretrained('2D_versatile_fluo')
     return model
 
-@st.cache(allow_output_mutation=True, max_entries=1)
+@st.cache(allow_output_mutation=True, max_entries=1, show_spinner=False)
 def load_image(images):
      img = io.imread(images)
      # re, img = cv2.imreadmulti(images, flags=cv2.IMREAD_UNCHANGED)
      # img = np.array(img)
      return img
 
-@st.cache(allow_output_mutation=True, max_entries=1)
+@st.cache(allow_output_mutation=True, max_entries=1, show_spinner=False)
 def stardist_seg(im,model):
     img_labels, img_det = model.predict_instances(normalize(im))
     return img_labels
