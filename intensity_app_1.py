@@ -82,19 +82,19 @@ def callback():
 def callback_table():
    st.session_state.display_table = True
     
-@st.cache(allow_output_mutation=True, max_entries=1, show_spinner=False)
+@st.cache(allow_output_mutation=True, max_entries=1, show_spinner=False, ttl = 2*60)
 def load_model():
     model = StarDist2D.from_pretrained('2D_versatile_fluo')
     return model
 
-@st.cache(allow_output_mutation=True, max_entries=1, show_spinner=False)
+@st.cache(allow_output_mutation=True, max_entries=1, show_spinner=False, ttl = 2*60)
 def load_image(images):
      img = io.imread(images)
      # re, img = cv2.imreadmulti(images, flags=cv2.IMREAD_UNCHANGED)
      # img = np.array(img)
      return img
 
-@st.cache(allow_output_mutation=True, max_entries=1, show_spinner=False)
+@st.cache(allow_output_mutation=True, max_entries=1, show_spinner=False, ttl = 2*60)
 def stardist_seg(im,model):
     img_labels, img_det = model.predict_instances(normalize(im))
     return img_labels
@@ -484,7 +484,7 @@ def apply_brightness_contrast(input_img, brightness = 0, contrast = 0):
 
    return buf 
 
-@st.cache(allow_output_mutation=True, max_entries=1)
+
 def get_image_download_link(img,filename_with_extension):
     result = Image.fromarray(img.astype(np.uint8))
     buffered = BytesIO()
@@ -495,7 +495,7 @@ def get_image_download_link(img,filename_with_extension):
     st.download_button("Press to Download", byte_im_2, filename_with_extension, "image/JPEG")
     #return href   
 
-@st.cache(allow_output_mutation=True, max_entries=1)
+
 def intensity(df_1, multi_tif_img):
     img_frames_list = list(range(0,multi_tif_img.shape[0]))
     img_frames = pd.DataFrame(img_frames_list, columns = ['Frame'])
