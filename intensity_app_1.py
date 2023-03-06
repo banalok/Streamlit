@@ -441,7 +441,7 @@ def Segment():
                                                 x="Frame",
                                                 y="Mean Intensity",
                                                 #color="sepal_length",
-                                                color="reds",
+                                                color=plot_df['Mean Intensity'],
                                             )
                             
                             csv = convert_df(plot_df)           
