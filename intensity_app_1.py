@@ -145,7 +145,7 @@ def main():
  
 
 def Segment():
-    st.title('Segmentation')
+    st.title('Segmentation of a tiff stack')
     raw_file = st.file_uploader("Choose an image file")
     st.write(raw_file)
     if raw_file is not None:
