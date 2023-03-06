@@ -436,7 +436,7 @@ def Segment():
                 
                             plot_df = intensity(df_selected, raw_image_ani)
                             st.write(plot_df)
-                            figure = px.scatter(
+                            figure = px.line(
                                                 plot_df,
                                                 x="Frame",
                                                 y="Mean Intensity",
