@@ -439,9 +439,9 @@ def Segment():
                             figure = px.line(
                                                 plot_df,
                                                 x="Frame",
-                                                y="Mean Intensity",
+                                                y="Mean Intensity"
                                                 #color="sepal_length",
-                                                color=plot_df['Mean Intensity'],
+                                                #color=plot_df['Mean Intensity'],
                                             )
                             
                             csv = convert_df(plot_df)           
