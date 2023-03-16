@@ -1185,5 +1185,3 @@ def intensity(df_1, multi_tif_img):
     new_d.rename(columns = {0 : 'Mean Intensity'}, inplace=True)
     return new_d, st.write(new_d)    
 """
-if __name__ == "__main__":
-    main()      
