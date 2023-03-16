@@ -201,7 +201,7 @@ def Segment():
             #diam_f = []
             label_list = []
             centroid_set_first = []
-            final_label = np.zeros((raw_image_ani.shape[1], raw_image_ani.shape[2]),dtype=np.uint8)
+            final_label_1 = np.zeros((raw_image_ani.shape[1], raw_image_ani.shape[2]),dtype=np.uint8)
             #raw_image_1 = raw_image_ani[0]           
             raw_image_first = raw_image_ani[0] 
             # raw_first_pixels = min(raw_image_1[:,:,0][raw_image_1[:,:,0][:,:]!=0])            
@@ -257,7 +257,7 @@ def Segment():
                     #if (centroid_coord_first[0]<200 and centroid_coord_first[0]>0)  and (centroid_coord_first[1]>0 and centroid_coord_first[1]<500):
                     object_coords = np.argwhere(label_first==props_first[obj_first]['label'])
                     label_value_first = polygon(object_coords[:, 0], object_coords[:, 1])
-                    final_label[label_value_first] = label_val        #object_label = props[objects]['label'] 
+                    final_label_1[label_value_first] = label_val        #object_label = props[objects]['label'] 
                     label_list.append(label_val)
                     label_val += 1
             
@@ -265,7 +265,7 @@ def Segment():
             #st.write(st.session_state.button_clicked)
             if st.button("Show segmented frame 1 (Overlayed on the original image)", key='seg_btn', on_click = callback) or st.session_state.button_clicked:
                 #st.write(st.session_state.button_clicked)
-                seg_im = render_label(final_label, img=raw_image_first)
+                seg_im = render_label(final_label_1, img=raw_image_first)
                 st.image(seg_im,use_column_width=True,clamp = True)  
                 #st.write(label_list)
                 cutoff = 10
@@ -330,13 +330,20 @@ def Segment():
                             if not flag:                               
                                 object_coords = np.argwhere(labels==props[objects]['label'])
                                 label_value = polygon(object_coords[:, 0], object_coords[:, 1])
-                                final_label[label_value] = label_val
+                                final_label_1[label_value] = label_val
                                 label_list.append(label_val)
                                 #plt.imsave(f"F:/Intensity measurement/check labels/label_{frame_num}_{label_val}.jpg", final_label==label_val)
                                 label_val += 1 
                                 centroid_set_first.append(centroid_coord)
                     p.write("Done!")  
-                    st.image(final_label,use_column_width=True,clamp = True)
+                    st.image(final_label_1,use_column_width=True,clamp = True)
+                    props_to_sort = measure.regionprops(final_label_1)
+                    centroid_positions = [prop_sort.centroid for prop_sort in props_to_sort]
+                    sorted_indices = np.lexsort((np.array(centroid_positions)[:, 1], np.array(centroid_positions)[:, 0]))
+                    # label the regions based on the sorted indices
+                    final_label = np.zeros_like(final_label_1)
+                    for i, idx in enumerate(sorted_indices, start=1):
+                        final_label[final_label_1 == (idx + 1)] = i                    
         # st.write(seg_im.shape)
         # st.write("Segmented image")
         # st.image(seg_im,use_column_width=True,clamp = True) 
