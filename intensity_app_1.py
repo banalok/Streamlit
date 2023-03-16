@@ -540,14 +540,18 @@ def Segment():
                             
                             keyval = {}
                             amp_keyval = {}
+                            prev_intensity = 0
                             for frame_key, intensity_val in enumerate(plot_df['Smoothed Mean Intensity']):
-                                if intensity_val >= smooth_baseline_mean_sd:
+                                if prev_intensity == 0 and intensity_val > smooth_baseline_mean_sd:
+                                    continue
+                                elif intensity_val >= smooth_baseline_mean_sd:
                                     keyval[frame_key] = intensity_val
                                     break
                                 else:
                                     if frame_key==len(plot_df.index)-1:
                                         raise ValueError("Error: The trace doesn't cross the baseline. No amplitude, rise time, decay time and duration can be found")
                                     else:
+                                        prev_intensity = intensity_val
                                         continue
                             
                             first_key = frame_key
