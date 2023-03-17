@@ -593,7 +593,10 @@ def Segment():
                                                 amplitude = prev_intensity - smooth_baseline_mean_sd
                                                 keyval[amp_key] = prev_intensity
                                                 prev_intensity = intensity_val_2
-                                                amp_keyval[f"{first_key}-{amp_key}-{frame_key}"] = amplitude
+                                                if (first_key == int(amp_key)) or (int(amp_key) == frame_key): 
+                                                    continue
+                                                else:
+                                                    amp_keyval[f"{first_key}-{amp_key}-{frame_key}"] = amplitude       
                                                 
                                   
                             
