@@ -5,6 +5,7 @@ import plotly.io
 import math
 from PIL import Image
 from matplotlib import pyplot as plt
+import seaborn as sns
 import statistics as stat
 import os
 import numpy as np
@@ -343,7 +344,8 @@ def Segment():
                     # label the regions based on the sorted indices
                     final_label = np.zeros_like(final_label_1)
                     for i, idx in enumerate(sorted_indices, start=1):
-                        final_label[final_label_1 == (idx + 1)] = i                    
+                        final_label[final_label_1 == (idx + 1)] = i
+
         # st.write(seg_im.shape)
         # st.write("Segmented image")
         # st.image(seg_im,use_column_width=True,clamp = True) 
@@ -377,7 +379,7 @@ def Segment():
                         #total_mean = np.sum(mean_of_mean)/raw_image_ani.shape[0]
                         #st.write(total_mean)
                         #st.write(mean_of_mean)
-                        st.write("Intensity table for segmented Image (Click to see each object on the label and its mean frame intensity)") 
+                        st.write("Intensity table for segmented Image") 
                         #st.image(labels,use_column_width=True,clamp = True)          
                                    
                         data = list(np.unique(label_list)) 
@@ -398,7 +400,8 @@ def Segment():
                         #df_pro = df_pro.drop(df_pro[df_pro['label'] == 255].index)
                             
                             ###############Interactive table################################################################
-                            
+                        st.write(df_pro)  
+                        st.write('Click to see each object on the label image')
                         gb = GridOptionsBuilder.from_dataframe(df_pro)
                         
                         
@@ -453,60 +456,153 @@ def Segment():
                             # Display the color image with the selected regions highlighted
                             st.image(labels_rgbb,use_column_width=True,clamp = True)
                             df_selected = df_selected.drop(columns = ['_selectedRowNodeInfo'])
+                            st.subheader("Selected labels")
                             st.write(df_selected)
                             get_data = convert_df(df_selected)
                             st.download_button("Press to Download", get_data, 'intensity_data.csv', "text/csv", key='download-get_data')
-                
-                            plot_df = intensity(df_selected, raw_image_ani)
-                                                       
                             
-                            smoothed_plot_df = plot_df['Smoothed Mean Intensity']
-                            smooth_mode = stat.mode(smoothed_plot_df)
-                            #non_smooth_mode = stat.mode(plot_df['Mean Intensity'])
-                            #st.write(f"Smooth Mode = {smooth_mode}")
-                            #st.write(f"Non smooth Mode = {non_smooth_mode}")
-                            #sd_non_smooth = plot_df['Mean Intensity']. std()
-                            sd_smooth = plot_df['Smoothed Mean Intensity']. std()
-                            #st.write(f"Smooth_SD = {sd_smooth}")
-                            #st.write(f"Non smooth SD = {sd_non_smooth}")
-                            #st.write( smoothed_plot_df)
-                            #st.write(plot_df.nsmallest(round(0.1*plot_df.shape[0]), ['Mean Intensity']))
-                            #low_10_mean = (np.mean(plot_df.nsmallest(round(0.1*plot_df.shape[0]), ['Mean Intensity'])))['Mean Intensity']
-                            smooth_baseline_mean_sd = smooth_mode + sd_smooth
-                            #non_smooth_baseline_mean_sd = non_smooth_mode + sd_non_smooth
+                            new_df_selected_transposed_smooth = df_selected.transpose()
+                            new_df_selected_transposed_smooth.columns = new_df_selected_transposed_smooth.iloc[0]
+                            new_df_selected_transposed_smooth.drop(new_df_selected_transposed_smooth.index[0], inplace=True)                            
+                            for i in df_selected['label']: 
+                                df_selected_transposed_smooth = pd.DataFrame(smooth_plot(new_df_selected_transposed_smooth[i]),columns = [f'smooth cell {i}'])
+                                new_df_selected_transposed_smooth = pd.concat([new_df_selected_transposed_smooth.reset_index(drop=True), df_selected_transposed_smooth[f'smooth cell {i}'].reset_index(drop=True)],axis=1)
+                                new_df_missing_values = pd.isna(new_df_selected_transposed_smooth[f"smooth cell {i}"])
+                                new_df_selected_transposed_smooth.loc[new_df_missing_values, f'smooth cell {i}'] = new_df_selected_transposed_smooth.loc[new_df_missing_values, i]                               
+                                #st.write(new_df_selected_transposed)
+                            new_df_selected_transposed_smooth['Frame'] = new_df_selected_transposed_smooth.index
+                            #st.write(new_df_selected_transposed_smooth)
+                            #get_data_indi = convert_df(new_df_selected_transposed_smooth)
+                            #st.download_button("Press to Download", get_data_indi, 'indi_intensity_data.csv', "text/csv", key='indi_download-get_data')
+                            nested_dict = {'Label':[], "Number of Events":[], "Rise time":[], "Decay time":[], "Duration":[], "Amplitude":[]}
+                            for i in df_selected['label']:
+                                new_df_selected_transposed_smooth_mode = stat.mode(new_df_selected_transposed_smooth[f"smooth cell {i}"])
+                                new_df_selected_transposed_smooth_sd = new_df_selected_transposed_smooth[f"smooth cell {i}"].std()
+                                baseline_each = new_df_selected_transposed_smooth_mode + new_df_selected_transposed_smooth_sd
+                                
+                                keyval = {}
+                                amp_keyval = {}
+                                prev_intensity = 0
+                                flag = 1
+                                for frame_key, intensity_val in enumerate(new_df_selected_transposed_smooth[f'smooth cell {i}']):
+                                    if prev_intensity == 0 and intensity_val > baseline_each:
+                                        continue
+                                    elif intensity_val >= baseline_each:
+                                        keyval[frame_key] = intensity_val
+                                        break
+                                    else:
+                                        if frame_key==len(new_df_selected_transposed_smooth.index)-1:
+                                            flag = 0
+                                        else:
+                                            prev_intensity = intensity_val
+                                            continue
+                                if flag==0:
+                                    prev_intensity = 0
+                                    continue
+                                
+                                first_key = frame_key
+                                first_intensity = keyval[frame_key]
+                                
+                                prev_intensity = keyval[frame_key]
+                                for frame_key_2, intensity_val_2 in enumerate(new_df_selected_transposed_smooth[f'smooth cell {i}']):                               
+                                    if frame_key_2 <= frame_key:
+                                        continue
+                                    elif frame_key_2 > frame_key:
+                                        if intensity_val_2 >= prev_intensity:
+                                            if intensity_val_2 < baseline_each:
+                                                frame_key = frame_key_2
+                                                continue
+                                            elif intensity_val_2 >= baseline_each:
+                                                if prev_intensity < baseline_each:
+                                                    first_key = frame_key_2
+                                                    first_intensity = intensity_val_2
+                                                    keyval[first_key] = first_intensity
+                                                    frame_key = frame_key_2
+                                                    prev_intensity = intensity_val_2
+                                                else:
+                                                    frame_key = frame_key_2
+                                                    prev_intensity = intensity_val_2
+                                                
+    
+                                        elif intensity_val_2 < prev_intensity:
+                                            if intensity_val_2 > baseline_each:
+                                                frame_key = frame_key_2                                         
+                                            elif intensity_val_2 <= baseline_each:
+                                                if prev_intensity <= baseline_each:
+                                                    frame_key = frame_key_2
+                                                    continue
+                                                else:
+                                                    keyval[frame_key_2] = intensity_val_2
+                                                    frame_key = frame_key_2
+                                                    #start_key = plot_df.query(f'"Smoothed Mean Intensity" == {prev_intensity}')['Frame']
+                                                    amp_key = str(new_df_selected_transposed_smooth[new_df_selected_transposed_smooth[f'smooth cell {i}']==prev_intensity]['Frame'].iloc[0])
+                                                    amplitude = prev_intensity - baseline_each
+                                                    keyval[amp_key] = prev_intensity
+                                                    prev_intensity = intensity_val_2
+                                                    if (first_key == int(amp_key)) or (int(amp_key) == frame_key): 
+                                                        continue
+                                                    else:
+                                                        amp_keyval[f"{first_key}-{amp_key}-{frame_key}"] = amplitude                
+                                
+                                #st.write(keyval)    
+                                #st.write(amp_keyval)
+                                count_items = 0
+                                for item in amp_keyval.items():
+                                    #st.write(item[0].split('-')) 
+                                    if len(item[0].split('-'))==3:
+                                        count_items += 1
+                                        signal_start_frame = item[0].split('-')[0]
+                                        #st.write(f"The signal start frame is {int(signal_start_frame)}")
+                                        peak_frame = item[0].split('-')[1]
+                                        #st.write(f"The peak frame is {int(peak_frame)}")
+                                        signal_decay_frame = item[0].split('-')[2]
+                                        #st.write(f"The signal decay frame is {int(signal_decay_frame)}")
+                                        event_num = count_items
+                                        amplitude_each = item[1]
+                                        signal_rise = int(peak_frame)-int(signal_start_frame)
+                                        signal_decay = int(signal_decay_frame)-int(peak_frame)
+                                        signal_duration = int(signal_decay_frame)-int(signal_start_frame)
+                                        nested_dict["Label"].append(i)
+                                        nested_dict["Number of Events"].append(event_num)
+                                        nested_dict["Rise time"].append(signal_rise)
+                                        nested_dict["Decay time"].append(signal_decay)
+                                        nested_dict["Duration"].append(signal_duration)
+                                        nested_dict["Amplitude"].append(amplitude_each)
+                            
+                            nested_dict = (pd.DataFrame.from_dict(nested_dict)) 
+                            st.subheader("Parameters for individual selected labels across all frames")
+                            st.write(nested_dict)
+                            individual_csv = convert_df(nested_dict)           
+                            st.download_button("Press to Download", individual_csv, 'individual_para_data.csv', "text/csv", key='individual_download-csv')
+                            average_rise_time = nested_dict['Rise time'].mean()
+                            st.write(f"The average rise time based on the selected labels across all frames is {average_rise_time}")
+                            average_decay_time = nested_dict['Decay time'].mean()
+                            st.write(f"The average decay time based on the selected labels across all frames is {average_decay_time}")
+                            average_duration = nested_dict['Duration'].mean()
+                            st.write(f"The average duration based on the selected labels across all frames is {average_duration}")
+                            average_amplitude = nested_dict['Amplitude'].mean()
+                            st.write(f"The average amplitude based on the selected labels across all frames is {average_amplitude}")
+                            st.subheader("Distribution plots based on the selected labels")
+                            sns.displot(data = nested_dict, x="Rise time",kind='hist')
+                            st.pyplot(plt.gcf())
+                            sns.displot(data = nested_dict, x="Decay time",kind='hist')
+                            st.pyplot(plt.gcf())
+                            sns.displot(data = nested_dict, x="Duration",kind='hist')
+                            st.pyplot(plt.gcf())
+                            sns.displot(data = nested_dict, x="Amplitude",kind='hist')
+                            st.pyplot(plt.gcf())
+                            
+                            plot_df = intensity(df_selected, raw_image_ani)                                                      
+                            smoothed_plot_df = plot_df['Smoothed Mean Intensity']                           
                             missing_values = pd.isna(plot_df["Smoothed Mean Intensity"])
-                            plot_df.loc[missing_values, "Smoothed Mean Intensity"] = plot_df.loc[missing_values, "Mean Intensity"]                            
+                            plot_df.loc[missing_values, "Smoothed Mean Intensity"] = plot_df.loc[missing_values, "Mean Intensity"]  
+                            smooth_mode = stat.mode(smoothed_plot_df)
+                            sd_smooth = plot_df['Smoothed Mean Intensity'].std()
+                            smooth_baseline_mean_sd = smooth_mode + sd_smooth
                             plot_df['delta_f/f_0'] = (plot_df['Smoothed Mean Intensity'] - smooth_baseline_mean_sd)/smooth_baseline_mean_sd
-                            
-
+                            st.subheader("Data for mean intensity trace")
                             st.write(plot_df)
-                            # figure = px.line(
-                            #                     plot_df,
-                            #                     x="Frame",
-                            #                     y="Mean Intensity"
-                            #                     #color="sepal_length",
-                            #                     #color=plot_df['Mean Intensity'],
-                            #                 )
-                            
-                            # figure.add_shape(type='line',
-                            #                     x0=0,
-                            #                     y0= non_smooth_baseline_mean_sd ,
-                            #                     x1=raw_image_ani.shape[0],
-                            #                     y1= non_smooth_baseline_mean_sd ,
-                            #                     line=dict(color='Red',),
-                            #                     xref='x',
-                            #                     yref='y')
-                            
-                            # figure.add_shape(type='line',
-                            #                     x0=0,
-                            #                     y0=baseline_mean_sd,
-                            #                     x1=raw_image_ani.shape[0],
-                            #                     y1=baseline_mean_sd,
-                            #                     line=dict(color='Green',),
-                            #                     xref='x',
-                            #                     yref='y')     
-                            
-                            
+                                                        
                             smoothed_figure =  px.line(
                                                 plot_df,
                                                 x="Frame",
@@ -596,9 +692,7 @@ def Segment():
                                                 if (first_key == int(amp_key)) or (int(amp_key) == frame_key): 
                                                     continue
                                                 else:
-                                                    amp_keyval[f"{first_key}-{amp_key}-{frame_key}"] = amplitude       
-                                                
-                                  
+                                                    amp_keyval[f"{first_key}-{amp_key}-{frame_key}"] = amplitude                
                             
                             #st.write(keyval)        
                             st.write(amp_keyval)
@@ -617,10 +711,9 @@ def Segment():
                                     st.write(f"The amplitude for peak number {count_items} is {item[1]}")
                                     st.write(f"The signal rise time for peak number {count_items} is {int(peak_frame)-int(signal_start_frame)}")
                                     st.write(f"The signal decay time for peak number {count_items} is {int(signal_decay_frame)-int(peak_frame)}")
-                                    st.write(f"The signal duration for peak number {count_items} is {int(signal_decay_frame)-int(signal_start_frame)}")                         
-
-              
-        
+                                    st.write(f"The signal duration for peak number {count_items} is {int(signal_decay_frame)-int(signal_start_frame)}")                 
+                                                                         
+                           
 def convert_df(df):
    return df.to_csv(index=False).encode('utf-8')
 
