@@ -479,7 +479,7 @@ def Segment():
                                 new_df_selected_transposed_smooth_mode = stat.mode(new_df_selected_transposed_smooth[f"smooth cell {i}"])
                                 new_df_selected_transposed_smooth_sd = new_df_selected_transposed_smooth[f"smooth cell {i}"].std()
                                 baseline_each = new_df_selected_transposed_smooth_mode + new_df_selected_transposed_smooth_sd
-                                
+                                st.write(f'mode is :{new_df_selected_transposed_smooth_mode}')
                                 keyval = {}
                                 amp_keyval = {}
                                 prev_intensity = 0
