@@ -149,13 +149,13 @@ def main():
 def Segment():
     st.title('Segmentation of a tiff stack')
     raw_file = st.file_uploader("Choose an image file")
-    st.write(raw_file)
+    #st.write(raw_file)
     if raw_file is not None:
         
         #plt.save(raw_file, cwd)
         ######use this script to load the image on the deployed app############
         file_bytes = BytesIO(raw_file.read())
-        st.image(file_bytes,use_column_width=True,clamp = True) 
+        #st.image(file_bytes,use_column_width=True,clamp = True) 
         ############use this script to load the image on the deployed app############################
         
         #st.image(raw_file,use_column_width=True,clamp = True) 
@@ -164,16 +164,16 @@ def Segment():
         raw_image = load_image(file_bytes) #use this script to load the image on the deployed app
         #raw_image = load_image(raw_name)
         #raw_image = io.imread(raw_name) 
-        st.write(raw_image.shape)
+        #st.write(raw_image.shape)
         if (len(raw_image.shape) == 2) or (len(raw_image.shape) ==3 and raw_image.shape[-1]!=3) or (len(raw_image.shape) ==4 and raw_image.shape[-1]!=3):
             raw_image = cv2.cvtColor(img_as_ubyte(raw_image), cv2.COLOR_GRAY2RGB)
            
-        st.write(raw_image.dtype)
+        #st.write(raw_image.dtype)
         model = load_model()        
         extension = raw_file.name.split(".")[1]
         # if raw_file.name.split(".")[1] == 'tif':
         raw_image_ani = raw_image
-        st.write(raw_image_ani.shape)
+        #st.write(raw_image_ani.shape)
         
         if extension == 'tif' and len(raw_image_ani.shape)==4:
             image_frame_num = st.number_input(f"Show frames (0 - {raw_image_ani.shape[0]-1})", min_value = 0,max_value = raw_image_ani.shape[0], value = 0, step = 1)
@@ -337,7 +337,7 @@ def Segment():
                                 label_val += 1 
                                 centroid_set_first.append(centroid_coord)
                     p.write("Done!")  
-                    st.image(final_label_1,use_column_width=True,clamp = True)
+                    #st.image(final_label_1,use_column_width=True,clamp = True)
                     props_to_sort = measure.regionprops(final_label_1)
                     centroid_positions = [prop_sort.centroid for prop_sort in props_to_sort]
                     sorted_indices = np.lexsort((np.array(centroid_positions)[:, 1], np.array(centroid_positions)[:, 0]))
@@ -346,13 +346,13 @@ def Segment():
                     for i, idx in enumerate(sorted_indices, start=1):
                         final_label[final_label_1 == (idx + 1)] = i
 
-        # st.write(seg_im.shape)
-        # st.write("Segmented image")
-        # st.image(seg_im,use_column_width=True,clamp = True) 
-        # rgba_image = Image.fromarray(seg_im, "RGB")
-        # #rgb_image = seg_im.convert("RGB")
-        # rgb_image = np.array(rgba_image)
-        # get_image_download_link(rgb_image,"segmented.png")
+                    # st.write(seg_im.shape)
+                    # st.write("Segmented image")
+                    # st.image(seg_im,use_column_width=True,clamp = True) 
+                    # rgba_image = Image.fromarray(seg_im, "RGB")
+                    # #rgb_image = seg_im.convert("RGB")
+                    # rgb_image = np.array(rgba_image)
+                    # get_image_download_link(rgb_image,"segmented.png")
                     final_label_rgb = cv2.cvtColor(final_label, cv2.COLOR_GRAY2RGB)
                     for label in np.unique(label_list):
                   	 #if the label is zero, we are examining the 'background'
@@ -391,6 +391,7 @@ def Segment():
                                                                   properties=['label','intensity_mean'])
                             
                             df_single = pd.DataFrame(props_pro)
+                            df_single['intensity_mean'] = np.round(df_single['intensity_mean'],3)
                             df_single.rename(columns = {'intensity_mean' : f'intensity_mean_{frames_pro}'}, inplace=True)
                             #df_single.rename(columns = {'solidity' : f'solidity_{frames_pro}'}, inplace=True)
                             df_pro = pd.merge(df_pro, df_single, on = 'label', how = 'outer')                                                
@@ -400,19 +401,20 @@ def Segment():
                         #df_pro = df_pro.drop(df_pro[df_pro['label'] == 255].index)
                             
                             ###############Interactive table################################################################
-                        st.write(df_pro)  
+                        st.write(df_pro)
+                        get_data_indi = convert_df(df_pro)
+                        st.download_button("Press to Download", get_data_indi, 'label_intensity_data.csv', "text/csv", key='label_download-get_data')                      
                         st.write('Click to see each object on the label image')
-                        gb = GridOptionsBuilder.from_dataframe(df_pro)
                         
-                        
+                        gb = GridOptionsBuilder.from_dataframe(df_pro)                       
                         gb.configure_pagination(paginationAutoPageSize=True) #Add pagination
                         gb.configure_side_bar() #Add a sidebar
                         #gb.configure_selection('multiple', use_checkbox=True, groupSelectsChildren="Group checkbox select children") #Enable multi-row selection
-                        gb.configure_selection(selection_mode="multiple", use_checkbox=True, groupSelectsChildren="Group checkbox select children", pre_selected_rows=[]) #list(range(0, len(df_pro))))  #[str(st.session_state.selected_row)]
+                        gb.configure_selection(selection_mode="single", use_checkbox=True, groupSelectsChildren="Group checkbox select children", pre_selected_rows=[]) #list(range(0, len(df_pro))))  #[str(st.session_state.selected_row)]
                                    
                         gridOptions = gb.build()
-                        gridOptions["columnDefs"][0]["checkboxSelection"]=True
-                        gridOptions["columnDefs"][0]["headerCheckboxSelection"]=True
+                        #gridOptions["columnDefs"][0]["checkboxSelection"]=True
+                        #gridOptions["columnDefs"][0]["headerCheckboxSelection"]=True
                         
                         grid_response = AgGrid(
                             df_pro,
@@ -456,55 +458,97 @@ def Segment():
                             # Display the color image with the selected regions highlighted
                             st.image(labels_rgbb,use_column_width=True,clamp = True)
                             df_selected = df_selected.drop(columns = ['_selectedRowNodeInfo'])
-                            st.subheader("Selected labels")
-                            st.write(df_selected)
-                            get_data = convert_df(df_selected)
-                            st.download_button("Press to Download", get_data, 'intensity_data.csv', "text/csv", key='download-get_data')
-                            
-                            new_df_selected_transposed_smooth = df_selected.transpose()
-                            new_df_selected_transposed_smooth.columns = new_df_selected_transposed_smooth.iloc[0]
-                            new_df_selected_transposed_smooth.drop(new_df_selected_transposed_smooth.index[0], inplace=True)                            
-                            for i in df_selected['label']: 
-                                df_selected_transposed_smooth = pd.DataFrame(smooth_plot(new_df_selected_transposed_smooth[i]),columns = [f'smooth cell {i}'])
-                                new_df_selected_transposed_smooth = pd.concat([new_df_selected_transposed_smooth.reset_index(drop=True), df_selected_transposed_smooth[f'smooth cell {i}'].reset_index(drop=True)],axis=1)
-                                new_df_missing_values = pd.isna(new_df_selected_transposed_smooth[f"smooth cell {i}"])
-                                new_df_selected_transposed_smooth.loc[new_df_missing_values, f'smooth cell {i}'] = new_df_selected_transposed_smooth.loc[new_df_missing_values, i]                               
-                                #st.write(new_df_selected_transposed)
-                            new_df_selected_transposed_smooth['Frame'] = new_df_selected_transposed_smooth.index
-                            #st.write(new_df_selected_transposed_smooth)
-                            #get_data_indi = convert_df(new_df_selected_transposed_smooth)
-                            #st.download_button("Press to Download", get_data_indi, 'indi_intensity_data.csv', "text/csv", key='indi_download-get_data')
+
                             nested_dict = {'Label':[], "Number of Events":[], "Rise time":[], "Decay time":[], "Duration":[], "Amplitude":[]}
-                            for i in df_selected['label']:
-                                new_df_selected_transposed_smooth_mode = stat.mode(new_df_selected_transposed_smooth[f"smooth cell {i}"])
-                                new_df_selected_transposed_smooth_sd = new_df_selected_transposed_smooth[f"smooth cell {i}"].std()
-                                baseline_each = new_df_selected_transposed_smooth_mode + new_df_selected_transposed_smooth_sd
-                                st.write(f'mode is :{new_df_selected_transposed_smooth_mode}')
-                                keyval = {}
-                                amp_keyval = {}
-                                prev_intensity = 0
-                                flag = 1
-                                for frame_key, intensity_val in enumerate(new_df_selected_transposed_smooth[f'smooth cell {i}']):
-                                    if prev_intensity == 0 and intensity_val > baseline_each:
-                                        continue
-                                    elif intensity_val >= baseline_each:
-                                        keyval[frame_key] = intensity_val
-                                        break
-                                    else:
-                                        if frame_key==len(new_df_selected_transposed_smooth.index)-1:
-                                            flag = 0
-                                        else:
-                                            prev_intensity = intensity_val
-                                            continue
-                                if flag==0:
-                                    prev_intensity = 0
+                            plot_df = intensity(df_selected, raw_image_ani)                                                      
+                            #smoothed_plot_df = plot_df['Smoothed Mean Intensity']                           
+                            missing_values = pd.isna(plot_df["Smoothed Mean Intensity"])
+                            plot_df.loc[missing_values, "Smoothed Mean Intensity"] = plot_df.loc[missing_values, "Mean Intensity"]  
+                            #smooth_mode = stat.mode(smoothed_plot_df)
+                            #sd_smooth = plot_df['Smoothed Mean Intensity'].std()
+                            #smooth_baseline_mean_sd = smooth_mode + sd_smooth
+                            #st.write(smooth_mode)
+                            #st.write(smooth_baseline_mean_sd)
+                            plot_df["Smoothed Mean Intensity"] = np.round(plot_df["Smoothed Mean Intensity"],3)                            
+                            plot_df_smooth_mode =plot_df.mode()['Smoothed Mean Intensity'].min() #stat.mode(new_df_selected_transposed_smooth[f"smooth cell {i}"])
+                            plot_df_smooth_sd = plot_df['Smoothed Mean Intensity'].std()
+                            baseline_each = plot_df_smooth_mode + plot_df_smooth_sd   
+                            plot_df['delta_f/f_0'] = (plot_df['Smoothed Mean Intensity'] - baseline_each)/baseline_each  
+                            unsmooth_mode = stat.mode(plot_df['Mean Intensity'])
+                            sd_unsmooth = plot_df['Mean Intensity'].std()
+                            unsmooth_baseline_mean_sd = unsmooth_mode + sd_unsmooth
+                            # st.write(baseline_each)
+                            # st.write(plot_df_smooth_mode)
+                            # st.write(plot_df_smooth_sd)
+                            keyval = {}
+                            amp_keyval = {}
+                            prev_intensity = 0
+                            flag = 1
+                            
+                            for frame_key, intensity_val in enumerate(plot_df['Smoothed Mean Intensity']):
+                                if prev_intensity == 0 and intensity_val > baseline_each:
                                     continue
-                                
+                                elif intensity_val >= baseline_each:
+                                    keyval[frame_key] = intensity_val
+                                    break
+                                else:
+                                    if frame_key==len(plot_df.index)-1:
+                                        flag = 0
+                                    else:
+                                        prev_intensity = intensity_val
+                                        continue
+                            if flag==0:
+                                prev_intensity = 0
+                                st.write("Error! The trace doesn't cross the baseline. No parameters can be found")
+                                st.subheader("Data for intensity of selected label")
+                                st.write(plot_df)
+    
+                                unsmoothed_figure =  px.line(
+                                                    plot_df,
+                                                    x="Frame",
+                                                    y="Mean Intensity"
+                                                    #color="sepal_length",
+                                                    #color=plot_df['Mean Intensity'],
+                                                )
+                                unsmoothed_figure.add_shape(type='line',
+                                                    x0=0,
+                                                    y0=unsmooth_baseline_mean_sd,
+                                                    x1=raw_image_ani.shape[0],
+                                                    y1=unsmooth_baseline_mean_sd,
+                                                    line=dict(color='Green',),
+                                                    xref='x',
+                                                    yref='y')    
+                                                            
+                                smoothed_figure =  px.line(
+                                                    plot_df,
+                                                    x="Frame",
+                                                    y='Smoothed Mean Intensity'
+                                                    #color="sepal_length",
+                                                    #color=plot_df['Mean Intensity'],
+                                                )
+                                smoothed_figure.add_shape(type='line',
+                                                    x0=0,
+                                                    y0=baseline_each,
+                                                    x1=raw_image_ani.shape[0],
+                                                    y1=baseline_each,
+                                                    line=dict(color='Red',),
+                                                    xref='x',
+                                                    yref='y')                            
+                            
+
+                        
+                                csv = convert_df(plot_df)           
+                                st.download_button("Press to Download", csv, 'intensity_data.csv', "text/csv", key='download-csv')
+                                #st.plotly_chart(figure, theme="streamlit", use_container_width=True)
+                                #st.plotly_chart(figure_2, theme="streamlit", use_container_width=True)
+                                st.plotly_chart(smoothed_figure, theme="streamlit", use_container_width=True)     
+                                st.plotly_chart(unsmoothed_figure, theme="streamlit", use_container_width=True)      
+                            else:
                                 first_key = frame_key
                                 first_intensity = keyval[frame_key]
                                 
                                 prev_intensity = keyval[frame_key]
-                                for frame_key_2, intensity_val_2 in enumerate(new_df_selected_transposed_smooth[f'smooth cell {i}']):                               
+                                for frame_key_2, intensity_val_2 in enumerate(plot_df['Smoothed Mean Intensity']):                               
                                     if frame_key_2 <= frame_key:
                                         continue
                                     elif frame_key_2 > frame_key:
@@ -535,12 +579,15 @@ def Segment():
                                                     keyval[frame_key_2] = intensity_val_2
                                                     frame_key = frame_key_2
                                                     #start_key = plot_df.query(f'"Smoothed Mean Intensity" == {prev_intensity}')['Frame']
-                                                    amp_key = str(new_df_selected_transposed_smooth[new_df_selected_transposed_smooth[f'smooth cell {i}']==prev_intensity]['Frame'].iloc[0])
+                                                    amp_key_vals = plot_df[plot_df['Smoothed Mean Intensity']==prev_intensity]['Frame']
+                                                    amp_key_vals = amp_key_vals[amp_key_vals>=first_key].iloc[0]
+                                                    amp_key = str(amp_key_vals)
                                                     amplitude = prev_intensity - baseline_each
                                                     keyval[amp_key] = prev_intensity
                                                     prev_intensity = intensity_val_2
-                                                    if (first_key == int(amp_key)) or (int(amp_key) == frame_key): 
-                                                        continue
+                                                    if (first_key == int(amp_key)): #or (int(amp_key) == frame_key): 
+                                                        first_key = int(amp_key)-1
+                                                        amp_keyval[f"{first_key}-{amp_key}-{frame_key}"] = amplitude
                                                     else:
                                                         amp_keyval[f"{first_key}-{amp_key}-{frame_key}"] = amplitude                
                                 
@@ -568,102 +615,130 @@ def Segment():
                                         nested_dict["Decay time"].append(signal_decay)
                                         nested_dict["Duration"].append(signal_duration)
                                         nested_dict["Amplitude"].append(amplitude_each)
+                                
+                                
+                                st.subheader("Data for intensity of selected label")
+                                st.write(plot_df)
+    
+                                unsmoothed_figure =  px.line(
+                                                    plot_df,
+                                                    x="Frame",
+                                                    y="Mean Intensity"
+                                                    #color="sepal_length",
+                                                    #color=plot_df['Mean Intensity'],
+                                                )
+                                unsmoothed_figure.add_shape(type='line',
+                                                    x0=0,
+                                                    y0=unsmooth_baseline_mean_sd,
+                                                    x1=raw_image_ani.shape[0],
+                                                    y1=unsmooth_baseline_mean_sd,
+                                                    line=dict(color='Green',),
+                                                    xref='x',
+                                                    yref='y')    
+                                                            
+                                smoothed_figure =  px.line(
+                                                    plot_df,
+                                                    x="Frame",
+                                                    y='Smoothed Mean Intensity'
+                                                    #color="sepal_length",
+                                                    #color=plot_df['Mean Intensity'],
+                                                )
+                                smoothed_figure.add_shape(type='line',
+                                                    x0=0,
+                                                    y0=baseline_each,
+                                                    x1=raw_image_ani.shape[0],
+                                                    y1=baseline_each,
+                                                    line=dict(color='Red',),
+                                                    xref='x',
+                                                    yref='y')                            
                             
-                            nested_dict = (pd.DataFrame.from_dict(nested_dict)) 
-                            st.subheader("Parameters for individual selected labels across all frames")
-                            st.write(nested_dict)
-                            individual_csv = convert_df(nested_dict)           
-                            st.download_button("Press to Download", individual_csv, 'individual_para_data.csv', "text/csv", key='individual_download-csv')
-                            average_rise_time = nested_dict['Rise time'].mean()
-                            st.write(f"The average rise time based on the selected labels across all frames is {average_rise_time}")
-                            average_decay_time = nested_dict['Decay time'].mean()
-                            st.write(f"The average decay time based on the selected labels across all frames is {average_decay_time}")
-                            average_duration = nested_dict['Duration'].mean()
-                            st.write(f"The average duration based on the selected labels across all frames is {average_duration}")
-                            average_amplitude = nested_dict['Amplitude'].mean()
-                            st.write(f"The average amplitude based on the selected labels across all frames is {average_amplitude}")
-                            st.subheader("Distribution plots based on the selected labels")
-                            sns.displot(data = nested_dict, x="Rise time",kind='hist')
-                            st.pyplot(plt.gcf())
-                            sns.displot(data = nested_dict, x="Decay time",kind='hist')
-                            st.pyplot(plt.gcf())
-                            sns.displot(data = nested_dict, x="Duration",kind='hist')
-                            st.pyplot(plt.gcf())
-                            sns.displot(data = nested_dict, x="Amplitude",kind='hist')
-                            st.pyplot(plt.gcf())
-                            
-                            plot_df = intensity(df_selected, raw_image_ani)                                                      
-                            smoothed_plot_df = plot_df['Smoothed Mean Intensity']                           
-                            missing_values = pd.isna(plot_df["Smoothed Mean Intensity"])
-                            plot_df.loc[missing_values, "Smoothed Mean Intensity"] = plot_df.loc[missing_values, "Mean Intensity"]  
-                            smooth_mode = stat.mode(smoothed_plot_df)
-                            sd_smooth = plot_df['Smoothed Mean Intensity'].std()
-                            smooth_baseline_mean_sd = smooth_mode + sd_smooth
-                            plot_df['delta_f/f_0'] = (plot_df['Smoothed Mean Intensity'] - smooth_baseline_mean_sd)/smooth_baseline_mean_sd
-                            st.subheader("Data for mean intensity trace")
-                            st.write(plot_df)
-                                                        
-                            smoothed_figure =  px.line(
-                                                plot_df,
-                                                x="Frame",
-                                                y="Smoothed Mean Intensity"
-                                                #color="sepal_length",
-                                                #color=plot_df['Mean Intensity'],
-                                            )
-                            smoothed_figure.add_shape(type='line',
-                                                x0=0,
-                                                y0=smooth_baseline_mean_sd,
-                                                x1=raw_image_ani.shape[0],
-                                                y1=smooth_baseline_mean_sd,
-                                                line=dict(color='Red',),
-                                                xref='x',
-                                                yref='y')                            
-                            
-                            figure_2 =  px.line(
-                                                plot_df,
-                                                x="Frame",
-                                                y="delta_f/f_0"
-                                                #color="sepal_length",
-                                                #color=plot_df['Mean Intensity'],
-                                            )
-                            
-                            csv = convert_df(plot_df)           
-                            st.download_button("Press to Download", csv, 'intensity_data.csv', "text/csv", key='download-csv')
-                            #st.plotly_chart(figure, theme="streamlit", use_container_width=True)
-                            #st.plotly_chart(figure_2, theme="streamlit", use_container_width=True)
-                            st.plotly_chart(smoothed_figure, theme="streamlit", use_container_width=True)     
-                            st.plotly_chart(figure_2, theme="streamlit", use_container_width=True)
-                            
+
+                        
+                                csv = convert_df(plot_df)           
+                                st.download_button("Press to Download", csv, 'intensity_data.csv', "text/csv", key='download-csv')
+                                #st.plotly_chart(figure, theme="streamlit", use_container_width=True)
+                                #st.plotly_chart(figure_2, theme="streamlit", use_container_width=True)
+                                st.plotly_chart(smoothed_figure, theme="streamlit", use_container_width=True)     
+                                st.plotly_chart(unsmoothed_figure, theme="streamlit", use_container_width=True)                           
+     
+                                nested_dict = (pd.DataFrame.from_dict(nested_dict)) 
+                                st.subheader("Parameters for selected label across all frames")
+                                st.write(nested_dict)
+                                individual_csv = convert_df(nested_dict)           
+                                st.download_button("Press to Download", individual_csv, 'individual_para_data.csv', "text/csv", key='individual_download-csv')
+                                average_rise_time = np.round(nested_dict['Rise time'].mean(),4)
+                                st.write(f"The average rise time based on the selected labels across all frames is {average_rise_time}")
+                                average_decay_time = np.round(nested_dict['Decay time'].mean(),4)
+                                st.write(f"The average decay time based on the selected labels across all frames is {average_decay_time}")
+                                average_duration = np.round(nested_dict['Duration'].mean(),4)
+                                st.write(f"The average duration based on the selected labels across all frames is {average_duration}")
+                                average_amplitude = np.round(nested_dict['Amplitude'].mean(),4)
+                                st.write(f"The average amplitude based on the selected labels across all frames is {average_amplitude}")
+                                st.subheader("Distribution plots based on selected label")
+                                sns.displot(data = nested_dict, x="Rise time",kind='hist')
+                                st.pyplot(plt.gcf())
+                                sns.displot(data = nested_dict, x="Decay time",kind='hist')
+                                st.pyplot(plt.gcf())
+                                sns.displot(data = nested_dict, x="Duration",kind='hist')
+                                st.pyplot(plt.gcf())
+                                sns.displot(data = nested_dict, x="Amplitude",kind='hist')
+                                st.pyplot(plt.gcf())
+                       
+####################################  Parameter calcualtion for all the detected cells  ###############################################################################
+                       
+                        new_df_pro_transposed_smooth = df_pro.transpose()
+                        new_df_pro_transposed_smooth.columns = new_df_pro_transposed_smooth.iloc[0]
+                        new_df_pro_transposed_smooth.drop(new_df_pro_transposed_smooth.index[0], inplace=True)  
+                        #st.write(new_df_pro_transposed_smooth)      
+                        for i in df_pro['label']: 
+                            df_pro_transposed_smooth = pd.DataFrame(smooth_plot(new_df_pro_transposed_smooth[i]),columns = [f'smooth cell {i}'])
+                            new_df_pro_transposed_smooth = pd.concat([new_df_pro_transposed_smooth.reset_index(drop=True), (np.round(df_pro_transposed_smooth[f'smooth cell {i}'],3)).reset_index(drop=True)],axis=1)
+                            new_df_missing_values = pd.isna(new_df_pro_transposed_smooth[f"smooth cell {i}"])
+                            new_df_pro_transposed_smooth.loc[new_df_missing_values, f'smooth cell {i}'] = new_df_pro_transposed_smooth.loc[new_df_missing_values, i]                               
+                            #st.write(new_df_pro_transposed)
+                        new_df_pro_transposed_smooth['Frame'] = pd.DataFrame(list(range(0, df_pro.shape[1])))
+                        
+                        #get_data_indi = convert_df(new_df_pro_transposed_smooth)
+                        #st.download_button("Press to Download", get_data_indi, 'indi_intensity_data.csv', "text/csv", key='indi_download-get_data')
+                        nested_dict_pro = {'Label':[], "Number of Events":[], "Rise time":[], "Decay time":[], "Duration":[], "Amplitude":[]}
+                        for i in df_pro['label']:
+                            new_df_pro_transposed_smooth_mode = new_df_pro_transposed_smooth.mode()[f"smooth cell {i}"].min() #stat.mode(new_df_pro_transposed_smooth[f"smooth cell {i}"])
+                            new_df_pro_transposed_smooth_sd = new_df_pro_transposed_smooth[f"smooth cell {i}"].std()
+                            baseline_each = new_df_pro_transposed_smooth_mode + new_df_pro_transposed_smooth_sd
                             keyval = {}
                             amp_keyval = {}
                             prev_intensity = 0
-                            for frame_key, intensity_val in enumerate(plot_df['Smoothed Mean Intensity']):
-                                if prev_intensity == 0 and intensity_val > smooth_baseline_mean_sd:
+                            flag = 1
+                            for frame_key, intensity_val in enumerate(new_df_pro_transposed_smooth[f'smooth cell {i}']):
+                                if prev_intensity == 0 and intensity_val > baseline_each:
                                     continue
-                                elif intensity_val >= smooth_baseline_mean_sd:
+                                elif intensity_val >= baseline_each:
                                     keyval[frame_key] = intensity_val
                                     break
                                 else:
-                                    if frame_key==len(plot_df.index)-1:
-                                        raise ValueError("Error: The trace doesn't cross the baseline. No amplitude, rise time, decay time and duration can be found")
+                                    if frame_key==len(new_df_pro_transposed_smooth.index)-1:
+                                        flag = 0
                                     else:
                                         prev_intensity = intensity_val
                                         continue
+                            if flag==0:
+                                prev_intensity = 0
+                                continue
                             
                             first_key = frame_key
                             first_intensity = keyval[frame_key]
                             
                             prev_intensity = keyval[frame_key]
-                            for frame_key_2, intensity_val_2 in enumerate(plot_df['Smoothed Mean Intensity']):                               
+                            for frame_key_2, intensity_val_2 in enumerate(new_df_pro_transposed_smooth[f'smooth cell {i}']):                               
                                 if frame_key_2 <= frame_key:
                                     continue
                                 elif frame_key_2 > frame_key:
                                     if intensity_val_2 >= prev_intensity:
-                                        if intensity_val_2 < smooth_baseline_mean_sd:
+                                        if intensity_val_2 < baseline_each:
                                             frame_key = frame_key_2
                                             continue
-                                        elif intensity_val_2 >= smooth_baseline_mean_sd:
-                                            if prev_intensity < smooth_baseline_mean_sd:
+                                        elif intensity_val_2 >= baseline_each:
+                                            if prev_intensity < baseline_each:
                                                 first_key = frame_key_2
                                                 first_intensity = intensity_val_2
                                                 keyval[first_key] = first_intensity
@@ -673,29 +748,31 @@ def Segment():
                                                 frame_key = frame_key_2
                                                 prev_intensity = intensity_val_2
                                             
-
+    
                                     elif intensity_val_2 < prev_intensity:
-                                        if intensity_val_2 > smooth_baseline_mean_sd:
+                                        if intensity_val_2 > baseline_each:
                                             frame_key = frame_key_2                                         
-                                        elif intensity_val_2 <= smooth_baseline_mean_sd:
-                                            if prev_intensity <= smooth_baseline_mean_sd:
+                                        elif intensity_val_2 <= baseline_each:
+                                            if prev_intensity <= baseline_each:
                                                 frame_key = frame_key_2
                                                 continue
                                             else:
                                                 keyval[frame_key_2] = intensity_val_2
                                                 frame_key = frame_key_2
                                                 #start_key = plot_df.query(f'"Smoothed Mean Intensity" == {prev_intensity}')['Frame']
-                                                amp_key = str(plot_df[plot_df["Smoothed Mean Intensity"]==prev_intensity]['Frame'].iloc[0])
-                                                amplitude = prev_intensity - smooth_baseline_mean_sd
+                                                amp_key_vals = new_df_pro_transposed_smooth[new_df_pro_transposed_smooth[f'smooth cell {i}']==prev_intensity]['Frame']
+                                                amp_key_vals = amp_key_vals[amp_key_vals>=first_key].iloc[0]
+                                                amp_key = str(amp_key_vals)
+                                                #amp_key = str(new_df_pro_transposed_smooth[new_df_pro_transposed_smooth[f'smooth cell {i}']==prev_intensity]['Frame'].iloc[0])
+                                                amplitude = prev_intensity - baseline_each
                                                 keyval[amp_key] = prev_intensity
                                                 prev_intensity = intensity_val_2
-                                                if (first_key == int(amp_key)) or (int(amp_key) == frame_key): 
-                                                    continue
+                                                if (first_key == int(amp_key)): #or (int(amp_key) == frame_key): 
+                                                    first_key = int(amp_key)-1
+                                                    amp_keyval[f"{first_key}-{amp_key}-{frame_key}"] = amplitude
                                                 else:
                                                     amp_keyval[f"{first_key}-{amp_key}-{frame_key}"] = amplitude                
-                            
-                            #st.write(keyval)        
-                            st.write(amp_keyval)
+ 
                             count_items = 0
                             for item in amp_keyval.items():
                                 #st.write(item[0].split('-')) 
@@ -707,11 +784,42 @@ def Segment():
                                     #st.write(f"The peak frame is {int(peak_frame)}")
                                     signal_decay_frame = item[0].split('-')[2]
                                     #st.write(f"The signal decay frame is {int(signal_decay_frame)}")
-                                    st.subheader(f"Parameters for peak number {count_items}")
-                                    st.write(f"The amplitude for peak number {count_items} is {item[1]}")
-                                    st.write(f"The signal rise time for peak number {count_items} is {int(peak_frame)-int(signal_start_frame)}")
-                                    st.write(f"The signal decay time for peak number {count_items} is {int(signal_decay_frame)-int(peak_frame)}")
-                                    st.write(f"The signal duration for peak number {count_items} is {int(signal_decay_frame)-int(signal_start_frame)}")                 
+                                    event_num = count_items
+                                    amplitude_each = item[1]
+                                    signal_rise = int(peak_frame)-int(signal_start_frame)
+                                    signal_decay = int(signal_decay_frame)-int(peak_frame)
+                                    signal_duration = int(signal_decay_frame)-int(signal_start_frame)
+                                    nested_dict_pro["Label"].append(i)
+                                    nested_dict_pro["Number of Events"].append(event_num)
+                                    nested_dict_pro["Rise time"].append(signal_rise)
+                                    nested_dict_pro["Decay time"].append(signal_decay)
+                                    nested_dict_pro["Duration"].append(signal_duration)
+                                    nested_dict_pro["Amplitude"].append(amplitude_each)
+                                    
+
+                        nested_dict_pro = (pd.DataFrame.from_dict(nested_dict_pro)) 
+                        st.subheader("Parameters for all detected labels")
+                        st.write(nested_dict_pro)  
+                        all_csv = convert_df(nested_dict_pro)           
+                        st.download_button("Press to Download", all_csv, 'all_data.csv', "text/csv", key='all_download-csv')
+                        average_rise_time = np.round(nested_dict_pro['Rise time'].mean(),4)
+                        st.write(f"The average rise time based on all detected labels across all frames is {average_rise_time}")
+                        average_decay_time = np.round(nested_dict_pro['Decay time'].mean(),4)
+                        st.write(f"The average decay time based on all detected labels across all frames is {average_decay_time}")
+                        average_duration = np.round(nested_dict_pro['Duration'].mean(),4)
+                        st.write(f"The average duration based on all detected labels across all frames is {average_duration}")
+                        average_amplitude = np.round(nested_dict_pro['Amplitude'].mean(),4)
+                        st.write(f"The average amplitude based on all detected labels across all frames is {average_amplitude}")
+                        st.subheader("Distribution plots based on all detected labels")
+                        sns.displot(data = nested_dict_pro, x="Rise time")
+                        st.pyplot(plt.gcf())
+                        sns.displot(data = nested_dict_pro, x="Decay time")
+                        st.pyplot(plt.gcf())
+                        sns.displot(data = nested_dict_pro, x="Duration")
+                        st.pyplot(plt.gcf())
+                        sns.displot(data = nested_dict_pro, x="Amplitude")
+                        st.pyplot(plt.gcf())
+           
                                                                          
                            
 def convert_df(df):
