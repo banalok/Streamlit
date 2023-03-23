@@ -404,13 +404,13 @@ def Segment():
                         st.write(df_pro)
                         get_data_indi = convert_df(df_pro)
                         st.download_button("Press to Download", get_data_indi, 'label_intensity_data.csv', "text/csv", key='label_download-get_data')                      
-                        st.write('Click to see each object on the label image')
+                        st.write('Select a label to explore')
                         
                         gb = GridOptionsBuilder.from_dataframe(df_pro)                       
                         gb.configure_pagination(paginationAutoPageSize=True) #Add pagination
                         gb.configure_side_bar() #Add a sidebar
                         #gb.configure_selection('multiple', use_checkbox=True, groupSelectsChildren="Group checkbox select children") #Enable multi-row selection
-                        gb.configure_selection(selection_mode="single", use_checkbox=True, groupSelectsChildren="Group checkbox select children", pre_selected_rows=[]) #list(range(0, len(df_pro))))  #[str(st.session_state.selected_row)]
+                        gb.configure_selection(selection_mode="single", use_checkbox=True, groupSelectsChildren="Group checkbox select children", pre_selected_rows=[0]) #list(range(0, len(df_pro))))  #[str(st.session_state.selected_row)]
                                    
                         gridOptions = gb.build()
                         #gridOptions["columnDefs"][0]["checkboxSelection"]=True
