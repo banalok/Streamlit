@@ -338,7 +338,7 @@ def Segment():
                             pixel_counts.append(count)
                         pixel_var = f'pixel_count_{frame_col}'
                         df_pro[pixel_var] = pixel_counts    
-                    #st.write(pixel_counts)
+                    #st.write(df_pro["pixel_count_40"].dtype)
                     
                     for drop_frame in range(0, raw_image_ani.shape[0]):  
                        df_pro.drop([f'image_intensity_{drop_frame}'], axis=1, inplace=True) 
@@ -401,7 +401,8 @@ def Segment():
                         df_selected = df_selected.drop(columns = ['_selectedRowNodeInfo'])
 
                         nested_dict = {'Label':[], "Number of Events":[], "Rise time":[], "Decay time":[], "Duration":[], "Amplitude":[]}
-                        plot_df = intensity(df_selected, raw_image_ani)                                                      
+                        plot_df = intensity(df_selected, raw_image_ani)
+                        #st.write(plot_df)                                                      
                         #smoothed_plot_df = plot_df['Smoothed Mean Intensity']                           
                         missing_values = pd.isna(plot_df["Smoothed Mean Intensity"])
                         plot_df.loc[missing_values, "Smoothed Mean Intensity"] = plot_df.loc[missing_values, "Mean Intensity"]  
@@ -474,7 +475,14 @@ def Segment():
                                                 y1=baseline_each,
                                                 line=dict(color='Red',),
                                                 xref='x',
-                                                yref='y')                            
+                                                yref='y') 
+                            unsmoothed_area_figure =  px.line(
+                                                plot_df,
+                                                x="Frame",
+                                                y="Bright Pixel Area"
+                                                #color="sepal_length",
+                                                #color=plot_df['Mean Intensity'],
+                                            )
                         
 
                     
@@ -483,7 +491,8 @@ def Segment():
                             #st.plotly_chart(figure, theme="streamlit", use_container_width=True)
                             #st.plotly_chart(figure_2, theme="streamlit", use_container_width=True)
                             st.plotly_chart(smoothed_figure, theme="streamlit", use_container_width=True)     
-                            st.plotly_chart(unsmoothed_figure, theme="streamlit", use_container_width=True)      
+                            st.plotly_chart(unsmoothed_figure, theme="streamlit", use_container_width=True)
+                            st.plotly_chart(unsmoothed_area_figure, theme="streamlit", use_container_width=True)  
                         else:
                             first_key = frame_key
                             first_intensity = keyval[frame_key]
@@ -592,16 +601,22 @@ def Segment():
                                                 line=dict(color='Red',),
                                                 xref='x',
                                                 yref='y')                            
-                        
+                            unsmoothed_area_figure =  px.line(
+                                                plot_df,
+                                                x="Frame",
+                                                y="Bright Pixel Area"
+                                                #color="sepal_length",
+                                                #color=plot_df['Mean Intensity'],
+                                            )
 
-                    
+                            
                             csv = convert_df(plot_df)           
                             st.download_button("Press to Download", csv, 'intensity_data.csv', "text/csv", key='download-csv')
                             #st.plotly_chart(figure, theme="streamlit", use_container_width=True)
                             #st.plotly_chart(figure_2, theme="streamlit", use_container_width=True)
                             st.plotly_chart(smoothed_figure, theme="streamlit", use_container_width=True)     
                             st.plotly_chart(unsmoothed_figure, theme="streamlit", use_container_width=True)                           
- 
+                            st.plotly_chart(unsmoothed_area_figure, theme="streamlit", use_container_width=True) 
                             nested_dict = (pd.DataFrame.from_dict(nested_dict)) 
                             if nested_dict.empty:
                                 st.write("No parameter information for the selected label can be found based on the trace")
@@ -632,7 +647,8 @@ def Segment():
                    
 ####################################  Parameter calcualtion for all the detected cells  ###############################################################################
                    
-                    new_df_pro_transposed_smooth = df_pro.transpose()
+                    df_pro_pixel_remove = df_pro.drop(columns=df_pro.filter(regex='^pixel_count').columns)
+                    new_df_pro_transposed_smooth = df_pro_pixel_remove.transpose()
                     new_df_pro_transposed_smooth.columns = new_df_pro_transposed_smooth.iloc[0]
                     new_df_pro_transposed_smooth.drop(new_df_pro_transposed_smooth.index[0], inplace=True)  
                     #st.write(new_df_pro_transposed_smooth)      
@@ -643,7 +659,7 @@ def Segment():
                         new_df_pro_transposed_smooth.loc[new_df_missing_values, f'smooth cell {i}'] = new_df_pro_transposed_smooth.loc[new_df_missing_values, i]                               
                         #st.write(new_df_pro_transposed)
                     new_df_pro_transposed_smooth['Frame'] = pd.DataFrame(list(range(0, df_pro.shape[1])))
-                    
+                    #st.write(new_df_pro_transposed_smooth)
                     #get_data_indi = convert_df(new_df_pro_transposed_smooth)
                     #st.download_button("Press to Download", get_data_indi, 'indi_intensity_data.csv', "text/csv", key='indi_download-get_data')
                     nested_dict_pro = {'Label':[], "Number of Events":[], "Rise time":[], "Decay time":[], "Duration":[], "Amplitude":[]}
@@ -818,10 +834,12 @@ def intensity(df_1, multi_tif_img):
     img_frames_list = list(range(0,multi_tif_img.shape[0]))
     img_frames = pd.DataFrame(img_frames_list, columns = ['Frame'])
     mean_intensity = []
+    p_count = []
     #change_in_F = []
     for frames_pro in range(0,multi_tif_img.shape[0]):
             #new_df = pd.DataFrame(frames_pro, df_pro[f'intensity_mean_{frames_pro}'].mean(),  columns = ['Frames', 'Mean Intensity'])
         mean_intensity.append(df_1[f'intensity_mean_{frames_pro}'].mean())
+        p_count.append(df_1[f'pixel_count_{frames_pro}'].mean())
             # new_df = pd.DataFrame.from_dict({'Frame': frames_pro, 'Mean Intensity': df_pro[f'intensity_mean_{frames_pro}'].mean()})
             # img_frames = pd.merge(img_frames, new_df, on = "Frame")
         #st.write(np.array(mean_intensity).max())
@@ -831,9 +849,10 @@ def intensity(df_1, multi_tif_img):
     #change_F_df = pd.DataFrame(change_in_F, columns = ['delta_F/F'])
     smooth_F_df = pd.DataFrame(smooth_plot(mean_intensity), columns = ['Smoothed Mean Intensity'] ) #pd.DataFrame(smooth_df, columns = ['smoothed mean intensity'])
     mean_inten_df = pd.DataFrame(mean_intensity)
-    new_d = pd.concat([img_frames, mean_inten_df, smooth_F_df],axis=1)
+    pixel_count_df = pd.DataFrame(p_count, columns = ['Bright Pixel Area'])
+    new_d = pd.concat([img_frames, mean_inten_df, smooth_F_df, pixel_count_df],axis=1)
     new_d.rename(columns = {0 : 'Mean Intensity'}, inplace=True)
-    #new_d.rename(columns = {1 : 'delta_F/F'}, inplace=True)
+    #new_d.rename(columns = {1 : 'Bright Pixel Number'}, inplace=True)
     return new_d 
 
 def fluo_change(intensity_mean, baseline):
