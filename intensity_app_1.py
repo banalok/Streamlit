@@ -313,7 +313,16 @@ def Segment():
                     for frames_pro in range(0,raw_image_ani.shape[0]):
                         props_pro = measure.regionprops_table(final_label, intensity_image=raw_image_ani[frames_pro][:,:,0],   #markers
                                                               properties=['label','intensity_mean','image_intensity'])
-                        col_arr.append(props_pro['image_intensity'])
+                        col = []
+                        label_array = props_pro['label']
+                        intensity_im = props_pro['image_intensity']
+                        #col_arr.append(intensity_im)                        
+                        for lab in label_array:                          
+                            mask_label = label_array == lab
+                            intensity_values = intensity_im[mask_label]
+                            col.append(intensity_values)
+                        col_arr.append((np.array(col)).ravel())                        
+                        
                         df_single = pd.DataFrame(props_pro)
                         #df_single['area'] = df_single[df_single['area']>df_single['intensity_mean'].mean()]['area']
                         df_single['intensity_mean'] = np.round(df_single['intensity_mean'],3)
@@ -334,7 +343,7 @@ def Segment():
                         pixel_counts = []
                         for label_val in df_pro['label']:
                             intensity_image = col_arr[frame_col][label_val-1]
-                            count = np.sum(np.greater(intensity_image, 0.1*np.amax(raw_image_ani[frame_col]))) #df_pro[f'intensity_mean_{frames_pro}'].mean()))
+                            count = np.sum(np.greater(intensity_image,0.5*np.amax(raw_image_ani[frame_col]))) #df_pro[f'intensity_mean_{frames_pro}'].mean()))
                             pixel_counts.append(count)
                         pixel_var = f'pixel_count_{frame_col}'
                         df_pro[pixel_var] = pixel_counts    
