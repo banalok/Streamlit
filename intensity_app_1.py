@@ -310,9 +310,10 @@ def Segment():
                     
                     df_pro = pd.DataFrame(data, columns=['label'])
                     col_arr = []
+                    
                     for frames_pro in range(0,raw_image_ani.shape[0]):
                         props_pro = measure.regionprops_table(final_label, intensity_image=raw_image_ani[frames_pro][:,:,0],   #markers
-                                                              properties=['label','intensity_mean','image_intensity'])
+                                                              properties=['label','intensity_mean','image_intensity','area'])
                         col = []
                         label_array = props_pro['label']
                         intensity_im = props_pro['image_intensity']
@@ -321,35 +322,48 @@ def Segment():
                             mask_label = label_array == lab
                             intensity_values = intensity_im[mask_label]
                             col.append(intensity_values)
-                        col_arr.append((np.array(col)).ravel())                        
+                        col_arr.append((np.array(col)).ravel())
                         
                         df_single = pd.DataFrame(props_pro)
                         #df_single['area'] = df_single[df_single['area']>df_single['intensity_mean'].mean()]['area']
                         df_single['intensity_mean'] = np.round(df_single['intensity_mean'],3)
-                        #df_single.rename(columns = {'area' : f'area_{frames_pro}'}, inplace=True)
+                        df_single.rename(columns = {'area' : f'area_{frames_pro}'}, inplace=True)
                         df_single.rename(columns = {'intensity_mean' : f'intensity_mean_{frames_pro}'}, inplace=True)
                         df_single.rename(columns = {'image_intensity' : f'image_intensity_{frames_pro}'}, inplace=True)
                         #df_single.rename(columns = {'solidity' : f'solidity_{frames_pro}'}, inplace=True)
-                        df_pro = pd.merge(df_pro, df_single, on = 'label', how = 'outer')                                                
-                    #st.write(col_arr)
+                        df_pro = pd.merge(df_pro, df_single, on = 'label', how = 'outer')                                                 
+                    #st.write(col_arr[0].shape)
                     #df_pro.drop([0], inplace=True)
                     
+######## #################  ################# ###############Interactive table################################################################
+                    
                     #df_pro = df_pro.drop(df_pro[df_pro['label'] == 255].index)
-                        
-                       ###############Interactive table################################################################
-                    
-                    
                     for frame_col in range(0, raw_image_ani.shape[0]):
                         pixel_counts = []
                         for label_val in df_pro['label']:
                             intensity_image = col_arr[frame_col][label_val-1]
                             count = np.sum(np.greater(intensity_image, 0.1*np.amax(raw_image_ani[frame_col]))) #df_pro[f'intensity_mean_{frames_pro}'].mean()))
                             pixel_counts.append(count)
-                    
+                        #st.write(type(np.amax(raw_image_ani[frame_col])))
                         pixel_var = f'pixel_count_{frame_col}'
                         #df_pro[pixel_var] = pixel_counts
                         pixel_counts_df = pd.DataFrame(pixel_counts,columns = [pixel_var])
                         df_pro = pd.concat((df_pro, pixel_counts_df),axis=1)   
+                                         
+
+                    # pixels_to_add = []   
+                    # for frame_col in range(0, raw_image_ani.shape[0]):                                    
+                    #     pixel_var = f'pixel_count_{frame_col}'
+                    #     pixel_counts = []
+                    #     for label_val in df_pro['label']:
+                    #         #st.write("HERE")
+                    #         intensity_image = col_arr[frame_col][label_val-1]
+                    #         count = np.sum(np.greater(intensity_image, 0.5*np.amax(raw_image_ani))) #df_pro[f'intensity_mean_{frames_pro}'].mean()))
+                    #         pixel_counts.append(count)  
+                    #     pixels_to_add.append({pixel_var: pixel_counts})
+                        
+                    # df_pro = pd.concat([df_pro, pd.DataFrame(pixels_to_add)], axis=1)  
+                    #st.write(df_pro["pixel_count_40"].dtype)
                     
                     for drop_frame in range(0, raw_image_ani.shape[0]):  
                        df_pro.drop([f'image_intensity_{drop_frame}'], axis=1, inplace=True) 
@@ -659,6 +673,7 @@ def Segment():
 ####################################  Parameter calcualtion for all the detected cells  ###############################################################################
                    
                     df_pro_pixel_remove = df_pro.drop(columns=df_pro.filter(regex='^pixel_count').columns)
+                    df_pro_pixel_remove = df_pro_pixel_remove.drop(columns=df_pro.filter(regex='^area').columns)
                     new_df_pro_transposed_smooth = df_pro_pixel_remove.transpose()
                     new_df_pro_transposed_smooth.columns = new_df_pro_transposed_smooth.iloc[0]
                     new_df_pro_transposed_smooth.drop(new_df_pro_transposed_smooth.index[0], inplace=True)  
@@ -853,7 +868,7 @@ def intensity(df_1, multi_tif_img):
         p_count.append(df_1[f'pixel_count_{frames_pro}'][0])
             # new_df = pd.DataFrame.from_dict({'Frame': frames_pro, 'Mean Intensity': df_pro[f'intensity_mean_{frames_pro}'].mean()})
             # img_frames = pd.merge(img_frames, new_df, on = "Frame")
-        #st.write(np.array(mean_intensity).max())
+        #st.write(df_1[f'pixel_count_{frames_pro}'])
         #change_f = fluo_change(mean_intensity[frames_pro], baseline)
         #change_in_F.append(change_f)
         
