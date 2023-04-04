@@ -850,7 +850,7 @@ def intensity(df_1, multi_tif_img):
     for frames_pro in range(0,multi_tif_img.shape[0]):
             #new_df = pd.DataFrame(frames_pro, df_pro[f'intensity_mean_{frames_pro}'].mean(),  columns = ['Frames', 'Mean Intensity'])
         mean_intensity.append(df_1[f'intensity_mean_{frames_pro}'].mean())
-        p_count.append(df_1[f'pixel_count_{frames_pro}'].mean())
+        p_count.append(df_1[f'pixel_count_{frames_pro}'][0])
             # new_df = pd.DataFrame.from_dict({'Frame': frames_pro, 'Mean Intensity': df_pro[f'intensity_mean_{frames_pro}'].mean()})
             # img_frames = pd.merge(img_frames, new_df, on = "Frame")
         #st.write(np.array(mean_intensity).max())
