@@ -343,11 +343,13 @@ def Segment():
                         pixel_counts = []
                         for label_val in df_pro['label']:
                             intensity_image = col_arr[frame_col][label_val-1]
-                            count = np.sum(np.greater(intensity_image,0.5*np.amax(raw_image_ani[frame_col]))) #df_pro[f'intensity_mean_{frames_pro}'].mean()))
+                            count = np.sum(np.less(intensity_image, np.amax(raw_image_ani[frame_col]))) #df_pro[f'intensity_mean_{frames_pro}'].mean()))
                             pixel_counts.append(count)
+                    
                         pixel_var = f'pixel_count_{frame_col}'
-                        df_pro[pixel_var] = pixel_counts    
-                    #st.write(df_pro["pixel_count_40"].dtype)
+                        #df_pro[pixel_var] = pixel_counts
+                        pixel_counts_df = pd.DataFrame(pixel_counts,columns = [pixel_var])
+                        df_pro = pd.concat((df_pro, pixel_counts_df),axis=1)   
                     
                     for drop_frame in range(0, raw_image_ani.shape[0]):  
                        df_pro.drop([f'image_intensity_{drop_frame}'], axis=1, inplace=True) 
