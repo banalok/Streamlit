@@ -313,7 +313,7 @@ def Segment():
                     
                     for frames_pro in range(0,raw_image_ani.shape[0]):
                         props_pro = measure.regionprops_table(final_label, intensity_image=raw_image_ani[frames_pro][:,:,0],   #markers
-                                                              properties=['label','intensity_mean','image_intensity','area'])
+                                                              properties=['label','intensity_mean','image_intensity'])
                         col = []
                         label_array = props_pro['label']
                         intensity_im = props_pro['image_intensity']
@@ -327,7 +327,7 @@ def Segment():
                         df_single = pd.DataFrame(props_pro)
                         #df_single['area'] = df_single[df_single['area']>df_single['intensity_mean'].mean()]['area']
                         df_single['intensity_mean'] = np.round(df_single['intensity_mean'],3)
-                        df_single.rename(columns = {'area' : f'area_{frames_pro}'}, inplace=True)
+                        #df_single.rename(columns = {'area' : f'area_{frames_pro}'}, inplace=True)
                         df_single.rename(columns = {'intensity_mean' : f'intensity_mean_{frames_pro}'}, inplace=True)
                         df_single.rename(columns = {'image_intensity' : f'image_intensity_{frames_pro}'}, inplace=True)
                         #df_single.rename(columns = {'solidity' : f'solidity_{frames_pro}'}, inplace=True)
@@ -342,7 +342,7 @@ def Segment():
                         pixel_counts = []
                         for label_val in df_pro['label']:
                             intensity_image = col_arr[frame_col][label_val-1]
-                            count = np.sum(np.greater(intensity_image, np.amax(raw_image_ani[frame_col]))) #df_pro[f'intensity_mean_{frames_pro}'].mean()))
+                            count = np.sum(np.greater(intensity_image, 0.3*np.amax(raw_image_ani[frame_col]))) #df_pro[f'intensity_mean_{frames_pro}'].mean()))
                             pixel_counts.append(count)
                         #st.write(type(np.amax(raw_image_ani[frame_col])))
                         pixel_var = f'pixel_count_{frame_col}'
@@ -673,7 +673,7 @@ def Segment():
 ####################################  Parameter calcualtion for all the detected cells  ###############################################################################
                    
                     df_pro_pixel_remove = df_pro.drop(columns=df_pro.filter(regex='^pixel_count').columns)
-                    df_pro_pixel_remove = df_pro_pixel_remove.drop(columns=df_pro.filter(regex='^area').columns)
+                    #df_pro_pixel_remove = df_pro_pixel_remove.drop(columns=df_pro.filter(regex='^area').columns)
                     new_df_pro_transposed_smooth = df_pro_pixel_remove.transpose()
                     new_df_pro_transposed_smooth.columns = new_df_pro_transposed_smooth.iloc[0]
                     new_df_pro_transposed_smooth.drop(new_df_pro_transposed_smooth.index[0], inplace=True)  
