@@ -265,7 +265,7 @@ def Segment():
                 #p.write("Done!")  
                 props = measure.regionprops(label)   
                 diam = [props[obj_s]['equivalent_diameter_area'] for obj_s in range(0,len(props))]
-                labels_to_keep_len = len([prop['label'] for prop in props if prop['equivalent_diameter_area'] > 0.8*stat.mean(diam)])
+                labels_to_keep_len = len([prop['label'] for prop in props if prop['equivalent_diameter_area'] > 0.2*stat.mean(diam)])
                 labels_to_keep = list(range(1, labels_to_keep_len))
                 label_f = np.zeros_like(label, dtype= 'uint8')
                 for labels in labels_to_keep:
@@ -441,6 +441,8 @@ def Segment():
                         df_selected = df_selected.drop(columns = ['_selectedRowNodeInfo'])
 
                         nested_dict = {'Label':[], "Number of Events":[], "Rise time":[], "Decay time":[], "Duration":[], "Amplitude":[]}
+                        
+                        st.subheader("**_Data for intensity of selected label_**")                        
                         plot_df = intensity(df_selected, raw_image_ani)
                         #st.write(plot_df)                                                      
                         #smoothed_plot_df = plot_df['Smoothed Mean Intensity']                           
@@ -452,10 +454,10 @@ def Segment():
                         #st.write(smooth_mode)
                         #st.write(smooth_baseline_mean_sd)
                         plot_df["Smoothed Mean Intensity"] = np.round(plot_df["Smoothed Mean Intensity"],3)                            
-                        plot_df_smooth_mode =plot_df.mode()['Smoothed Mean Intensity'].min() #stat.mode(new_df_selected_transposed_smooth[f"smooth cell {i}"])
+                        plot_df_smooth_mode =stat.mode(plot_df['Smoothed Mean Intensity']) #stat.mode(new_df_selected_transposed_smooth[f"smooth cell {i}"])
                         plot_df_smooth_sd = plot_df['Smoothed Mean Intensity'].std()
-                        st.subheader("**_Data for intensity of selected label_**")
-                        baseline_smooth_x = st.slider("*_Choose 'n' in n(S.D.) for Smoothed Intensity trace_*", min_value = 0.0, max_value = 3.0, step = 0.1, format="%.1f", value = 1.0,help = "Slide to adjust the baseline on the traces below. Baselines are calculated as: **_mode + n(S.D.)_**",  key='smooth')
+                        
+                        baseline_smooth_x = st.slider("*_Choose 'n' in n(S.D.) for Smoothed Intensity trace_*", min_value = 0.0, max_value = 3.0, step = 0.1, format="%.1f", value = 1.0,help = "Slide to adjust the baseline on the traces below. Baselines are calculated as: **_mode + n(S.D.)._** Parameters are calculated on the basis of 'Smoothed Mean Intensity'",  key='smooth')
                         baseline_each = plot_df_smooth_mode + baseline_smooth_x*plot_df_smooth_sd   
                         plot_df['delta_f/f_0'] = (plot_df['Smoothed Mean Intensity'] - baseline_each)/baseline_each 
                         baseline_unsmooth_x = st.slider("*_Choose 'n' in n(S.D.) for Mean Intensity trace_*", min_value = 0.0, max_value = 3.0, step = 0.1, format="%.1f", value = 1.0, key='unsmooth')
@@ -953,7 +955,8 @@ def fluo_change(intensity_mean, baseline):
     return change_f
 
 def smooth_plot(unsmoothed_intensity):
-    smooth_df = (np.convolve(unsmoothed_intensity, np.ones((3)), mode = 'valid'))/3 #ndimage.median_filter(unsmoothed_intensity,7)
+    smooth_plot_x = st.slider("*_Moving Average Window_*", min_value=1, max_value=5, help = "Select to smooth the intensity trace. Moving average of 1 would mean the original 'Mean Intensity' trace below")
+    smooth_df = (np.convolve(unsmoothed_intensity, np.ones((smooth_plot_x)), mode = 'valid'))/smooth_plot_x #ndimage.median_filter(unsmoothed_intensity,7)
     return smooth_df
 
 @st.cache(allow_output_mutation=True, max_entries=1, show_spinner=False, ttl = 500)
