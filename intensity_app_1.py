@@ -350,7 +350,7 @@ def Segment():
                     #df_pro.drop([0], inplace=True)
                     
 ######## #################  ################# ###############Interactive table################################################################
-                    area_thres_x = st.slider("*_Choose the area threshold percentage_*", min_value=0.0, max_value=1.0, value=0.3, format="%0.1f", help = "Default is 0.3. Pixels below 30% of the maximum (255) are not counted to get the bright area of labels", key='area_thres')
+                    area_thres_x = st.slider("*_Choose the area threshold percentage_*", min_value=0.0, max_value=1.0, value=0.3, format="%0.1f", help = "Default is 0.3. Pixels below 30% of the maximum ({np.amax(raw_image_ani)}) are not counted to get the bright area of labels", key='area_thres')
                     #df_pro = df_pro.drop(df_pro[df_pro['label'] == 255].index)
                     for frame_col in range(0, raw_image_ani.shape[0]):
                         pixel_counts = []
