@@ -183,7 +183,7 @@ def Segment():
         ############use this script to load the image on the deployed app############################
         
         #st.image(raw_file,use_column_width=True,clamp = True) 
-        raw_name=cwd+st.session_state['raw_file'].name
+        #raw_name=cwd+st.session_state['raw_file'].name
         #st.write(raw_name)      #needs to be (none, none, 3)
         raw_image = load_image(file_bytes) #use this script to load the image on the deployed app
         #raw_image = load_image(raw_name)
