@@ -155,7 +155,7 @@ else:
     st.image(collapsed,use_column_width=True,clamp = True)
 
 if 'final_label_rgb_pg_2' not in st.session_state:
-    st.warning("Please generate the labeled image and the intensity table from the 'Preprocessing and Segmentation' page, and click on 'Multiple Intensity Traces' before proceeding")
+    st.warning("Please generate the labeled image and the intensity table from the 'Preprocessing and Segmentation' page, and click on 'Multi-cell Analysis' before proceeding")
 else:
     label = st.session_state['final_label_rgb_pg_2']
     st.write('*_Segmented and labeled image_*')

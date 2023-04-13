@@ -160,7 +160,7 @@ else:
     raw_img_ani_pg_2 = st.session_state['raw_img_ani_pg_2']
     
 if 'final_label_rgb_pg_2' not in st.session_state:
-    st.warning("Please generate the labeled image and the intensity table from the 'Preprocessing and Segmentation' page, and click on 'Single Intensity Traces' before proceeding")
+    st.warning("Please generate the labeled image and the intensity table from the 'Preprocessing and Segmentation' page, and click on 'Single-cell Analysis' before proceeding")
 else:
     label = st.session_state['final_label_rgb_pg_2']
     st.write('*_Segmented and labeled image_*')
