@@ -49,6 +49,13 @@ import subprocess
 if 'all_param_table' not in st.session_state:
     st.session_state.all_param_table = False
     
+if "button_clicked_sing_para" not in st.session_state:
+    st.session_state.button_clicked_sing_para = False
+    
+def callback_sing():
+    #Button was clicked
+    st.session_state.button_clicked_sing_para = True
+    
 def callback_all_param_table():
    st.session_state.all_param_table = True
     
@@ -295,7 +302,7 @@ else:
         nested_dict = {'Label':[], "Number of Events":[], "Rise time":[], "Decay time":[], "Duration":[], "Amplitude":[]}
         
         st.subheader("**_Data for intensity of selected label_**")  
-        smooth_plot_x = st.slider("*_Moving Average Window_*", min_value=1, max_value=5, help = "Select to smooth the intensity trace. Moving average of 1 would mean the original 'Mean Intensity' trace below")
+        smooth_plot_x = st.slider("*_Moving Average Window_*", min_value=1, max_value=5, help = "Adjust to smooth the mean intensity trace below. Moving average of 1 would mean the original 'Mean Intensity' trace")
         plot_df = intensity(df_selected, raw_img_ani_pg_2, smooth_plot_x)
         #st.write(plot_df)                                                      
         #smoothed_plot_df = plot_df['Smoothed Mean Intensity']                           
@@ -310,13 +317,13 @@ else:
         plot_df_smooth_mode =stat.mode(plot_df['Smoothed Mean Intensity']) #stat.mode(new_df_selected_transposed_smooth[f"smooth cell {i}"])
         plot_df_smooth_sd = plot_df['Smoothed Mean Intensity'].std()
         
-        baseline_smooth_x = st.slider("*_Choose 'n' in n(S.D.) for Smoothed Intensity trace_*", min_value = 0.0, max_value = 3.0, step = 0.1, format="%.1f", value = 1.0,help = "Slide to adjust the baseline on the traces below. Baselines are calculated as: **_mode + n(S.D.)._** Parameters are calculated on the basis of 'Smoothed Mean Intensity'",  key='smooth')
+        baseline_smooth_x = st.slider("*_Choose 'n' in n(S.D.) for Smoothed Intensity trace_*", min_value = 0.0, max_value = 3.0, step = 0.1, format="%.1f", value = 1.0,help = "Slide to adjust the baseline on the 'Smoothed Mean Intensity' trace below. Baseline is calculated as: **_mode + n(S.D.)._**",  key='smooth')
         baseline_each = plot_df_smooth_mode + baseline_smooth_x*plot_df_smooth_sd   
         plot_df['delta_f/f_0'] = (plot_df['Smoothed Mean Intensity'] - baseline_each)/baseline_each 
-        baseline_unsmooth_x = st.slider("*_Choose 'n' in n(S.D.) for Mean Intensity trace_*", min_value = 0.0, max_value = 3.0, step = 0.1, format="%.1f", value = 1.0, key='unsmooth')
-        unsmooth_mode = stat.mode(plot_df['Mean Intensity'])
-        sd_unsmooth = plot_df['Mean Intensity'].std()
-        unsmooth_baseline_mean_sd = unsmooth_mode + baseline_unsmooth_x*sd_unsmooth
+        #baseline_unsmooth_x = st.slider("*_Choose 'n' in n(S.D.) for Mean Intensity trace_*", min_value = 0.0, max_value = 3.0, step = 0.1, format="%.1f", value = 1.0, key='unsmooth')
+        #unsmooth_mode = stat.mode(plot_df['Mean Intensity'])
+        #sd_unsmooth = plot_df['Mean Intensity'].std()
+        #unsmooth_baseline_mean_sd = unsmooth_mode + baseline_unsmooth_x*sd_unsmooth
         # st.write(baseline_each)
         # st.write(plot_df_smooth_mode)
         # st.write(plot_df_smooth_sd)
@@ -350,14 +357,14 @@ else:
                                 #color="sepal_length",
                                 #color=plot_df['Mean Intensity'],
                             )
-            unsmoothed_figure.add_shape(type='line',
-                                x0=0,
-                                y0=unsmooth_baseline_mean_sd,
-                                x1=raw_img_ani_pg_2.shape[0],
-                                y1=unsmooth_baseline_mean_sd,
-                                line=dict(color='Green',),
-                                xref='x',
-                                yref='y')    
+            # unsmoothed_figure.add_shape(type='line',
+            #                     x0=0,
+            #                     y0=unsmooth_baseline_mean_sd,
+            #                     x1=raw_img_ani_pg_2.shape[0],
+            #                     y1=unsmooth_baseline_mean_sd,
+            #                     line=dict(color='Green',),
+            #                     xref='x',
+            #                     yref='y')    
                                         
             smoothed_figure =  px.line(
                                 plot_df,
@@ -388,21 +395,11 @@ else:
             st.download_button("Press to Download", csv, 'intensity_data.csv', "text/csv", key='download-csv')
             #st.plotly_chart(figure, theme="streamlit", use_container_width=True)
             #st.plotly_chart(figure_2, theme="streamlit", use_container_width=True)
-            col_13, col_14 = st.columns([3,1])
-            col_17, col_18 = st.columns([3,1])
-            col_19, col_20 = st.columns([3,1])
-            with col_13:
-                st.plotly_chart(smoothed_figure, theme="streamlit", use_container_width=True)
-            with col_14:
-                st.write(plot_df[['Frame', 'Smoothed Mean Intensity']])
-            with col_17:
-                st.plotly_chart(unsmoothed_figure, theme="streamlit", use_container_width=True)
-            with col_18:
-                st.write(plot_df[['Frame', 'Mean Intensity']],use_container_width=True)
-            with col_19:
-                st.plotly_chart(unsmoothed_area_figure, theme="streamlit", use_container_width=True)  
-            with col_20:
-                st.write(plot_df[['Frame', 'Bright Pixel Area']])
+            
+            st.plotly_chart(unsmoothed_figure, theme="streamlit", use_container_width=True)
+            st.plotly_chart(smoothed_figure, theme="streamlit", use_container_width=True)         
+            st.plotly_chart(unsmoothed_area_figure, theme="streamlit", use_container_width=True)  
+           
         else:
             first_key = frame_key
             first_intensity = keyval[frame_key]
@@ -487,14 +484,14 @@ else:
                                 #color="sepal_length",
                                 #color=plot_df['Mean Intensity'],
                             )
-            unsmoothed_figure.add_shape(type='line',
-                                x0=0,
-                                y0=unsmooth_baseline_mean_sd,
-                                x1=raw_img_ani_pg_2.shape[0],
-                                y1=unsmooth_baseline_mean_sd,
-                                line=dict(color='Green',),
-                                xref='x',
-                                yref='y')    
+            # unsmoothed_figure.add_shape(type='line',
+            #                     x0=0,
+            #                     y0=unsmooth_baseline_mean_sd,
+            #                     x1=raw_img_ani_pg_2.shape[0],
+            #                     y1=unsmooth_baseline_mean_sd,
+            #                     line=dict(color='Green',),
+            #                     xref='x',
+            #                     yref='y')    
                                         
             smoothed_figure =  px.line(
                                 plot_df,
@@ -524,22 +521,12 @@ else:
             st.download_button("Press to Download", csv, 'intensity_data.csv', "text/csv", key='download-csv')
             #st.plotly_chart(figure, theme="streamlit", use_container_width=True)
             #st.plotly_chart(figure_2, theme="streamlit", use_container_width=True)
-            col_15, col_16 = st.columns([3,1])
-            col_21, col_22 = st.columns([3,1])
-            col_23, col_24 = st.columns([3,1])                            
-            with col_15:
-                st.plotly_chart(smoothed_figure, theme="streamlit",use_container_width=True)
-            with col_16:
-                st.dataframe(plot_df[['Frame','Smoothed Mean Intensity']])                            
-            with col_21:
-                st.plotly_chart(unsmoothed_figure, theme="streamlit", use_container_width=True)
-            with col_22:
-                st.write(plot_df[['Frame','Mean Intensity']])
-            with col_23:
-                st.plotly_chart(unsmoothed_area_figure, theme="streamlit", use_container_width=True)  
-            with col_24:
-                st.write(plot_df[['Frame','Bright Pixel Area']])                               
+            st.plotly_chart(unsmoothed_figure, theme="streamlit", use_container_width=True)
+            st.plotly_chart(smoothed_figure, theme="streamlit", use_container_width=True)         
+            st.plotly_chart(unsmoothed_area_figure, theme="streamlit", use_container_width=True)                 
     
+    
+        if st.button("Obtain the parameters for selected label",on_click=callback_sing) or st.session_state.button_clicked_sing_para:
             nested_dict = (pd.DataFrame.from_dict(nested_dict)) 
             if nested_dict.empty:
                 st.write("No parameter information for the selected label can be found based on the trace")
@@ -574,8 +561,7 @@ else:
                     st.pyplot(plt.gcf())
                 with col_6:     
                     sns.displot(data = nested_dict, x="Amplitude",kind='hist')
-                    st.pyplot(plt.gcf())
-           
+                    st.pyplot(plt.gcf())           
                 st.warning('Navigating to another page from the sidebar will remove all selections from the current page')
        
     ####################################  Parameter calcualtion for all the detected cells  ###############################################################################
