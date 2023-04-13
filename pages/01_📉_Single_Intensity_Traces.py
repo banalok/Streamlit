@@ -579,6 +579,6 @@ else:
                
        
     ####################################  Parameter calcualtion for all the detected cells  ###############################################################################
-        if st.button("**_Go to Multiple Intensity Traces_**", help = 'Clicking on this switches to a new page and all selection in the current page will be lost'):
-            switch_page('📉 Multiple intensity traces')
+        # if st.button("**_Go to Multiple Intensity Traces_**", help = 'Clicking on this switches to a new page and all selection in the current page will be lost'):
+        #     switch_page('📉 Multiple intensity traces')
             

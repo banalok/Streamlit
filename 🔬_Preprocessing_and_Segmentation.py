@@ -352,13 +352,13 @@ def Segment():
                 st.session_state['final_label_rgb_pg_2'] = final_label_rgb
                         
                 
-                col_pg_1, col_pg_2, col_pg_3 = st.columns(3)
-                with col_pg_1:
-                    if st.button("**_Single Intensity Traces_**"):
-                        switch_page('Single intensity traces')
-                with col_pg_3:
-                    if st.button("**_Multiple Intensity Traces_**"):
-                        switch_page('📉 Multiple intensity traces')                                
+                # col_pg_1, col_pg_2, col_pg_3 = st.columns(3)
+                # with col_pg_1:
+                #     if st.button("**_Single Intensity Traces_**"):
+                #         switch_page('Single intensity traces')
+                # with col_pg_3:
+                #     if st.button("**_Multiple Intensity Traces_**"):
+                #         switch_page('📉 Multiple intensity traces')                                
                 
          
                                                                          
