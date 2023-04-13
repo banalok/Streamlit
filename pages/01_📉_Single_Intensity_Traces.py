@@ -576,7 +576,7 @@ else:
                     sns.displot(data = nested_dict, x="Amplitude",kind='hist')
                     st.pyplot(plt.gcf())
            
-               
+                st.warning('Navigating to another page from the sidebar will remove all selections from the current page')
        
     ####################################  Parameter calcualtion for all the detected cells  ###############################################################################
         # if st.button("**_Go to Multiple Intensity Traces_**", help = 'Clicking on this switches to a new page and all selection in the current page will be lost'):

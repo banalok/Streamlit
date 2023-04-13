@@ -466,6 +466,6 @@ else:
             with col_12:    
                 sns.displot(data = nested_dict_pro, x="Amplitude")
                 st.pyplot(plt.gcf())
-          
+            st.warning('Navigating to another page from the sidebar will remove all selections from the current page')
             # if st.button("**_Go to Single Intensity Traces_**", help = 'Clicking on this switches to a new page and all selection in the current page will be lost'):
             #     switch_page('Single_Intensity_Trace')  
