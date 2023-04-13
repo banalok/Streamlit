@@ -167,11 +167,12 @@ def Segment():
     if "raw_file" not in st.session_state:
         st.session_state.raw_file = st.file_uploader("*_Choose an image file_*")                
     else:
-        st.warning('Please reload the page to upload a new file')   
+        st.warning('Please reload the page to upload a new file')
+        st.image(st.session_state.raw_file)
         st.session_state.raw_file = st.session_state.raw_file
     #st.write(raw_file)
     if st.session_state.raw_file is not None:
-        st.write(st.session_state.raw_file)
+        #st.image(st.session_state.raw_file)
         #plt.save(raw_file, cwd)
         ######use this script to load the image on the deployed app############
         file_bytes = BytesIO(st.session_state['raw_file'].read())
