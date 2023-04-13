@@ -169,7 +169,7 @@ def Segment():
     else:
         st.warning('Please reload the page to upload a new file')
         st.image(st.session_state.raw_file)
-        st.session_state.raw_file = st.session_state.raw_file
+        #st.session_state.raw_file = st.session_state.raw_file
     #st.write(raw_file)
     if st.session_state.raw_file is not None:
         #st.image(st.session_state.raw_file)
