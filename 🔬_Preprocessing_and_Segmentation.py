@@ -103,21 +103,21 @@ def callback_table():
 def callback_all_param_table():
    st.session_state.all_param_table = True
     
-@st.cache(allow_output_mutation=True, max_entries=1, show_spinner=False, ttl = 2*60)
+@st.cache_resource(max_entries=1, show_spinner=False, ttl = 2*60)
 def load_model():
     model = StarDist2D.from_pretrained('2D_versatile_fluo')
     return model
 
-@st.cache(allow_output_mutation=True, max_entries=1, show_spinner=False, ttl = 2*60)
+@st.cache_data(max_entries=1, show_spinner=False, ttl = 2*60)
 def load_image(images):
      img = io.imread(images)
      # re, img = cv2.imreadmulti(images, flags=cv2.IMREAD_UNCHANGED)
      # img = np.array(img)
      return img
 
-@st.cache(allow_output_mutation=True, max_entries=1, show_spinner=False, ttl = 2*60)
-def stardist_seg(im,model):
-    img_labels, img_det = model.predict_instances(normalize(im))
+@st.cache_data(max_entries=1, show_spinner=False, ttl = 2*60)
+def stardist_seg(im,_model):
+    img_labels, img_det = _model.predict_instances(normalize(im))
     return img_labels
 
 # @st.cache(allow_output_mutation=True)
