@@ -178,7 +178,7 @@ def Segment():
         st.image(st.session_state.raw_file)
         #plt.save(raw_file, cwd)
         ######use this script to load the image on the deployed app############
-        file_bytes = BytesIO(st.session_state['raw_file'].read())
+        file_bytes = BytesIO(st.session_state.raw_file.read())
         #st.image(file_bytes,use_column_width=True,clamp = True) 
         ############use this script to load the image on the deployed app############################
         
@@ -194,7 +194,7 @@ def Segment():
            
         #st.write(raw_image.dtype)
         model = load_model()        
-        extension = st.session_state['raw_file'].name.split(".")[1]
+        extension = st.session_state.raw_file.name.split(".")[1]
         # if raw_file.name.split(".")[1] == 'tif':
         raw_image_ani = raw_image
         #st.write(raw_image_ani.shape)
