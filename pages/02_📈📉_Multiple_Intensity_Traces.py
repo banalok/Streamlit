@@ -467,5 +467,5 @@ else:
                 sns.displot(data = nested_dict_pro, x="Amplitude")
                 st.pyplot(plt.gcf())
           
-            if st.button("**_Go to Single Intensity Traces_**", help = 'Clicking on this switches to a new page and all selection in the current page will be lost'):
-                switch_page('Single_Intensity_Trace')  
+            # if st.button("**_Go to Single Intensity Traces_**", help = 'Clicking on this switches to a new page and all selection in the current page will be lost'):
+            #     switch_page('Single_Intensity_Trace')  
