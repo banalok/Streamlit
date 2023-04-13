@@ -169,9 +169,11 @@ def Segment():
     st.title('**_Segmentation of a tiff stack_**')
     
     if st.session_state.raw_file is not None:
-        st.warning('Please reload the page to upload a new file')        
+        st.warning('Please reload the page to upload a new file')  
+        file_bytes = BytesIO(st.session_state['raw_file'].read()).seek(0)
     else:
         st.session_state.raw_file = st.file_uploader("*_Choose an image file_*")
+        file_bytes = BytesIO(st.session_state['raw_file'].read())
     #st.write(raw_file)
     if st.session_state.raw_file is not None:
         
