@@ -58,7 +58,7 @@ import subprocess
 cwd=os.getcwd()+'/'
 
 
-    st.session_state.raw_file = None
+    
 
 # for keys, v in st.session_state.items():
 #     st.session_state[keys] = v
