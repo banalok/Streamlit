@@ -317,7 +317,7 @@ else:
         
         if st.button("Obtain the parameters for selected labels",on_click=callback_movav) or st.session_state.button_clicked_movav:
             
-            st.warning("The parameters for all labels are obtained using baseline calculated as: *_mode + n(S.D.) where n = 1_*, based on 'Smoothed Mean Intensity' with a moving average of window 3. To manually adjust the baseline and obtain the parameters for each label, go to 'Single Intensity Traces' page.")
+            st.warning("The parameters for all labels are obtained using baseline calculated as: *_mode + n(S.D.) where n = 1_*, based on 'Smoothed Mean Intensity' with a moving average of window 3. To manually adjust the baseline and obtain the parameters for each label, go to 'Single-cell Analysis' page.")
             df_pro_pixel_remove = df_selected_1.drop(columns=df_selected.filter(regex='^Bright_pixel_area_').columns)
             #df_pro_pixel_remove = df_pro_pixel_remove.drop(columns=df_pro.filter(regex='^area').columns)
             new_df_pro_transposed_smooth = df_pro_pixel_remove.transpose()
