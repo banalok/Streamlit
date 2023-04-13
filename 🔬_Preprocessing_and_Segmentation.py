@@ -168,7 +168,7 @@ def Segment():
         st.session_state.raw_file = st.file_uploader("*_Choose an image file_*") 
         st.image(st.session_state.raw_file)               
     else:
-        pass
+        st.write(st.session_state.raw_file)
         # st.warning('Please reload the page to upload a new file')
         # st.image(st.session_state.raw_file)
         #st.session_state.raw_file = st.session_state.raw_file
