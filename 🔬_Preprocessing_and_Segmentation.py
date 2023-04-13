@@ -57,8 +57,8 @@ import subprocess
 #get current directory
 cwd=os.getcwd()+'/'
 
-
-    
+if "raw_file" not in st.session_state:
+    st.session_state.raw_file = None
 
 # for keys, v in st.session_state.items():
 #     st.session_state[keys] = v
@@ -168,22 +168,21 @@ def main():
 def Segment():
     st.title('**_Segmentation of a tiff stack_**')
     
-    if "raw_file" not in st.session_state:
-        st.session_state.raw_file = st.file_uploader("*_Choose an image file_*")
-               
+    if st.session_state.raw_file is not None:
+        st.warning('Please reload the page to upload a new file')        
     else:
-        st.warning('Please reload the page to upload a new file') 
+        st.session_state.raw_file = st.file_uploader("*_Choose an image file_*")
     #st.write(raw_file)
     if st.session_state.raw_file is not None:
         
         #plt.save(raw_file, cwd)
         ######use this script to load the image on the deployed app############
-        file_bytes = BytesIO(st.session_state.raw_fileraw_file.read())
+        file_bytes = BytesIO(st.session_state.raw_file.read())
         #st.image(file_bytes,use_column_width=True,clamp = True) 
         ############use this script to load the image on the deployed app############################
         
         #st.image(raw_file,use_column_width=True,clamp = True) 
-        #raw_name=cwd+st.session_state['raw_file'].name
+        raw_name=cwd+st.session_state['raw_file'].name
         #st.write(raw_name)      #needs to be (none, none, 3)
         raw_image = load_image(file_bytes) #use this script to load the image on the deployed app
         #raw_image = load_image(raw_name)
