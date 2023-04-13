@@ -177,7 +177,7 @@ def Segment():
         
         #plt.save(raw_file, cwd)
         ######use this script to load the image on the deployed app############
-        file_bytes = BytesIO(st.session_state['raw_file'].read()).seek(0)
+        file_bytes = BytesIO(st.session_state['raw_file'].read())
         #st.image(file_bytes,use_column_width=True,clamp = True) 
         ############use this script to load the image on the deployed app############################
         
