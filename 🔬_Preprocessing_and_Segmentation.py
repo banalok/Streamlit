@@ -171,7 +171,7 @@ def Segment():
         st.session_state.raw_file = st.session_state.raw_file
     #st.write(raw_file)
     if st.session_state.raw_file is not None:
-        
+        st.write(st.session_state.raw_file)
         #plt.save(raw_file, cwd)
         ######use this script to load the image on the deployed app############
         file_bytes = BytesIO(st.session_state['raw_file'].read())
