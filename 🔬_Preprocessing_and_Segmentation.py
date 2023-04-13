@@ -57,6 +57,9 @@ import subprocess
 #get current directory
 cwd=os.getcwd()+'/'
 
+
+    st.session_state.raw_file = None
+
 # for keys, v in st.session_state.items():
 #     st.session_state[keys] = v
 if "multi" not in st.session_state:
@@ -105,7 +108,7 @@ def load_model():
     model = StarDist2D.from_pretrained('2D_versatile_fluo')
     return model
 
-#@st.cache(allow_output_mutation=True, max_entries=1, show_spinner=False, ttl = 2*60)
+@st.cache(allow_output_mutation=True, max_entries=1, show_spinner=False, ttl = 2*60)
 def load_image(images):
      img = io.imread(images)
      # re, img = cv2.imreadmulti(images, flags=cv2.IMREAD_UNCHANGED)
@@ -164,21 +167,18 @@ def main():
 
 def Segment():
     st.title('**_Segmentation of a tiff stack_**')
-    #if "raw_file" not in st.session_state:
-    raw_file = st.file_uploader("*_Choose an image file_*") 
-    #st.image(raw_file)
-    st.write(raw_file)               
-    #else:
-        #st.write(st.session_state.raw_file)
-        # st.warning('Please reload the page to upload a new file')
-        # st.image(st.session_state.raw_file)
-        #st.session_state.raw_file = st.session_state.raw_file
+    
+    if "raw_file" not in st.session_state:
+        st.session_state.raw_file = st.file_uploader("*_Choose an image file_*")
+               
+    else:
+        st.warning('Please reload the page to upload a new file') 
     #st.write(raw_file)
-    if raw_file is not None:
-        st.image(raw_file)
+    if st.session_state.raw_file is not None:
+        
         #plt.save(raw_file, cwd)
         ######use this script to load the image on the deployed app############
-        file_bytes = BytesIO(raw_file.read())
+        file_bytes = BytesIO(st.session_state.raw_fileraw_file.read())
         #st.image(file_bytes,use_column_width=True,clamp = True) 
         ############use this script to load the image on the deployed app############################
         
@@ -194,7 +194,7 @@ def Segment():
            
         #st.write(raw_image.dtype)
         model = load_model()        
-        extension = raw_file.name.split(".")[1]
+        extension = st.session_state['raw_file'].name.split(".")[1]
         # if raw_file.name.split(".")[1] == 'tif':
         raw_image_ani = raw_image
         #st.write(raw_image_ani.shape)
