@@ -168,12 +168,11 @@ def Segment():
         st.session_state.raw_file = st.file_uploader("*_Choose an image file_*") 
         #st.image(st.session_state.raw_file)               
     else:
-        st.write('Please reload the page to upload a new file')
-        #st.image(st.session_state.raw_file)
+        st.warning('Please reload the page to upload a new file')
+        st.image(st.session_state.raw_file)
         #st.session_state.raw_file = st.session_state.raw_file
     #st.write(raw_file)
     if st.session_state.raw_file is not None:
-        st.write('HEREEEEE')
         st.image(st.session_state.raw_file)
         #plt.save(raw_file, cwd)
         ######use this script to load the image on the deployed app############
