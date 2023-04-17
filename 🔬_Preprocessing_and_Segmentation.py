@@ -445,4 +445,5 @@ def smooth_plot(unsmoothed_intensity, window):
 
 
 if __name__ == "__main__":
+    st.set_page_config(page_title="Segmentation", page_icon=None, layout="centered", initial_sidebar_state="auto", menu_items=None)
     main()      
