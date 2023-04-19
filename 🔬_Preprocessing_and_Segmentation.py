@@ -347,7 +347,7 @@ def Segment():
                         cv2.putText(final_label_rgb, "{}".format(label), (int(x) - 10, int(y)),
                          	cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)
                 #with st.expander("*_Show the segmented and labeled image_*"):
-                st.write("*_Segmented and labeled image_*", help = 'The red circles just show the location of the labels and are not the actual segmented cells themselves')
+                st.markdown("*_Segmented and labeled image_*", help = 'The red circles just show the location of the segmented labels and are not the actual segmented labels themselves')
                 st.image(final_label_rgb,use_column_width=True,clamp = True)
                 st.session_state['final_label_rgb_pg_2'] = final_label_rgb
                         
