@@ -158,7 +158,7 @@ if 'final_label_rgb_pg_2' not in st.session_state:
     st.warning("Please generate the labeled image and the intensity table from the 'Preprocessing and Segmentation' page, and click on 'Multi-cell Analysis' before proceeding")
 else:
     label = st.session_state['final_label_rgb_pg_2']
-    st.write('*_Segmented and labeled image_*')
+    st.markdown("*_Segmented and labeled image_*", help = 'The red circles just show the location of the segmented labels and are not the actual segmented labels themselves')
     st.image(label,use_column_width=True,clamp = True)
     
 if 'final_label_pg_2' not in st.session_state:
