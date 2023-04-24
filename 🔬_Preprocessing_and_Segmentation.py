@@ -189,7 +189,7 @@ def Segment():
         raw_image = load_image(file_bytes) #use this script to load the image on the deployed app
         #raw_image = load_image(raw_name)
         #raw_image = io.imread(raw_name) 
-        st.write(raw_image.shape)
+        
         if (len(raw_image.shape) == 2) or (len(raw_image.shape) ==3 and raw_image.shape[-1]!=3) or (len(raw_image.shape) ==4 and raw_image.shape[-1]!=3):
             raw_image = cv2.cvtColor(img_as_ubyte(raw_image), cv2.COLOR_GRAY2RGB)
            
