@@ -110,7 +110,7 @@ def load_model():
 
 #@st.cache_data(max_entries=1, show_spinner=False, ttl = 2*60)
 def load_image(images):
-     img = io.imread(images)
+     img = io.imread(images, plugin='tifffile')
      # re, img = cv2.imreadmulti(images, flags=cv2.IMREAD_UNCHANGED)
      # img = np.array(img)
      return img
