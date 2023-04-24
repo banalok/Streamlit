@@ -43,7 +43,7 @@ from csbdeep.utils import normalize
 from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode
 import time
 import subprocess
-
+import imageio
 #st.set_page_config(initial_sidebar_state="collapsed")
 
 #hide_pages(['Multiple_Intensity_Traces'])
@@ -110,9 +110,10 @@ def load_model():
 
 #@st.cache_data(max_entries=1, show_spinner=False, ttl = 2*60)
 def load_image(images):
-     img = io.imread(images)
+     img = imageio.imread(images)
      # re, img = cv2.imreadmulti(images, flags=cv2.IMREAD_UNCHANGED)
      # img = np.array(img)
+     img = np.array(img)
      return img
 
 @st.cache_data(max_entries=1, show_spinner=False, ttl = 2*60)
@@ -179,7 +180,7 @@ def Segment():
         #plt.save(raw_file, cwd)
         ######use this script to load the image on the deployed app############
         file_bytes = BytesIO(st.session_state.raw_file.read())
-        st.write(type(file_bytes))
+        #st.write(type(file_bytes))
         #st.image(file_bytes,use_column_width=True,clamp = True) 
         ############use this script to load the image on the deployed app############################
         

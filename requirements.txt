@@ -1,5 +1,6 @@
 csbdeep==0.7.3
 ffmpeg-python
+imageio==2.19.3
 imutils==0.5.4
 keras==2.9.0
 Keras-Applications==1.0.8
