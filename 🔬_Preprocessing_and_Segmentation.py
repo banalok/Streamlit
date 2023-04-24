@@ -173,20 +173,20 @@ def Segment():
         st.image(st.session_state.raw_file,use_column_width=True,clamp = True)
     else:
         st.session_state.raw_file = st.file_uploader("*_Choose an image file_*")
-        #st.image(st.session_state.raw_file,use_column_width=True,clamp = True)
+        st.image(st.session_state.raw_file,use_column_width=True,clamp = True)
     if st.session_state.raw_file is not None:
         
         #plt.save(raw_file, cwd)
         ######use this script to load the image on the deployed app############
         file_bytes = BytesIO(st.session_state.raw_file.read())
-        st.write(file_bytes)
+        #st.write(file_bytes)
         #st.image(file_bytes,use_column_width=True,clamp = True) 
         ############use this script to load the image on the deployed app############################
         
         #st.image(raw_file,use_column_width=True,clamp = True) 
         #raw_name=cwd+st.session_state['raw_file'].name
         #st.write(raw_name)      #needs to be (none, none, 3)
-        raw_image = load_image((BytesIO(file_bytes.read()))) #use this script to load the image on the deployed app
+        raw_image = load_image(file_bytes) #use this script to load the image on the deployed app
         #raw_image = load_image(raw_name)
         #raw_image = io.imread(raw_name) 
         #st.write(raw_image.shape)
