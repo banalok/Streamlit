@@ -170,7 +170,7 @@ if 'final_label_rgb_pg_2' not in st.session_state:
     st.warning("Please generate the labeled image and the intensity table from the 'Preprocessing and Segmentation' page, and click on 'Single-cell Analysis' before proceeding")
 else:
     label = st.session_state['final_label_rgb_pg_2']
-    st.markdown("*_Segmented and labeled image_*", help = 'The red circles just show the location of the segmented labels and are not the actual segmented labels themselves')
+    st.write('*_Segmented and labeled image_*')
     st.image(label,use_column_width=True,clamp = True)
     
 if 'final_label_pg_2' not in st.session_state:
@@ -314,11 +314,15 @@ else:
         #st.write(smooth_mode)
         #st.write(smooth_baseline_mean_sd)
         plot_df["Smoothed Mean Intensity"] = np.round(plot_df["Smoothed Mean Intensity"],3)                            
-        plot_df_smooth_mode =stat.mode(plot_df['Smoothed Mean Intensity']) #stat.mode(new_df_selected_transposed_smooth[f"smooth cell {i}"])
-        plot_df_smooth_sd = plot_df['Smoothed Mean Intensity'].std()
+        #plot_df_smooth_mode =stat.mode(plot_df['Smoothed Mean Intensity']) #stat.mode(new_df_selected_transposed_smooth[f"smooth cell {i}"])
+        #plot_df_smooth_sd = plot_df['Smoothed Mean Intensity'].std()
         
-        baseline_smooth_x = st.slider("*_Choose 'n' in n(S.D.) for Smoothed Intensity trace_*", min_value = 0.0, max_value = 3.0, step = 0.1, format="%.1f", value = 1.0,help = "Slide to adjust the baseline on the 'Smoothed Mean Intensity' trace below. Baseline is calculated as: **_mode + n(S.D.)._**",  key='smooth')
-        baseline_each = plot_df_smooth_mode + baseline_smooth_x*plot_df_smooth_sd   
+        baseline_smooth_x = st.slider("*_Choose frame number(s) to average their corresponding intensity values for baseline calculation_*", min_value = 0, max_value = raw_img_ani_pg_2.shape[0]-1, value = 10,  key='smooth')
+        #baseline_smooth_x = st.slider("*_Choose 'n' in n(S.D.) for Smoothed Intensity trace_*", min_value = 0.0, max_value = 3.0, step = 0.1, format="%.1f", value = 1.0,help = "Slide to adjust the baseline on the 'Smoothed Mean Intensity' trace below. Baseline is calculated as: **_mode + n(S.D.)._**",  key='smooth')
+        
+        baseline_each = plot_df.loc[(plot_df['Frame'] >= 0) & (plot_df['Frame'] <= baseline_smooth_x), 'Smoothed Mean Intensity'].mean()
+        #st.write(baseline_each)
+        #baseline_each = plot_df_smooth_mode + baseline_smooth_x*plot_df_smooth_sd   
         plot_df['delta_f/f_0'] = (plot_df['Smoothed Mean Intensity'] - baseline_each)/baseline_each 
         #baseline_unsmooth_x = st.slider("*_Choose 'n' in n(S.D.) for Mean Intensity trace_*", min_value = 0.0, max_value = 3.0, step = 0.1, format="%.1f", value = 1.0, key='unsmooth')
         #unsmooth_mode = stat.mode(plot_df['Mean Intensity'])
