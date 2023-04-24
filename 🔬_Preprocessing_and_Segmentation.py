@@ -170,7 +170,7 @@ def Segment():
     
     if st.session_state.raw_file is not None:
         st.warning('Please reload the page to upload a new file') 
-        #st.image(st.session_state.raw_file,use_column_width=True,clamp = True)
+        st.image(st.session_state.raw_file,use_column_width=True,clamp = True)
     else:
         st.session_state.raw_file = st.file_uploader("*_Choose an image file_*")
         #st.image(st.session_state.raw_file,use_column_width=True,clamp = True)
