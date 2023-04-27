@@ -191,7 +191,11 @@ def Segment():
         #raw_image = io.imread(raw_name) 
         
         if (len(raw_image.shape) == 2) or (len(raw_image.shape) ==3 and raw_image.shape[-1]!=3) or (len(raw_image.shape) ==4 and raw_image.shape[-1]!=3):
-            raw_image = cv2.cvtColor(img_as_ubyte(raw_image), cv2.COLOR_GRAY2RGB)
+            raw_image_1D = raw_image
+            raw_image = np.zeros((raw_image_1D.shape[0], raw_image_1D.shape[1], raw_image_1D.shape[2], 3), dtype=np.uint8)
+            # convert each 2D image from grayscale to RGB and stack them into the 4D array
+            for i in range(raw_image.shape[0]):
+                raw_image[i] = cv2.cvtColor(img_as_ubyte(raw_image_1D[i]), cv2.COLOR_GRAY2RGB)
            
         #st.write(raw_image.dtype)
         model = load_model()        
