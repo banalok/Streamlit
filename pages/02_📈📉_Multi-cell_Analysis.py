@@ -28,6 +28,7 @@ import pandas as pd
 #import scipy as sp
 #from scipy.signal import medfilt
 from scipy import ndimage
+from scipy.optimize import curve_fit
 from skimage import measure, color, io
 #from skimage.segmentation import clear_border
 #from skimage import segmentation
@@ -44,6 +45,7 @@ from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode
 import time
 import subprocess 
 
+st.warning('Navigating to another page from the sidebar will remove all selections from the current page')
 # for keys, v in st.session_state.items():
 #     st.session_state[keys] = v
 
@@ -128,6 +130,9 @@ def smooth_plot(unsmoothed_intensity):
     smooth_df = (np.convolve(unsmoothed_intensity, np.ones((3)), mode = 'valid'))/3 #ndimage.median_filter(unsmoothed_intensity,7)
     return smooth_df
 
+def mono_exp_decay(t, a, b):
+    return a * np.exp(-b * t)
+
 if "button_clicked_movav" not in st.session_state:
     st.session_state.button_clicked_movav = False
     
@@ -155,10 +160,10 @@ else:
     st.image(collapsed,use_column_width=True,clamp = True)
 
 if 'final_label_rgb_pg_2' not in st.session_state:
-    st.warning("Please generate the labeled image and the intensity table from the 'Preprocessing and Segmentation' page, and click on 'Multi-cell Analysis' before proceeding")
+    st.warning("Please generate the segmented and labeled image from the 'Preprocessing and Segmentation' page, and click on 'Single-cell Analysis' before proceeding")
 else:
     label = st.session_state['final_label_rgb_pg_2']
-    st.markdown("*_Segmented and labeled image_*", help = 'The red circles just show the location of the segmented labels and are not the actual segmented labels themselves')
+    st.write('*_Segmented and labeled image_*')
     st.image(label,use_column_width=True,clamp = True)
     
 if 'final_label_pg_2' not in st.session_state:

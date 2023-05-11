@@ -28,6 +28,8 @@ import pandas as pd
 #import scipy as sp
 #from scipy.signal import medfilt
 from scipy import ndimage
+from scipy.optimize import curve_fit
+from scipy import interpolate
 from skimage import measure, color, io
 #from skimage.segmentation import clear_border
 #from skimage import segmentation
@@ -44,6 +46,7 @@ from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode
 import time
 import subprocess 
 
+st.warning('Navigating to another page from the sidebar will remove all selections from the current page')
 # for keys, v in st.session_state.items():
 #     st.session_state[keys] = v
 if 'all_param_table' not in st.session_state:
@@ -140,6 +143,9 @@ def smooth_plot(unsmoothed_intensity, window):
     smooth_df = (np.convolve(unsmoothed_intensity, np.ones((window)), mode = 'valid'))/window #ndimage.median_filter(unsmoothed_intensity,7)
     return smooth_df
 
+def mono_exp_decay(t, a, b):
+    return a * np.exp(-b * t)
+
 if "button_clicked_movav" not in st.session_state:
     st.session_state.button_clicked_movav = False
     
@@ -167,7 +173,7 @@ else:
     raw_img_ani_pg_2 = st.session_state['raw_img_ani_pg_2']
     
 if 'final_label_rgb_pg_2' not in st.session_state:
-    st.warning("Please generate the labeled image and the intensity table from the 'Preprocessing and Segmentation' page, and click on 'Single-cell Analysis' before proceeding")
+    st.warning("Please generate the segmented and labeled image from the 'Preprocessing and Segmentation' page, and click on 'Single-cell Analysis' before proceeding")
 else:
     label = st.session_state['final_label_rgb_pg_2']
     st.write('*_Segmented and labeled image_*')
@@ -301,272 +307,698 @@ else:
     
         nested_dict = {'Label':[], "Number of Events":[], "Rise time":[], "Decay time":[], "Duration":[], "Amplitude":[]}
         
-        st.subheader("**_Data for intensity of selected label_**")  
-        smooth_plot_x = st.slider("*_Moving Average Window_*", min_value=1, max_value=5, help = "Adjust to smooth the mean intensity trace below. Moving average of 1 would mean the original 'Mean Intensity' trace")
-        plot_df = intensity(df_selected, raw_img_ani_pg_2, smooth_plot_x)
-        #st.write(plot_df)                                                      
-        #smoothed_plot_df = plot_df['Smoothed Mean Intensity']                           
-        missing_values = pd.isna(plot_df["Smoothed Mean Intensity"])
-        plot_df.loc[missing_values, "Smoothed Mean Intensity"] = plot_df.loc[missing_values, "Mean Intensity"]  
-        #smooth_mode = stat.mode(smoothed_plot_df)
-        #sd_smooth = plot_df['Smoothed Mean Intensity'].std()
-        #smooth_baseline_mean_sd = smooth_mode + sd_smooth
-        #st.write(smooth_mode)
-        #st.write(smooth_baseline_mean_sd)
-        plot_df["Smoothed Mean Intensity"] = np.round(plot_df["Smoothed Mean Intensity"],3)                            
-        #plot_df_smooth_mode =stat.mode(plot_df['Smoothed Mean Intensity']) #stat.mode(new_df_selected_transposed_smooth[f"smooth cell {i}"])
-        #plot_df_smooth_sd = plot_df['Smoothed Mean Intensity'].std()
+        bleach_corr_check = st.radio("Select one", ('No bleaching correction', 'Bleaching correction'), help='Analyze the trace as is (No bleaching correction) or fit mono-exponential curves and interpolate to correct for bleaching (Bleaching correction)')
+        if bleach_corr_check == 'No bleaching correction':
         
-        baseline_smooth_x = st.slider("*_Choose frame number(s) to average their corresponding intensity values for baseline calculation_*", min_value = 0, max_value = raw_img_ani_pg_2.shape[0]-1, value = 10,  key='smooth')
-        #baseline_smooth_x = st.slider("*_Choose 'n' in n(S.D.) for Smoothed Intensity trace_*", min_value = 0.0, max_value = 3.0, step = 0.1, format="%.1f", value = 1.0,help = "Slide to adjust the baseline on the 'Smoothed Mean Intensity' trace below. Baseline is calculated as: **_mode + n(S.D.)._**",  key='smooth')
-        
-        baseline_each = plot_df.loc[(plot_df['Frame'] >= 0) & (plot_df['Frame'] <= baseline_smooth_x), 'Smoothed Mean Intensity'].mean()
-        #st.write(baseline_each)
-        #baseline_each = plot_df_smooth_mode + baseline_smooth_x*plot_df_smooth_sd   
-        plot_df['delta_f/f_0'] = (plot_df['Smoothed Mean Intensity'] - baseline_each)/baseline_each 
-        #baseline_unsmooth_x = st.slider("*_Choose 'n' in n(S.D.) for Mean Intensity trace_*", min_value = 0.0, max_value = 3.0, step = 0.1, format="%.1f", value = 1.0, key='unsmooth')
-        #unsmooth_mode = stat.mode(plot_df['Mean Intensity'])
-        #sd_unsmooth = plot_df['Mean Intensity'].std()
-        #unsmooth_baseline_mean_sd = unsmooth_mode + baseline_unsmooth_x*sd_unsmooth
-        # st.write(baseline_each)
-        # st.write(plot_df_smooth_mode)
-        # st.write(plot_df_smooth_sd)
-        keyval = {}
-        amp_keyval = {}
-        prev_intensity = 0
-        flag = 1
-        
-        for frame_key, intensity_val in enumerate(plot_df['Smoothed Mean Intensity']):
-            if prev_intensity == 0 and intensity_val > baseline_each:
-                continue
-            elif intensity_val >= baseline_each:
-                keyval[frame_key] = intensity_val
-                break
-            else:
-                if frame_key==len(plot_df.index)-1:
-                    flag = 0
-                else:
-                    prev_intensity = intensity_val
-                    continue
-        if flag==0:
+            st.subheader("**_Data for intensity of selected label_**")  
+            smooth_plot_x = st.slider("*_Moving Average Window_*", min_value=1, max_value=5, help = "Adjust to smooth the mean intensity trace below. Moving average of 1 would mean the original 'Mean Intensity' trace")
+            plot_df = intensity(df_selected, raw_img_ani_pg_2, smooth_plot_x)
+            #st.write(plot_df)                                                      
+            #smoothed_plot_df = plot_df['Smoothed Mean Intensity']                           
+            missing_values = pd.isna(plot_df["Smoothed Mean Intensity"])
+            plot_df.loc[missing_values, "Smoothed Mean Intensity"] = plot_df.loc[missing_values, "Mean Intensity"]  
+            #smooth_mode = stat.mode(smoothed_plot_df)
+            #sd_smooth = plot_df['Smoothed Mean Intensity'].std()
+            #smooth_baseline_mean_sd = smooth_mode + sd_smooth
+            #st.write(smooth_mode)
+            #st.write(smooth_baseline_mean_sd)
+            plot_df["Smoothed Mean Intensity"] = np.round(plot_df["Smoothed Mean Intensity"],3)                            
+            #plot_df_smooth_mode =stat.mode(plot_df['Smoothed Mean Intensity']) #stat.mode(new_df_selected_transposed_smooth[f"smooth cell {i}"])
+            #plot_df_smooth_sd = plot_df['Smoothed Mean Intensity'].std()
+            
+            baseline_smooth_x = st.slider("*_Choose frame number(s) to average their corresponding intensity values for baseline calculation_*", min_value = 0, max_value = raw_img_ani_pg_2.shape[0]-1, value = 10,  key='smooth')
+            #baseline_smooth_x = st.slider("*_Choose 'n' in n(S.D.) for Smoothed Intensity trace_*", min_value = 0.0, max_value = 3.0, step = 0.1, format="%.1f", value = 1.0,help = "Slide to adjust the baseline on the 'Smoothed Mean Intensity' trace below. Baseline is calculated as: **_mode + n(S.D.)._**",  key='smooth')
+            
+            baseline_each = plot_df.loc[(plot_df['Frame'] >= 0) & (plot_df['Frame'] <= baseline_smooth_x), 'Smoothed Mean Intensity'].mean()
+            #st.write(baseline_each)
+            #baseline_each = plot_df_smooth_mode + baseline_smooth_x*plot_df_smooth_sd   
+            plot_df['delta_f/f_0'] = (plot_df['Smoothed Mean Intensity'] - baseline_each)/baseline_each 
+            #baseline_unsmooth_x = st.slider("*_Choose 'n' in n(S.D.) for Mean Intensity trace_*", min_value = 0.0, max_value = 3.0, step = 0.1, format="%.1f", value = 1.0, key='unsmooth')
+            #unsmooth_mode = stat.mode(plot_df['Mean Intensity'])
+            #sd_unsmooth = plot_df['Mean Intensity'].std()
+            #unsmooth_baseline_mean_sd = unsmooth_mode + baseline_unsmooth_x*sd_unsmooth
+            # st.write(baseline_each)
+            # st.write(plot_df_smooth_mode)
+            # st.write(plot_df_smooth_sd)
+            #st.write(plot_df.loc[(plot_df['Frame'] >= 0) & (plot_df['Frame'] <= baseline_smooth_x), 'Smoothed Mean Intensity'])
+            #fit_first_x = st.slider("*_Choose the number of first few frame number(s) to fit a mono-exponential decay_*", min_value = 1, max_value = 30, value = 10,  key='smooth_fit_first')
+            #fit_last_x = st.slider("*_Choose the number of last few frame number(s) to fit a mono-exponential decay_*", 1, 30, value = 10, key='smooth_fit_last')
+            #fit_last_x = raw_img_ani_pg_2.shape[0] - 1 - fit_last_x
+    
+            #fit_params, pcov = curve_fit(mono_exp_decay, plot_df[0:fit_first_x+1]['Frame'], plot_df.loc[(plot_df['Frame'] >= 0) & (plot_df['Frame'] <= fit_first_x), 'Smoothed Mean Intensity'],p0=[40,0.002])
+            #photobleach_curve_first = mono_exp_decay(plot_df[0:fit_first_x+1]['Frame'], *fit_params)
+                    
+            #fit_params_last, pcov_last = curve_fit(mono_exp_decay, plot_df[fit_last_x:raw_img_ani_pg_2.shape[0]]['Frame'], plot_df.loc[(plot_df['Frame'] >= fit_last_x) & (plot_df['Frame'] <= raw_img_ani_pg_2.shape[0]-1), 'Smoothed Mean Intensity'],p0=[40,0.002])
+            #photobleach_curve_last = mono_exp_decay(plot_df[fit_last_x:raw_img_ani_pg_2.shape[0]]['Frame'], *fit_params_last)                 
+            
+            #st.write(photobleach_concat)
+            
+            #fit_first_df = pd.DataFrame()
+            #fit_last_df = pd.DataFrame()
+            #fit_first_df['Frame'] = plot_df[0:fit_first_x+1]['Frame']
+            #fit_first_df['Photobleach Corr'] = photobleach_curve_first
+            #fit_last_df['Frame'] = plot_df[fit_last_x:raw_img_ani_pg_2.shape[0]]['Frame']
+            #fit_last_df['Photobleach Corr'] = photobleach_curve_last
+            #frame_concat = pd.concat([fit_first_df['Frame'], fit_last_df['Frame']], axis=0)
+            #photobleach_concat = pd.concat([fit_first_df['Photobleach Corr'], fit_last_df['Photobleach Corr']], axis=0) 
+            #st.write(frame_concat)
+            #st.write(photobleach_concat)
+            # st.write(fit_first_df)
+            # st.write(fit_last_df)
+            
+            #interpol = interpolate.interp1d(frame_concat, photobleach_concat,'cubic')
+            #frames_to_interpol = pd.Series(list(set(range(0,raw_img_ani_pg_2.shape[0])).difference(set(frame_concat))))        
+            #photobleach_interpol = interpol(plot_df['Frame'])
+            # st.write(fit_params)
+            # st.write(fit_params_last)
+            # st.write(pcov_last)
+            # st.write(np.diag(pcov_last))
+            # st.write(np.sqrt(np.diag(pcov_last)))
+            
+            keyval = {}
+            amp_keyval = {}
             prev_intensity = 0
-            st.write("Error! The trace doesn't cross the baseline. No parameters can be found")
+            flag = 1
             
-            st.dataframe(plot_df, 1000,200)
-    
-            unsmoothed_figure =  px.line(
-                                plot_df,
-                                x="Frame",
-                                y="Mean Intensity"
-                                #color="sepal_length",
-                                #color=plot_df['Mean Intensity'],
-                            )
-            # unsmoothed_figure.add_shape(type='line',
-            #                     x0=0,
-            #                     y0=unsmooth_baseline_mean_sd,
-            #                     x1=raw_img_ani_pg_2.shape[0],
-            #                     y1=unsmooth_baseline_mean_sd,
-            #                     line=dict(color='Green',),
-            #                     xref='x',
-            #                     yref='y')    
-                                        
-            smoothed_figure =  px.line(
-                                plot_df,
-                                x="Frame",
-                                y='Smoothed Mean Intensity'
-                                #color="sepal_length",
-                                #color=plot_df['Mean Intensity'],
-                            )
-            smoothed_figure.add_shape(type='line',
-                                x0=0,
-                                y0=baseline_each,
-                                x1=raw_img_ani_pg_2.shape[0],
-                                y1=baseline_each,
-                                line=dict(color='Red',),
-                                xref='x',
-                                yref='y') 
-            unsmoothed_area_figure =  px.line(
-                                plot_df,
-                                x="Frame",
-                                y="Bright Pixel Area"
-                                #color="sepal_length",
-                                #color=plot_df['Mean Intensity'],
-                            )
-        
-    
-    
-            csv = convert_df(plot_df)           
-            st.download_button("Press to Download", csv, 'intensity_data.csv', "text/csv", key='download-csv')
-            #st.plotly_chart(figure, theme="streamlit", use_container_width=True)
-            #st.plotly_chart(figure_2, theme="streamlit", use_container_width=True)
-            
-            st.plotly_chart(unsmoothed_figure, theme="streamlit", use_container_width=True)
-            st.plotly_chart(smoothed_figure, theme="streamlit", use_container_width=True)         
-            st.plotly_chart(unsmoothed_area_figure, theme="streamlit", use_container_width=True)  
-           
-        else:
-            first_key = frame_key
-            first_intensity = keyval[frame_key]
-            
-            prev_intensity = keyval[frame_key]
-            for frame_key_2, intensity_val_2 in enumerate(plot_df['Smoothed Mean Intensity']):                               
-                if frame_key_2 <= frame_key:
+            for frame_key, intensity_val in enumerate(plot_df['Smoothed Mean Intensity']):
+                if prev_intensity == 0 and intensity_val > baseline_each:
                     continue
-                elif frame_key_2 > frame_key:
-                    if intensity_val_2 >= prev_intensity:
-                        if intensity_val_2 < baseline_each:
-                            frame_key = frame_key_2
-                            continue
-                        elif intensity_val_2 >= baseline_each:
-                            if prev_intensity < baseline_each:
-                                first_key = frame_key_2
-                                first_intensity = intensity_val_2
-                                keyval[first_key] = first_intensity
-                                frame_key = frame_key_2
-                                prev_intensity = intensity_val_2
-                            else:
-                                frame_key = frame_key_2
-                                prev_intensity = intensity_val_2
-                            
-    
-                    elif intensity_val_2 < prev_intensity:
-                        if intensity_val_2 > baseline_each:
-                            frame_key = frame_key_2                                         
-                        elif intensity_val_2 <= baseline_each:
-                            if prev_intensity <= baseline_each:
+                elif intensity_val >= baseline_each:
+                    keyval[frame_key] = intensity_val
+                    break
+                else:
+                    if frame_key==len(plot_df.index)-1:
+                        flag = 0
+                    else:
+                        prev_intensity = intensity_val
+                        continue
+            if flag==0:
+                prev_intensity = 0
+                st.write("Error! The trace doesn't cross the baseline. No parameters can be found")
+                
+                st.dataframe(plot_df, 1000,200)
+        
+                unsmoothed_figure =  px.line(
+                                    plot_df,
+                                    x="Frame",
+                                    y="Mean Intensity"
+                                    #color="sepal_length",
+                                    #color=plot_df['Mean Intensity'],
+                                )
+                # unsmoothed_figure.add_shape(type='line',
+                #                     x0=0,
+                #                     y0=unsmooth_baseline_mean_sd,
+                #                     x1=raw_img_ani_pg_2.shape[0],
+                #                     y1=unsmooth_baseline_mean_sd,
+                #                     line=dict(color='Green',),
+                #                     xref='x',
+                #                     yref='y')    
+                                            
+                smoothed_figure =  px.line(
+                                    plot_df,
+                                    x="Frame",
+                                    y='Smoothed Mean Intensity'
+                                    #color="sepal_length",
+                                    #color=plot_df['Mean Intensity'],
+                                )
+                smoothed_figure.add_shape(type='line',
+                                    x0=0,
+                                    y0=baseline_each,
+                                    x1=raw_img_ani_pg_2.shape[0],
+                                    y1=baseline_each,
+                                    line=dict(color='Red',),
+                                    xref='x',
+                                    yref='y') 
+                unsmoothed_area_figure =  px.line(
+                                    plot_df,
+                                    x="Frame",
+                                    y="Bright Pixel Area"
+                                    #color="sepal_length",
+                                    #color=plot_df['Mean Intensity'],
+                                )
+            
+        
+        
+                csv = convert_df(plot_df)           
+                st.download_button("Press to Download", csv, 'intensity_data.csv', "text/csv", key='download-csv')
+                #st.plotly_chart(figure, theme="streamlit", use_container_width=True)
+                #st.plotly_chart(figure_2, theme="streamlit", use_container_width=True)
+                
+                st.plotly_chart(unsmoothed_figure, theme="streamlit", use_container_width=True)
+                st.plotly_chart(smoothed_figure, theme="streamlit", use_container_width=True)         
+                st.plotly_chart(unsmoothed_area_figure, theme="streamlit", use_container_width=True)  
+               
+            else:
+                first_key = frame_key
+                first_intensity = keyval[frame_key]
+                
+                prev_intensity = keyval[frame_key]
+                for frame_key_2, intensity_val_2 in enumerate(plot_df['Smoothed Mean Intensity']):                               
+                    if frame_key_2 <= frame_key:
+                        continue
+                    elif frame_key_2 > frame_key:
+                        if intensity_val_2 >= prev_intensity:
+                            if intensity_val_2 < baseline_each:
                                 frame_key = frame_key_2
                                 continue
-                            else:
-                                keyval[frame_key_2] = intensity_val_2
-                                frame_key = frame_key_2
-                                #start_key = plot_df.query(f'"Smoothed Mean Intensity" == {prev_intensity}')['Frame']
-                                amp_key_vals = plot_df[plot_df['Smoothed Mean Intensity']==prev_intensity]['Frame']
-                                amp_key_vals = amp_key_vals[amp_key_vals>=first_key].iloc[0]
-                                amp_key = str(amp_key_vals)
-                                amplitude = prev_intensity - baseline_each
-                                keyval[amp_key] = prev_intensity
-                                prev_intensity = intensity_val_2
-                                if (first_key == int(amp_key)): #or (int(amp_key) == frame_key): 
-                                    first_key = int(amp_key)-1
-                                    amp_keyval[f"{first_key}-{amp_key}-{frame_key}"] = amplitude
+                            elif intensity_val_2 >= baseline_each:
+                                if prev_intensity < baseline_each:
+                                    first_key = frame_key_2
+                                    first_intensity = intensity_val_2
+                                    keyval[first_key] = first_intensity
+                                    frame_key = frame_key_2
+                                    prev_intensity = intensity_val_2
                                 else:
-                                    amp_keyval[f"{first_key}-{amp_key}-{frame_key}"] = amplitude                
-            
-            #st.write(keyval)    
-            #st.write(amp_keyval)
-            count_items = 0
-            for item in amp_keyval.items():
-                #st.write(item[0].split('-')) 
-                if len(item[0].split('-'))==3:
-                    count_items += 1
-                    signal_start_frame = item[0].split('-')[0]
-                    #st.write(f"The signal start frame is {int(signal_start_frame)}")
-                    peak_frame = item[0].split('-')[1]
-                    #st.write(f"The peak frame is {int(peak_frame)}")
-                    signal_decay_frame = item[0].split('-')[2]
-                    #st.write(f"The signal decay frame is {int(signal_decay_frame)}")
-                    event_num = count_items
-                    amplitude_each = item[1]
-                    signal_rise = int(peak_frame)-int(signal_start_frame)
-                    signal_decay = int(signal_decay_frame)-int(peak_frame)
-                    signal_duration = int(signal_decay_frame)-int(signal_start_frame)
-                    nested_dict["Label"].append(i)
-                    nested_dict["Number of Events"].append(event_num)
-                    nested_dict["Rise time"].append(signal_rise)
-                    nested_dict["Decay time"].append(signal_decay)
-                    nested_dict["Duration"].append(signal_duration)
-                    nested_dict["Amplitude"].append(amplitude_each)
-            
-            
-            #st.subheader("**_Data for intensity of selected label_**")
-            st.dataframe(plot_df, 1000,200)
+                                    frame_key = frame_key_2
+                                    prev_intensity = intensity_val_2
+                                
+        
+                        elif intensity_val_2 < prev_intensity:
+                            if intensity_val_2 > baseline_each:
+                                frame_key = frame_key_2                                         
+                            elif intensity_val_2 <= baseline_each:
+                                if prev_intensity <= baseline_each:
+                                    frame_key = frame_key_2
+                                    continue
+                                else:
+                                    keyval[frame_key_2] = intensity_val_2
+                                    frame_key = frame_key_2
+                                    #start_key = plot_df.query(f'"Smoothed Mean Intensity" == {prev_intensity}')['Frame']
+                                    amp_key_vals = plot_df[plot_df['Smoothed Mean Intensity']==prev_intensity]['Frame']
+                                    amp_key_vals = amp_key_vals[amp_key_vals>=first_key].iloc[0]
+                                    amp_key = str(amp_key_vals)
+                                    amplitude = prev_intensity - baseline_each
+                                    keyval[amp_key] = prev_intensity
+                                    prev_intensity = intensity_val_2
+                                    if (first_key == int(amp_key)): #or (int(amp_key) == frame_key): 
+                                        first_key = int(amp_key)-1
+                                        amp_keyval[f"{first_key}-{amp_key}-{frame_key}"] = amplitude
+                                    else:
+                                        amp_keyval[f"{first_key}-{amp_key}-{frame_key}"] = amplitude                
+                
+                #st.write(keyval)    
+                #st.write(amp_keyval)
+                count_items = 0
+                for item in amp_keyval.items():
+                    #st.write(item[0].split('-')) 
+                    if len(item[0].split('-'))==3:
+                        count_items += 1
+                        signal_start_frame = item[0].split('-')[0]
+                        #st.write(f"The signal start frame is {int(signal_start_frame)}")
+                        peak_frame = item[0].split('-')[1]
+                        #st.write(f"The peak frame is {int(peak_frame)}")
+                        signal_decay_frame = item[0].split('-')[2]
+                        #st.write(f"The signal decay frame is {int(signal_decay_frame)}")
+                        event_num = count_items
+                        amplitude_each = item[1]
+                        signal_rise = int(peak_frame)-int(signal_start_frame)
+                        signal_decay = int(signal_decay_frame)-int(peak_frame)
+                        signal_duration = int(signal_decay_frame)-int(signal_start_frame)
+                        nested_dict["Label"].append(i)
+                        nested_dict["Number of Events"].append(event_num)
+                        nested_dict["Rise time"].append(signal_rise)
+                        nested_dict["Decay time"].append(signal_decay)
+                        nested_dict["Duration"].append(signal_duration)
+                        nested_dict["Amplitude"].append(amplitude_each)
+                
+                
+                #st.subheader("**_Data for intensity of selected label_**")
+                st.dataframe(plot_df, 1000,200)
+        
+                unsmoothed_figure =  px.line(
+                                    plot_df,
+                                    x="Frame",
+                                    y="Mean Intensity"
+                                    #color="sepal_length",
+                                    #color=plot_df['Mean Intensity'],
+                                )
+                # unsmoothed_figure.add_shape(type='line',
+                #                     x0=0,
+                #                     y0=unsmooth_baseline_mean_sd,
+                #                     x1=raw_img_ani_pg_2.shape[0],
+                #                     y1=unsmooth_baseline_mean_sd,
+                #                     line=dict(color='Green',),
+                #                     xref='x',
+                #                     yref='y')    
+                                            
+                smoothed_figure =  px.line(
+                                    plot_df,
+                                    x="Frame",
+                                    y='Smoothed Mean Intensity'
+                                    #color="sepal_length",
+                                    #color=plot_df['Mean Intensity'],
+                                )
     
-            unsmoothed_figure =  px.line(
-                                plot_df,
-                                x="Frame",
-                                y="Mean Intensity"
-                                #color="sepal_length",
-                                #color=plot_df['Mean Intensity'],
-                            )
-            # unsmoothed_figure.add_shape(type='line',
-            #                     x0=0,
-            #                     y0=unsmooth_baseline_mean_sd,
-            #                     x1=raw_img_ani_pg_2.shape[0],
-            #                     y1=unsmooth_baseline_mean_sd,
-            #                     line=dict(color='Green',),
-            #                     xref='x',
-            #                     yref='y')    
-                                        
-            smoothed_figure =  px.line(
-                                plot_df,
-                                x="Frame",
-                                y='Smoothed Mean Intensity'
-                                #color="sepal_length",
-                                #color=plot_df['Mean Intensity'],
-                            )
-            smoothed_figure.add_shape(type='line',
-                                x0=0,
-                                y0=baseline_each,
-                                x1=raw_img_ani_pg_2.shape[0],
-                                y1=baseline_each,
-                                line=dict(color='Red',),
-                                xref='x',
-                                yref='y')                            
-            unsmoothed_area_figure =  px.line(
-                                plot_df,
-                                x="Frame",
-                                y="Bright Pixel Area"
-                                #color="sepal_length",
-                                #color=plot_df['Mean Intensity'],
-                            )
-    
+                # smoothed_figure.add_shape(type='line',
+                #                     x0=0,
+                #                     y0=baseline_each,
+                #                     x1=raw_img_ani_pg_2.shape[0],
+                #                     y1=baseline_each,
+                #                     line=dict(color='Green'),
+                #                     xref='x',
+                #                     yref='y'
+                #                     )    
+                
+                #smoothed_figure.add_trace(go.Scatter(x = fit_first_df['Frame'], y = fit_first_df['Photobleach Corr'], mode="lines", name='Fitted_First'))
+                #smoothed_figure.add_trace(go.Scatter(x = fit_last_df['Frame'], y = fit_last_df['Photobleach Corr'], mode="lines", name='Fitted_Last'))
+                #smoothed_figure.add_trace(go.Scatter(x = plot_df['Frame'], y = photobleach_interpol, mode="lines", name='Fitted and Interpolated',fillcolor='green'))
+                smoothed_figure.add_trace(go.Scatter(x=[0, raw_img_ani_pg_2.shape[0]], y=[baseline_each, baseline_each], mode='lines', name='Baseline', line=dict(color='Green', width=2)))
+                                            
+                # fitted =  px.scatter(
+                #                     fit_last_df,
+                #                     x="Frame",
+                #                     y='Photobleach Corr'
+                #                     #color="sepal_length",
+                #                     #color=plot_df['Mean Intensity'],
+                #                 )           
+                
+                unsmoothed_area_figure =  px.line(
+                                    plot_df,
+                                    x="Frame",
+                                    y="Bright Pixel Area"
+                                    #color="sepal_length",
+                                    #color=plot_df['Mean Intensity'],
+                                )
+        
+                
+                csv = convert_df(plot_df)           
+                st.download_button("Press to Download", csv, 'intensity_data.csv', "text/csv", key='download-csv')
+                #st.plotly_chart(figure, theme="streamlit", use_container_width=True)
+                #st.plotly_chart(figure_2, theme="streamlit", use_container_width=True)
+                st.plotly_chart(unsmoothed_figure, theme="streamlit", use_container_width=True)
+                st.plotly_chart(smoothed_figure, theme="streamlit", use_container_width=True)         
+                st.plotly_chart(unsmoothed_area_figure, theme="streamlit", use_container_width=True)    
+                #st.plotly_chart(fitted, theme="streamlit", use_container_width=True)                
+
             
-            csv = convert_df(plot_df)           
-            st.download_button("Press to Download", csv, 'intensity_data.csv', "text/csv", key='download-csv')
-            #st.plotly_chart(figure, theme="streamlit", use_container_width=True)
-            #st.plotly_chart(figure_2, theme="streamlit", use_container_width=True)
-            st.plotly_chart(unsmoothed_figure, theme="streamlit", use_container_width=True)
-            st.plotly_chart(smoothed_figure, theme="streamlit", use_container_width=True)         
-            st.plotly_chart(unsmoothed_area_figure, theme="streamlit", use_container_width=True)                 
     
-    
-        if st.button("Obtain the parameters for selected label",on_click=callback_sing) or st.session_state.button_clicked_sing_para:
-            nested_dict = (pd.DataFrame.from_dict(nested_dict)) 
-            if nested_dict.empty:
-                st.write("No parameter information for the selected label can be found based on the trace")
-            else:
-                st.subheader("**_Parameters for selected label across all frames_**")
-                col_1, col_2 = st.columns(2)
-                with col_1:
-                    st.write(nested_dict)
-                    individual_csv = convert_df(nested_dict)           
-                    st.download_button("Press to Download", individual_csv, 'individual_para_data.csv', "text/csv", key='individual_download-csv')
+            if st.button("Obtain the parameters for selected label",on_click=callback_sing) or st.session_state.button_clicked_sing_para:
+                nested_dict = (pd.DataFrame.from_dict(nested_dict)) 
+                if nested_dict.empty:
+                    st.write("No parameter information for the selected label can be found based on the trace")
+                else:
+                    st.subheader("**_Parameters for selected label across all frames_**")
+                    col_1, col_2 = st.columns(2)
+                    with col_1:
+                        nested_dict = nested_dict[nested_dict['Amplitude']>0.1*baseline_each]
+                        st.write(nested_dict)
+                        individual_csv = convert_df(nested_dict)           
+                        st.download_button("Press to Download", individual_csv, 'individual_para_data.csv', "text/csv", key='individual_download-csv')
+                        
+                    with col_2:
+                        average_rise_time = np.round(nested_dict['Rise time'].mean(),4)
+                        st.write(f"The average rise time based on the selected labels across all frames is {average_rise_time}")
+                        average_decay_time = np.round(nested_dict['Decay time'].mean(),4)
+                        st.write(f"The average decay time based on the selected labels across all frames is {average_decay_time}")
+                        average_duration = np.round(nested_dict['Duration'].mean(),4)
+                        st.write(f"The average duration based on the selected labels across all frames is {average_duration}")
+                        average_amplitude = np.round(nested_dict['Amplitude'].mean(),4)
+                        st.write(f"The average amplitude based on the selected labels across all frames is {average_amplitude}")
+                    st.subheader("Distribution plots based on selected label")    
+                    col_3, col_4 = st.columns(2)
+                    with col_3:                                
+                        sns.displot(data = nested_dict, x="Rise time",kind='hist')
+                        st.pyplot(plt.gcf())
+                    with col_4: 
+                        sns.displot(data = nested_dict, x="Decay time",kind='hist')
+                        st.pyplot(plt.gcf())
+                    col_5, col_6 = st.columns(2)    
+                    with col_5: 
+                        sns.displot(data = nested_dict, x="Duration",kind='hist')
+                        st.pyplot(plt.gcf())
+                    with col_6:     
+                        sns.displot(data = nested_dict, x="Amplitude",kind='hist')
+                        st.pyplot(plt.gcf())           
+                    st.warning('Navigating to another page from the sidebar will remove all selections from the current page')  
                     
-                with col_2:
-                    average_rise_time = np.round(nested_dict['Rise time'].mean(),4)
-                    st.write(f"The average rise time based on the selected labels across all frames is {average_rise_time}")
-                    average_decay_time = np.round(nested_dict['Decay time'].mean(),4)
-                    st.write(f"The average decay time based on the selected labels across all frames is {average_decay_time}")
-                    average_duration = np.round(nested_dict['Duration'].mean(),4)
-                    st.write(f"The average duration based on the selected labels across all frames is {average_duration}")
-                    average_amplitude = np.round(nested_dict['Amplitude'].mean(),4)
-                    st.write(f"The average amplitude based on the selected labels across all frames is {average_amplitude}")
-                st.subheader("Distribution plots based on selected label")    
-                col_3, col_4 = st.columns(2)
-                with col_3:                                
-                    sns.displot(data = nested_dict, x="Rise time",kind='hist')
-                    st.pyplot(plt.gcf())
-                with col_4: 
-                    sns.displot(data = nested_dict, x="Decay time",kind='hist')
-                    st.pyplot(plt.gcf())
-                col_5, col_6 = st.columns(2)    
-                with col_5: 
-                    sns.displot(data = nested_dict, x="Duration",kind='hist')
-                    st.pyplot(plt.gcf())
-                with col_6:     
-                    sns.displot(data = nested_dict, x="Amplitude",kind='hist')
-                    st.pyplot(plt.gcf())           
-                st.warning('Navigating to another page from the sidebar will remove all selections from the current page')
+                    
+        if bleach_corr_check == 'Bleaching correction':
+        
+            st.subheader("**_Data for intensity of selected label_**")  
+            smooth_plot_x = st.slider("*_Moving Average Window_*", min_value=1, max_value=5, help = "Adjust to smooth the mean intensity trace below. Moving average of 1 would mean the original 'Mean Intensity' trace")
+            plot_df = intensity(df_selected, raw_img_ani_pg_2, smooth_plot_x)
+            #st.write(plot_df)                                                      
+            #smoothed_plot_df = plot_df['Smoothed Mean Intensity']                           
+            missing_values = pd.isna(plot_df["Smoothed Mean Intensity"])
+            plot_df.loc[missing_values, "Smoothed Mean Intensity"] = plot_df.loc[missing_values, "Mean Intensity"]  
+            #smooth_mode = stat.mode(smoothed_plot_df)
+            #sd_smooth = plot_df['Smoothed Mean Intensity'].std()
+            #smooth_baseline_mean_sd = smooth_mode + sd_smooth
+            #st.write(smooth_mode)
+            #st.write(smooth_baseline_mean_sd)
+            plot_df["Smoothed Mean Intensity"] = np.round(plot_df["Smoothed Mean Intensity"],3)                            
+            #plot_df_smooth_mode =stat.mode(plot_df['Smoothed Mean Intensity']) #stat.mode(new_df_selected_transposed_smooth[f"smooth cell {i}"])
+            #plot_df_smooth_sd = plot_df['Smoothed Mean Intensity'].std()
+            
+            baseline_smooth_x = st.slider("*_Choose frame number(s) to average their corresponding intensity values for baseline calculation_*", min_value = 0, max_value = raw_img_ani_pg_2.shape[0]-1, value = 10,  key='smooth')
+            #baseline_smooth_x = st.slider("*_Choose 'n' in n(S.D.) for Smoothed Intensity trace_*", min_value = 0.0, max_value = 3.0, step = 0.1, format="%.1f", value = 1.0,help = "Slide to adjust the baseline on the 'Smoothed Mean Intensity' trace below. Baseline is calculated as: **_mode + n(S.D.)._**",  key='smooth')
+            
+            baseline_each = plot_df.loc[(plot_df['Frame'] >= 0) & (plot_df['Frame'] <= baseline_smooth_x), 'Smoothed Mean Intensity'].mean()
+            #st.write(baseline_each)
+            #baseline_each = plot_df_smooth_mode + baseline_smooth_x*plot_df_smooth_sd   
+            #plot_df['delta_f/f_0'] = (plot_df['Smoothed Mean Intensity'] - baseline_each)/baseline_each 
+            #baseline_unsmooth_x = st.slider("*_Choose 'n' in n(S.D.) for Mean Intensity trace_*", min_value = 0.0, max_value = 3.0, step = 0.1, format="%.1f", value = 1.0, key='unsmooth')
+            #unsmooth_mode = stat.mode(plot_df['Mean Intensity'])
+            #sd_unsmooth = plot_df['Mean Intensity'].std()
+            #unsmooth_baseline_mean_sd = unsmooth_mode + baseline_unsmooth_x*sd_unsmooth
+            # st.write(baseline_each)
+            # st.write(plot_df_smooth_mode)
+            # st.write(plot_df_smooth_sd)
+            #st.write(plot_df.loc[(plot_df['Frame'] >= 0) & (plot_df['Frame'] <= baseline_smooth_x), 'Smoothed Mean Intensity'])
+            fit_first_x = st.slider("*_Choose the number of first few frame number(s) to fit a mono-exponential decay_*", min_value = 1, max_value = 30, value = 30,  key='smooth_fit_first')
+            fit_last_x = st.slider("*_Choose the number of last few frame number(s) to fit a mono-exponential decay_*", 1, 30, value = 30, key='smooth_fit_last')
+            fit_last_x = raw_img_ani_pg_2.shape[0] - 1 - fit_last_x
+    
+            fit_params, pcov = curve_fit(mono_exp_decay, plot_df[0:fit_first_x+1]['Frame'], plot_df.loc[(plot_df['Frame'] >= 0) & (plot_df['Frame'] <= fit_first_x), 'Smoothed Mean Intensity'],p0=[40,0.002])
+            photobleach_curve_first = mono_exp_decay(plot_df[0:fit_first_x+1]['Frame'], *fit_params)
+                    
+            fit_params_last, pcov_last = curve_fit(mono_exp_decay, plot_df[fit_last_x:raw_img_ani_pg_2.shape[0]]['Frame'], plot_df.loc[(plot_df['Frame'] >= fit_last_x) & (plot_df['Frame'] <= raw_img_ani_pg_2.shape[0]-1), 'Smoothed Mean Intensity'],p0=[40,0.002])
+            photobleach_curve_last = mono_exp_decay(plot_df[fit_last_x:raw_img_ani_pg_2.shape[0]]['Frame'], *fit_params_last)                 
+            
+            #st.write(photobleach_concat)
+            
+            fit_first_df = pd.DataFrame()
+            fit_last_df = pd.DataFrame()
+            fit_first_df['Frame'] = plot_df[0:fit_first_x+1]['Frame']
+            fit_first_df['Photobleach Corr'] = photobleach_curve_first
+            fit_last_df['Frame'] = plot_df[fit_last_x:raw_img_ani_pg_2.shape[0]]['Frame']
+            fit_last_df['Photobleach Corr'] = photobleach_curve_last
+            frame_concat = pd.concat([fit_first_df['Frame'], fit_last_df['Frame']], axis=0)
+            photobleach_concat = pd.concat([fit_first_df['Photobleach Corr'], fit_last_df['Photobleach Corr']], axis=0) 
+            #st.write(frame_concat)
+            #st.write(photobleach_concat)
+            # st.write(fit_first_df)
+            # st.write(fit_last_df)
+            
+            interpol = interpolate.interp1d(frame_concat, photobleach_concat,'linear')
+            frames_to_interpol = pd.Series(list(set(range(0,raw_img_ani_pg_2.shape[0])).difference(set(frame_concat))))        
+            photobleach_interpol = interpol(plot_df['Frame'])
+            #st.write(photobleach_interpol)
+            plot_df_corr = pd.DataFrame()
+            plot_df_corr_intensity = plot_df['Smoothed Mean Intensity']-photobleach_interpol
+            plot_df_corr['Frame'] = plot_df['Frame']
+            plot_df_corr['Smoothed Mean Intensity'] = plot_df_corr_intensity
+            plot_df_corr['Smoothed Mean Intensity'][plot_df_corr['Smoothed Mean Intensity']<0] = 0
+            plot_df_corr['Bright Pixel Area'] = plot_df['Bright Pixel Area']
+            baseline_corr_each = plot_df_corr.loc[(plot_df_corr['Frame'] >= 0) & (plot_df_corr['Frame'] <= baseline_smooth_x), 'Smoothed Mean Intensity'].mean()
+            plot_df_corr['delta_f/f_0'] = (plot_df_corr['Smoothed Mean Intensity']-baseline_corr_each)/baseline_corr_each
+            
+            
+            # st.write(fit_params)
+            # st.write(fit_params_last)
+            # st.write(pcov_last)
+            # st.write(np.diag(pcov_last))
+            # st.write(np.sqrt(np.diag(pcov_last)))
+            
+            keyval = {}
+            amp_keyval = {}
+            prev_intensity = 0
+            flag = 1
+            
+            for frame_key, intensity_val in enumerate(plot_df_corr['Smoothed Mean Intensity']):
+                if prev_intensity == 0 and intensity_val > baseline_corr_each:
+                    continue
+                elif intensity_val >= baseline_corr_each:
+                    keyval[frame_key] = intensity_val
+                    break
+                else:
+                    if frame_key==len(plot_df_corr.index)-1:
+                        flag = 0
+                    else:
+                        prev_intensity = intensity_val
+                        continue
+            if flag==0:
+                prev_intensity = 0
+                st.write("Error! The trace doesn't cross the baseline. No parameters can be found")
+                
+                st.dataframe(plot_df, 1000,200)
+        
+                unsmoothed_figure =  px.line(
+                                    plot_df,
+                                    x="Frame",
+                                    y="Mean Intensity"
+                                    #color="sepal_length",
+                                    #color=plot_df['Mean Intensity'],
+                                )
+                # unsmoothed_figure.add_shape(type='line',
+                #                     x0=0,
+                #                     y0=unsmooth_baseline_mean_sd,
+                #                     x1=raw_img_ani_pg_2.shape[0],
+                #                     y1=unsmooth_baseline_mean_sd,
+                #                     line=dict(color='Green',),
+                #                     xref='x',
+                #                     yref='y')    
+                                            
+                smoothed_figure =  px.line(
+                                    plot_df,
+                                    x="Frame",
+                                    y='Smoothed Mean Intensity'
+                                    #color="sepal_length",
+                                    #color=plot_df['Mean Intensity'],
+                                )
+                smoothed_figure.add_shape(type='line',
+                                    x0=0,
+                                    y0=baseline_each,
+                                    x1=raw_img_ani_pg_2.shape[0],
+                                    y1=baseline_each,
+                                    line=dict(color='Red',),
+                                    xref='x',
+                                    yref='y') 
+                unsmoothed_area_figure =  px.line(
+                                    plot_df,
+                                    x="Frame",
+                                    y="Bright Pixel Area"
+                                    #color="sepal_length",
+                                    #color=plot_df['Mean Intensity'],
+                                )
+
+                phot_corr_figure =  px.line(
+                                    plot_df_corr,
+                                    x="Frame",
+                                    y="Smoothed Mean Intensity"
+                                    #color="sepal_length",
+                                    #color=plot_df['Mean Intensity'],
+                                )            
+        
+        
+                csv = convert_df(plot_df)           
+                st.download_button("Press to Download", csv, 'intensity_data.csv', "text/csv", key='download-csv')
+                #st.plotly_chart(figure, theme="streamlit", use_container_width=True)
+                #st.plotly_chart(figure_2, theme="streamlit", use_container_width=True)
+                
+                smoothed_figure.add_trace(go.Scatter(x = fit_first_df['Frame'], y = fit_first_df['Photobleach Corr'], mode="lines", name='Fitted_First'))
+                smoothed_figure.add_trace(go.Scatter(x = fit_last_df['Frame'], y = fit_last_df['Photobleach Corr'], mode="lines", name='Fitted_Last'))
+                smoothed_figure.add_trace(go.Scatter(x = plot_df['Frame'], y = photobleach_interpol, mode="lines", name='Fitted and Interpolated',fillcolor='green'))
+                #smoothed_figure.add_trace(go.Scatter(x=[0, raw_img_ani_pg_2.shape[0]], y=[baseline_each, baseline_each], mode='lines', name='Baseline', line=dict(color='Green', width=2)))
+                phot_corr_figure.add_trace(go.Scatter(x = plot_df_corr['Frame'], y = plot_df_corr['Smoothed Mean Intensity'], mode="lines", name='Corrected Intensity'))                 
+                
+                st.plotly_chart(unsmoothed_figure, theme="streamlit", use_container_width=True)
+                st.plotly_chart(smoothed_figure, theme="streamlit", use_container_width=True)   
+                st.write('*_The Photobleaching-corrected data_*')
+                st.dataframe(plot_df_corr, 1000,200)
+                phot_corr_figure.add_trace(go.Scatter(x=[0, raw_img_ani_pg_2.shape[0]], y=[baseline_corr_each, baseline_corr_each], mode='lines', name='Baseline', line=dict(color='Green', width=2)))
+                st.plotly_chart(phot_corr_figure, theme="streamlit", use_container_width=True)                  
+                st.plotly_chart(unsmoothed_area_figure, theme="streamlit", use_container_width=True)  
+               
+            else:
+                first_key = frame_key
+                first_intensity = keyval[frame_key]
+                
+                prev_intensity = keyval[frame_key]
+                for frame_key_2, intensity_val_2 in enumerate(plot_df_corr['Smoothed Mean Intensity']):                               
+                    if frame_key_2 <= frame_key:
+                        continue
+                    elif frame_key_2 > frame_key:
+                        if intensity_val_2 >= prev_intensity:
+                            if intensity_val_2 < baseline_corr_each:
+                                frame_key = frame_key_2
+                                continue
+                            elif intensity_val_2 >= baseline_corr_each:
+                                if prev_intensity < baseline_corr_each:
+                                    first_key = frame_key_2
+                                    first_intensity = intensity_val_2
+                                    keyval[first_key] = first_intensity
+                                    frame_key = frame_key_2
+                                    prev_intensity = intensity_val_2
+                                else:
+                                    frame_key = frame_key_2
+                                    prev_intensity = intensity_val_2
+                                
+        
+                        elif intensity_val_2 < prev_intensity:
+                            if intensity_val_2 > baseline_corr_each:
+                                frame_key = frame_key_2                                         
+                            elif intensity_val_2 <= baseline_corr_each:
+                                if prev_intensity <= baseline_corr_each:
+                                    frame_key = frame_key_2
+                                    continue
+                                else:
+                                    keyval[frame_key_2] = intensity_val_2
+                                    frame_key = frame_key_2
+                                    #start_key = plot_df.query(f'"Smoothed Mean Intensity" == {prev_intensity}')['Frame']
+                                    amp_key_vals = plot_df_corr[plot_df_corr['Smoothed Mean Intensity']==prev_intensity]['Frame']
+                                    amp_key_vals = amp_key_vals[amp_key_vals>=first_key].iloc[0]
+                                    amp_key = str(amp_key_vals)
+                                    amplitude = prev_intensity - baseline_corr_each
+                                    keyval[amp_key] = prev_intensity
+                                    prev_intensity = intensity_val_2
+                                    if (first_key == int(amp_key)): #or (int(amp_key) == frame_key): 
+                                        first_key = int(amp_key)-1
+                                        amp_keyval[f"{first_key}-{amp_key}-{frame_key}"] = amplitude
+                                    else:
+                                        amp_keyval[f"{first_key}-{amp_key}-{frame_key}"] = amplitude                
+                
+                #st.write(keyval)    
+                #st.write(amp_keyval)
+                count_items = 0
+                for item in amp_keyval.items():
+                    #st.write(item[0].split('-')) 
+                    if len(item[0].split('-'))==3:
+                        count_items += 1
+                        signal_start_frame = item[0].split('-')[0]
+                        #st.write(f"The signal start frame is {int(signal_start_frame)}")
+                        peak_frame = item[0].split('-')[1]
+                        #st.write(f"The peak frame is {int(peak_frame)}")
+                        signal_decay_frame = item[0].split('-')[2]
+                        #st.write(f"The signal decay frame is {int(signal_decay_frame)}")
+                        event_num = count_items
+                        amplitude_each = item[1]
+                        signal_rise = int(peak_frame)-int(signal_start_frame)
+                        signal_decay = int(signal_decay_frame)-int(peak_frame)
+                        signal_duration = int(signal_decay_frame)-int(signal_start_frame)
+                        nested_dict["Label"].append(i)
+                        nested_dict["Number of Events"].append(event_num)
+                        nested_dict["Rise time"].append(signal_rise)
+                        nested_dict["Decay time"].append(signal_decay)
+                        nested_dict["Duration"].append(signal_duration)
+                        nested_dict["Amplitude"].append(amplitude_each)
+                
+                
+                st.write('*_The original intensity data_*')
+                st.dataframe(plot_df, 1000,200)
+        
+                unsmoothed_figure =  px.line(
+                                    plot_df,
+                                    x="Frame",
+                                    y="Mean Intensity"
+                                    #color="sepal_length",
+                                    #color=plot_df['Mean Intensity'],
+                                )
+                # unsmoothed_figure.add_shape(type='line',
+                #                     x0=0,
+                #                     y0=unsmooth_baseline_mean_sd,
+                #                     x1=raw_img_ani_pg_2.shape[0],
+                #                     y1=unsmooth_baseline_mean_sd,
+                #                     line=dict(color='Green',),
+                #                     xref='x',
+                #                     yref='y')    
+                                            
+                smoothed_figure =  px.line(
+                                    plot_df,
+                                    x="Frame",
+                                    y='Smoothed Mean Intensity'
+                                    #color="sepal_length",
+                                    #color=plot_df['Mean Intensity'],
+                                )
+    
+                # smoothed_figure.add_shape(type='line',
+                #                     x0=0,
+                #                     y0=baseline_each,
+                #                     x1=raw_img_ani_pg_2.shape[0],
+                #                     y1=baseline_each,
+                #                     line=dict(color='Green'),
+                #                     xref='x',
+                #                     yref='y'
+                #                     )    
+                phot_corr_figure =  px.line(
+                                    plot_df_corr,
+                                    x="Frame",
+                                    y="Smoothed Mean Intensity"
+                                    #color="sepal_length",
+                                    #color=plot_df['Mean Intensity'],
+                                )
+                
+
+
+
+                smoothed_figure.add_trace(go.Scatter(x = fit_first_df['Frame'], y = fit_first_df['Photobleach Corr'], mode="lines", name='Fitted_First'))
+                smoothed_figure.add_trace(go.Scatter(x = fit_last_df['Frame'], y = fit_last_df['Photobleach Corr'], mode="lines", name='Fitted_Last'))
+                smoothed_figure.add_trace(go.Scatter(x = plot_df['Frame'], y = photobleach_interpol, mode="lines", name='Fitted and Interpolated',fillcolor='green'))
+                smoothed_figure.add_trace(go.Scatter(x=[0, raw_img_ani_pg_2.shape[0]], y=[baseline_each, baseline_each], mode='lines', name='Baseline', line=dict(color='Green', width=2)))
+                phot_corr_figure.add_trace(go.Scatter(x = plot_df_corr['Frame'], y = plot_df_corr['Smoothed Mean Intensity'], mode="lines", name='Corrected Intensity', line=dict(color='Blue', width=1))) 
+                                           
+                # fitted =  px.scatter(
+                #                     fit_last_df,
+                #                     x="Frame",
+                #                     y='Photobleach Corr'
+                #                     #color="sepal_length",
+                #                     #color=plot_df['Mean Intensity'],
+                #                 )           
+                
+                
+                unsmoothed_area_figure =  px.line(
+                                    plot_df,
+                                    x="Frame",
+                                    y="Bright Pixel Area"
+                                    #color="sepal_length",
+                                    #color=plot_df['Mean Intensity'],
+                                )
+        
+                
+                csv = convert_df(plot_df)           
+                st.download_button("Press to Download", csv, 'intensity_data.csv', "text/csv", key='download-csv')
+                #st.plotly_chart(figure, theme="streamlit", use_container_width=True)
+                #st.plotly_chart(figure_2, theme="streamlit", use_container_width=True)
+                st.plotly_chart(unsmoothed_figure, theme="streamlit", use_container_width=True)
+                st.plotly_chart(smoothed_figure, theme="streamlit", use_container_width=True)  
+                st.write('*_The Photobleaching-corrected data_*')
+                st.dataframe(plot_df_corr, 1000,200)
+
+                phot_corr_figure.add_trace(go.Scatter(x=[0, raw_img_ani_pg_2.shape[0]], y=[baseline_corr_each, baseline_corr_each], mode='lines', name='Baseline', line=dict(color='Green', width=2)))
+                st.plotly_chart(phot_corr_figure, theme="streamlit", use_container_width=True)  
+                st.plotly_chart(unsmoothed_area_figure, theme="streamlit", use_container_width=True)    
+                #st.plotly_chart(fitted, theme="streamlit", use_container_width=True)                
+
+            
+    
+            if st.button("Obtain the parameters for selected label",on_click=callback_sing) or st.session_state.button_clicked_sing_para:
+                nested_dict = (pd.DataFrame.from_dict(nested_dict)) 
+                if nested_dict.empty:
+                    st.write("No parameter information for the selected label can be found based on the trace")
+                else:
+                    st.subheader("**_Parameters for selected label across all frames_**")
+                    col_1, col_2 = st.columns(2)
+                    with col_1:
+                        nested_dict = nested_dict[nested_dict['Amplitude']>0.1*baseline_each]
+                        st.write(nested_dict)
+                        individual_csv = convert_df(nested_dict)           
+                        st.download_button("Press to Download", individual_csv, 'individual_para_data.csv', "text/csv", key='individual_download-csv')
+                        
+                    with col_2:
+                        average_rise_time = np.round(nested_dict['Rise time'].mean(),4)
+                        st.write(f"The average rise time based on the selected labels across all frames is {average_rise_time}")
+                        average_decay_time = np.round(nested_dict['Decay time'].mean(),4)
+                        st.write(f"The average decay time based on the selected labels across all frames is {average_decay_time}")
+                        average_duration = np.round(nested_dict['Duration'].mean(),4)
+                        st.write(f"The average duration based on the selected labels across all frames is {average_duration}")
+                        average_amplitude = np.round(nested_dict['Amplitude'].mean(),4)
+                        st.write(f"The average amplitude based on the selected labels across all frames is {average_amplitude}")
+                    st.subheader("Distribution plots based on selected label")    
+                    col_3, col_4 = st.columns(2)
+                    with col_3:                                
+                        sns.displot(data = nested_dict, x="Rise time",kind='hist')
+                        st.pyplot(plt.gcf())
+                    with col_4: 
+                        sns.displot(data = nested_dict, x="Decay time",kind='hist')
+                        st.pyplot(plt.gcf())
+                    col_5, col_6 = st.columns(2)    
+                    with col_5: 
+                        sns.displot(data = nested_dict, x="Duration",kind='hist')
+                        st.pyplot(plt.gcf())
+                    with col_6:     
+                        sns.displot(data = nested_dict, x="Amplitude",kind='hist')
+                        st.pyplot(plt.gcf())           
+                    st.warning('Navigating to another page from the sidebar will remove all selections from the current page')
        
     ####################################  Parameter calcualtion for all the detected cells  ###############################################################################
         # if st.button("**_Go to Multiple Intensity Traces_**", help = 'Clicking on this switches to a new page and all selection in the current page will be lost'):
