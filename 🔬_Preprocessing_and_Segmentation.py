@@ -331,6 +331,7 @@ def Segment():
                 #st.image(final_label,use_column_width=True,clamp = True)
                 st.session_state['final_label_pg_2'] = final_label
                 final_label_rgb = cv2.cvtColor(final_label, cv2.COLOR_GRAY2RGB)
+                super_im_rgb = cv2.cvtColor(super_im, cv2.COLOR_GRAY2RGB)
                 label_list_len = len([prop['label'] for prop in props_to_sort if prop['label']])
                 label_list = list(range(1,label_list_len+1))
                 st.session_state['label_list_pg_2'] = label_list
@@ -351,8 +352,13 @@ def Segment():
                         cv2.circle(final_label_rgb, (int(x), int(y)), int(r), (255, 0, 0), 1)
                         cv2.putText(final_label_rgb, "{}".format(label), (int(x) - 10, int(y)),
                          	cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)
+                        cv2.circle(super_im_rgb, (int(x), int(y)), int(r), (255, 0, 0), 1)
+                        cv2.putText(super_im_rgb, "{}".format(label), (int(x) - 10, int(y)),
+                         	cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)                          
                 #with st.expander("*_Show the segmented and labeled image_*"):
-                st.markdown("*_Segmented and labeled image_*", help = 'The red circles just show the location of the segmented labels and are not the actual segmented labels themselves')
+                st.markdown("*_Segmented and labeled image overlayed on the collapsed image_*", help = 'The red circles just show the location of the segmented labels and are not the actual segmented labels themselves')
+                st.image(super_im_rgb,use_column_width=True,clamp = True)
+                st.markdown("*_Segmented and labeled image overlayed on a black background_*", help = 'The red circles just show the location of the segmented labels and are not the actual segmented labels themselves')
                 st.image(final_label_rgb,use_column_width=True,clamp = True)
                 st.session_state['final_label_rgb_pg_2'] = final_label_rgb
                         
