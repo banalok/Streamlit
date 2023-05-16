@@ -295,7 +295,7 @@ def Segment():
             #with st.expander("*_Show_*"):
             st.image(super_im, use_column_width=True,clamp = True) 
             st.session_state['Collapsed_Image'] = super_im
-            if st.button("*_Segment and generate a label_*", key='frame_btn',on_click = callback_allframes) or st.session_state.button_clicked_allframes:
+            if st.button("*_Segment and generate labels_*", key='frame_btn',on_click = callback_allframes) or st.session_state.button_clicked_allframes:
                 #st.image(super_im,use_column_width=True,clamp = True)   
                 #st.write(st.session_state.button_clicked_allframes)
                 if f"super_im_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}" not in st.session_state:

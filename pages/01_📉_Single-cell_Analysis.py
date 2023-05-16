@@ -173,7 +173,7 @@ else:
     raw_img_ani_pg_2 = st.session_state['raw_img_ani_pg_2']
     
 if 'super_im_rgb_pg_2' not in st.session_state:
-    st.warning("Please generate the segmented and labeled image from the 'Preprocessing and Segmentation' page, and click on 'Single-cell Analysis' before proceeding")
+    pass
 else:
     super_im_pg_2 = st.session_state['super_im_rgb_pg_2']
     st.write('*_Segmented and labeled image overlayed on the collapsed image_*')
