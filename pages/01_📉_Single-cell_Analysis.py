@@ -172,11 +172,18 @@ if 'raw_img_ani_pg_2' not in st.session_state:
 else:
     raw_img_ani_pg_2 = st.session_state['raw_img_ani_pg_2']
     
+if 'super_im_rgb_pg_2' not in st.session_state:
+    st.warning("Please generate the segmented and labeled image from the 'Preprocessing and Segmentation' page, and click on 'Single-cell Analysis' before proceeding")
+else:
+    super_im_pg_2 = st.session_state['super_im_rgb_pg_2']
+    st.write('*_Segmented and labeled image overlayed on the collapsed image_*')
+    st.image(super_im_pg_2,use_column_width=True,clamp = True)
+    
 if 'final_label_rgb_pg_2' not in st.session_state:
     st.warning("Please generate the segmented and labeled image from the 'Preprocessing and Segmentation' page, and click on 'Single-cell Analysis' before proceeding")
 else:
     label = st.session_state['final_label_rgb_pg_2']
-    st.write('*_Segmented and labeled image_*')
+    st.write('*_Segmented and labeled image on a black background_*')
     st.image(label,use_column_width=True,clamp = True)
     
 if 'final_label_pg_2' not in st.session_state:
