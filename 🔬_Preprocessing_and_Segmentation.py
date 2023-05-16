@@ -361,7 +361,7 @@ def Segment():
                 st.markdown("*_Segmented and labeled image overlayed on a black background_*", help = 'The red circles just show the location of the segmented labels and are not the actual segmented labels themselves')
                 st.image(final_label_rgb,use_column_width=True,clamp = True)
                 st.session_state['final_label_rgb_pg_2'] = final_label_rgb
-                        
+                st.session_state['super_im_rgb_pg_2'] = super_im_rgb        
                 
                 # col_pg_1, col_pg_2, col_pg_3 = st.columns(3)
                 # with col_pg_1:
