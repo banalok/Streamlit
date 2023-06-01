@@ -189,7 +189,9 @@ def Segment():
         raw_image = load_image(file_bytes) #use this script to load the image on the deployed app
         #raw_image = load_image(raw_name)
         #raw_image = io.imread(raw_name) 
-        
+        if raw_image.dtype != 'uint8':
+            raw_image = exposure.rescale_intensity(raw_image, out_range=(0, 255)).astype('uint8')      
+            
         if (len(raw_image.shape) == 2) or (len(raw_image.shape) ==3 and raw_image.shape[-1]!=3) or (len(raw_image.shape) ==4 and raw_image.shape[-1]!=3):
             raw_image_1D = raw_image
             raw_image = np.zeros((raw_image_1D.shape[0], raw_image_1D.shape[1], raw_image_1D.shape[2], 3), dtype=np.uint8)
