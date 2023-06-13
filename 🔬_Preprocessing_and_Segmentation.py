@@ -6,7 +6,7 @@ from streamlit_drawable_canvas import st_canvas
 import plotly.io
 #import PIL 
 import math
-from PIL import Image
+from PIL import Image, ImageDraw
 from matplotlib import pyplot as plt
 import seaborn as sns
 import statistics as stat
