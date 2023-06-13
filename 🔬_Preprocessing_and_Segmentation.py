@@ -1,6 +1,7 @@
   
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
+from streamlit_drawable_canvas import st_canvas
 #from st_pages import Page, show_pages, hide_pages
 import plotly.io
 #import PIL 
@@ -227,7 +228,76 @@ def Segment():
                 #     show_ani(raw_image_ani) 
                 
                 #st.session_state['frames_displayed'] = True              
-   
+
+            if 'bc_corr_check' not in st.session_state:
+                st.session_state.bc_corr_check = st.radio("Select", ['No background correction', 'Background correction'])  
+                
+            else:
+                st.session_state.bc_corr_check = st.radio("Select an option", ['No background correction', 'Background correction'], index=0 if st.session_state.bc_corr_check == 'No background correction' else 1)
+                
+            if st.session_state.bc_corr_check == 'No background correction':
+                background_corr_img = raw_image_ani
+                                    
+            # Load the image
+            elif st.session_state.bc_corr_check == 'Background correction':
+                background_corr_img = np.zeros(raw_image_ani.shape,dtype=np.int32)                
+                if 'canvas_data' not in st.session_state:
+                    st.session_state.canvas_data = None
+                                                 
+                st.markdown("Draw one region on the image below", help= "The original stack is background corrected based on the drawn region. This corrected stack is not used for segmentation")
+                image_draw = Image.fromarray(raw_image_ani[0])  # Replace 'image.jpg' with the path to your image
+                canvas_height = raw_image_ani.shape[1]
+                canvas_width = raw_image_ani.shape[2]
+                
+                canvas_result = st_canvas(
+                    fill_color="rgba(255, 165, 0, 0)",  # Fixed fill color with some opacity
+                    stroke_width=2,
+                    stroke_color="rgba(255, 0, 0, 0.7)",
+                    background_image=image_draw,
+                    update_streamlit=True,
+                    display_toolbar=True,
+                    height=canvas_height,
+                    width=canvas_width,
+                    drawing_mode="rect",
+                    key="canvas",                        
+                    )
+                if canvas_result.json_data != st.session_state.canvas_data:
+                    st.session_state.canvas_data = canvas_result.json_data    
+                               
+                    
+                for bc in range(0, raw_image_ani.shape[0]):
+                    #rerun_flag = False
+                    #if canvas_result.json_data is not None:
+                    if st.session_state.canvas_data is not None:
+                        objects = pd.json_normalize(st.session_state.canvas_data["objects"]) # need to convert obj to str because PyArrow
+                        
+                        if len(objects) == 0:
+                            background_corr_img = raw_image_ani
+                            break
+                                            
+                        elif len(objects) == 1:
+                            #st.write(raw_image_ani[bc][int(objects['top']):int(objects['top'])+int(objects['height']), int(objects['left']):int(objects['left'])+ int(objects['width'])])
+                            bc_selected_region = raw_image_ani[bc][int(objects['top']):int(objects['top'])+int(objects['height']), int(objects['left']):int(objects['left'])+ int(objects['width'])]
+                            background_corr_img[bc] = np.subtract((raw_image_ani[bc]).astype(np.int32), (np.mean(bc_selected_region)).astype(np.int32))
+                            background_corr_img[bc] = np.clip(background_corr_img[bc], 0, 255)
+                            
+                        elif len(objects) > 1: 
+                            background_corr_img = raw_image_ani
+                            break
+                background_corr_img = background_corr_img.astype(np.uint8)
+                       
+                if len(objects) > 1:
+                    # Delete the first drawn rectangle by removing it from the JSON data
+                    st.error('Please select only one region. Use the toolbar to either undo or delete the selected region(s)')                
+                if len(objects) == 1:
+                    st.write("*_Background Corrected Image_*")
+                    bc_image_frame_num = st.number_input(f"(0 - {raw_image_ani.shape[0]-1})", min_value = 0,max_value = raw_image_ani.shape[0]-1, value = 0, step = 1, key='bc_1')
+                    if bc_image_frame_num==0:
+                        st.image(background_corr_img[0],use_column_width=True,clamp = True)
+                    elif bc_image_frame_num >= 1:
+                        st.image(background_corr_img[bc_image_frame_num],use_column_width=True,clamp = True)
+                
+            st.session_state['background_corr_pg_2'] = background_corr_img
     
             #mean_of_mean = []   
             if 'med_x' not in st.session_state:

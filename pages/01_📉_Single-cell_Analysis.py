@@ -45,6 +45,7 @@ from csbdeep.utils import normalize
 from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode
 import time
 import subprocess 
+import warnings
 
 st.warning('Navigating to another page from the sidebar will remove all selections from the current page')
 # for keys, v in st.session_state.items():
@@ -175,6 +176,11 @@ if 'raw_img_ani_pg_2' not in st.session_state:
 else:
     raw_img_ani_pg_2 = st.session_state['raw_img_ani_pg_2']
     
+if 'background_corr_pg_2' not in st.session_state:
+    pass
+else:
+    background_corr_pg_2 = st.session_state['background_corr_pg_2']
+    
 if 'super_im_rgb_pg_2' not in st.session_state:
     pass
 else:
@@ -200,7 +206,7 @@ else:
     col_arr = []
     
     for frames_pro in range(0,raw_img_ani_pg_2.shape[0]):
-        props_pro = measure.regionprops_table(label_fin, intensity_image=raw_img_ani_pg_2[frames_pro][:,:,0],   #markers
+        props_pro = measure.regionprops_table(label_fin, intensity_image=background_corr_pg_2[frames_pro][:,:,0],   #markers
                                               properties=['label','intensity_mean','image_intensity'])
         col = []
         label_array = props_pro['label']
@@ -544,7 +550,7 @@ else:
                 max_frame = plot_df.loc[plot_df['Smoothed Mean Intensity'] == max_df_value, 'Frame']
                 decay_df = pd.DataFrame()
                 rise_df = pd.DataFrame()
-                if ~((plot_df['Smoothed Mean Intensity'] <= baseline_each) & (plot_df['Frame'] > max(max_frame))).any():
+                if ~((plot_df['Smoothed Mean Intensity'] <= baseline_each) & (plot_df['Frame'] > max(max_frame))).any(): ##trace crosses baseline but never comes back
                     
                     unsmoothed_figure =  px.line(
                                         plot_df,
@@ -596,6 +602,7 @@ else:
                     st.plotly_chart(smoothed_figure, theme="streamlit", use_container_width=True)         
                     st.plotly_chart(unsmoothed_area_figure, theme="streamlit", use_container_width=True)  
                     st.write("No parameter information for the selected label can be found based on the trace")
+                    nested_dict = {}
                 else:
                     if count_max == 1:
                         rise_df['Rise intensity'] = plot_df.loc[(plot_df['Smoothed Mean Intensity'] <= max_df_value) & (plot_df['Smoothed Mean Intensity'] >= baseline_each) & (plot_df['Frame'] <= max(max_frame)) , 'Smoothed Mean Intensity']
@@ -604,8 +611,11 @@ else:
                         rise_df['Frame'] = rise_df.index
                         decay_df = decay_df[decay_df.columns[::-1]]
                         rise_df = rise_df[rise_df.columns[::-1]]
-                        #st.write(rise_df)
-                        missing_value_df = (decay_df.loc[decay_df['Frame'].diff() > 1, 'Frame'].min())-1
+                        test_missing_value_df = next((decay_df['Frame'].iloc[i] + 1 for i in range(len(decay_df['Frame'])-1) if decay_df['Frame'].iloc[i+1] - decay_df['Frame'].iloc[i] > 1), None)
+                        if test_missing_value_df is None:
+                            missing_value_df = None
+                        else:
+                            missing_value_df = test_missing_value_df - 1 
                         missing_value_rise_df = (rise_df.loc[rise_df['Frame'].diff() > 1, 'Frame'].max())-1
                         #st.write(~rise_df['Rise intensity'].isin([baseline_each]).any())
                         # if ~decay_df['Decay intensity'].isin([baseline_each]).any():
@@ -616,13 +626,17 @@ else:
                         #     rise_df.loc[missing_value_rise_df] = new_row_rise
                         
                         #decay_df.loc[decay_df['Frame'] == missing_value_df, 'Decay intensity'] == baseline_each
-                        #st.write(missing_value_rise_df)
+                        #st.write(missing_value_df)
                         if not pd.isna(missing_value_df): #there is a missing value
                             #st.write('here')
                             decay_df = decay_df.loc[decay_df['Frame'] <= missing_value_df]
+                         
                         else:
-                            baseline_frame = max(decay_df.loc[decay_df['Decay intensity'] == baseline_each, 'Frame'])
-                            decay_df = decay_df.loc[(decay_df['Decay intensity'] >= baseline_each) & (decay_df['Frame'] <= baseline_frame)]  
+                            if (decay_df['Decay intensity'] == baseline_each).any():
+                                baseline_frame = max(decay_df.loc[decay_df['Decay intensity'] == baseline_each, 'Frame'])
+                                decay_df = decay_df.loc[(decay_df['Decay intensity'] >= baseline_each) & (decay_df['Frame'] <= baseline_frame)]  
+                            else:
+                                decay_df = decay_df
                             
                         if not pd.isna(missing_value_rise_df):
                             #st.write('here')
@@ -645,7 +659,11 @@ else:
                         decay_df = decay_df[decay_df.columns[::-1]]
                         rise_df = rise_df[rise_df.columns[::-1]]
                         #st.write(decay_df)
-                        missing_value_df = (decay_df.loc[decay_df['Frame'].diff() > 1, 'Frame'].min())-1
+                        test_missing_value_df = next((decay_df['Frame'].iloc[i] + 1 for i in range(len(decay_df['Frame'])-1) if decay_df['Frame'].iloc[i+1] - decay_df['Frame'].iloc[i] > 1), None)
+                        if test_missing_value_df is None:
+                            missing_value_df = None
+                        else:
+                            missing_value_df = test_missing_value_df - 1                         
                         missing_value_rise_df = (rise_df.loc[rise_df['Frame'].diff() > 1, 'Frame'].max())-1
                         #st.write(np.any(rise_df['Rise intensity']) != baseline_each)
                         if ~decay_df['Decay intensity'].isin([baseline_each]).any():
@@ -660,8 +678,11 @@ else:
                             #st.write('here')
                             decay_df = decay_df.loc[decay_df['Frame'] <= missing_value_df]
                         else:
-                            baseline_frame = max(decay_df.loc[decay_df['Decay intensity'] == baseline_each, 'Frame'])
-                            decay_df = decay_df.loc[(decay_df['Decay intensity'] >= baseline_each) & (decay_df['Frame'] <= baseline_frame)]  
+                            if (decay_df['Decay intensity'] == baseline_each).any():
+                                baseline_frame = max(decay_df.loc[decay_df['Decay intensity'] == baseline_each, 'Frame'])
+                                decay_df = decay_df.loc[(decay_df['Decay intensity'] >= baseline_each) & (decay_df['Frame'] <= baseline_frame)]  
+                            else:
+                                decay_df = decay_df
                             
                         if not pd.isna(missing_value_rise_df):
                             #st.write('here')
@@ -673,19 +694,38 @@ else:
                     
                     a_est = decay_df['Decay intensity'].iloc[0]
                     b_est = np.mean(np.diff(decay_df['Decay intensity']))
-                    #bounds = ([0, 0], [100, 100])
-                    #st.write(a_est)
-                    popt_decay, pcov_decay = curve_fit(mono_exp_decay, decay_df['Frame'], decay_df['Decay intensity'], p0=[a_est,b_est])
-                    decay_curve_exp = np.round((mono_exp_decay(decay_df['Frame'], *popt_decay)),3)
-                    
                     a_est_rise = rise_df['Rise intensity'].iloc[0]
                     b_est_rise = np.mean(np.diff(rise_df['Rise intensity']))
                     #bounds = ([0, 0], [100, 100])
                     #st.write(a_est)
-                    popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est,b_est])
-                    rise_curve_exp = np.round((mono_exp_rise(rise_df['Frame'], *popt_rise)),3)                
-                    #st.write(popt_decay)
-                    #st.write(popt_rise)
+                    try:
+                        popt_decay, pcov_decay = curve_fit(mono_exp_decay, decay_df['Frame'], decay_df['Decay intensity'], p0=[a_est,b_est])
+                        
+                    except TypeError:
+                        #st.write("here")
+                        # Replace the error with a warning message
+                        warning_message = "Fitting cannot be performed"
+                        warnings.warn(warning_message, category=UserWarning)
+                        popt_decay, pcov_decay = None, None
+                    else: 
+                        popt_decay, pcov_decay = curve_fit(mono_exp_decay, decay_df['Frame'], decay_df['Decay intensity'], p0=[a_est,b_est])
+                        decay_curve_exp = np.round((mono_exp_decay(decay_df['Frame'], *popt_decay)),3)
+                        #st.write(popt_decay)
+                    try:
+                        popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est,b_est])
+                        
+                    except TypeError:
+                        # Replace the error with a warning message
+                        warning_message = "Fitting cannot be performed"
+                        warnings.warn(warning_message, category=UserWarning)
+                        popt_rise, pcov_rise = None, None
+                        #bounds = ([0, 0], [100, 100])
+                        #st.write(a_est)
+                    else:
+                        popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est,b_est])
+                        rise_curve_exp = np.round((mono_exp_rise(rise_df['Frame'], *popt_rise)),3)                
+                        #st.write(popt_decay)
+                        #st.write(popt_rise)
                     
                     unsmoothed_figure =  px.line(
                                         plot_df,
@@ -756,49 +796,52 @@ else:
         
                 if st.button("Obtain the parameters for selected label",on_click=callback_sing) or st.session_state.button_clicked_sing_para:
                     nested_dict = (pd.DataFrame.from_dict(nested_dict)) 
-                    nested_dict_new = nested_dict[nested_dict['Amplitude']>0.1*baseline_each]
-                    
-                    if nested_dict_new.empty:
+                    if nested_dict.empty:
                         st.write("No parameter information for the selected label can be found based on the trace either because the trace doesn't cross the baseline or because the amplitude is below 10% increase")
                     else:
-                        st.subheader("**_Parameters for selected label across all frames_**")
-                        col_1, col_2 = st.columns(2)
-                        with col_1:
-                            
-                            nested_dict_new["Number of Events"] = nested_dict_new.shape[0]                        
-                            st.write(nested_dict_new)
-                            individual_csv = convert_df(nested_dict_new)           
-                            st.download_button("Press to Download", individual_csv, 'individual_para_data.csv', "text/csv", key='individual_download-csv')
-                            
-                        with col_2:
-                            average_rise_time = np.round(nested_dict_new['Rise time'].mean(),4)
-                            st.write(f"The average rise time based on the selected label across all frames is {average_rise_time}")
-                            rise_rate = np.round(popt_rise[1],4)
-                            st.write(f"The average rise rate based on the selected label across all frames is {rise_rate}")
-                            average_decay_time = np.round(nested_dict_new['Decay time'].mean(),4)
-                            st.write(f"The average decay time based on the selected label across all frames is {average_decay_time}")
-                            decay_rate = np.round(popt_decay[1],4)
-                            st.write(f"The average decay rate based on the selected label across all frames is {decay_rate}")                        
-                            average_duration = np.round(nested_dict_new['Duration'].mean(),4)
-                            st.write(f"The average duration based on the selected label across all frames is {average_duration}")
-                            average_amplitude = np.round(nested_dict_new['Amplitude'].mean(),4)
-                            st.write(f"The average amplitude based on the selected label across all frames is {average_amplitude}")
-                        st.subheader("Distribution plots based on selected label")    
-                        col_3, col_4 = st.columns(2)
-                        with col_3:                                
-                            sns.displot(data = nested_dict_new, x="Rise time",kind='hist')
-                            st.pyplot(plt.gcf())
-                        with col_4: 
-                            sns.displot(data = nested_dict_new, x="Decay time",kind='hist')
-                            st.pyplot(plt.gcf())
-                        col_5, col_6 = st.columns(2)    
-                        with col_5: 
-                            sns.displot(data = nested_dict_new, x="Duration",kind='hist')
-                            st.pyplot(plt.gcf())
-                        with col_6:     
-                            sns.displot(data = nested_dict_new, x="Amplitude",kind='hist')
-                            st.pyplot(plt.gcf())           
-                        st.warning('Navigating to another page from the sidebar will remove all selections from the current page')  
+                        nested_dict_new = nested_dict[nested_dict['Amplitude']>0.1*baseline_each]
+                        #st.write(nested_dict['Amplitude'])
+                        if nested_dict_new.empty:
+                            st.write("No parameter information for the selected label can be found based on the trace either because the trace doesn't cross the baseline or because the amplitude is below 10% increase")
+                        else:
+                            st.subheader("**_Parameters for selected label across all frames_**")
+                            col_1, col_2 = st.columns(2)
+                            with col_1:
+                                
+                                nested_dict_new["Number of Events"] = nested_dict_new.shape[0]                        
+                                st.write(nested_dict_new)
+                                individual_csv = convert_df(nested_dict_new)           
+                                st.download_button("Press to Download", individual_csv, 'individual_para_data.csv', "text/csv", key='individual_download-csv')
+                                
+                            with col_2:
+                                average_rise_time = np.round(nested_dict_new['Rise time'].mean(),4)
+                                st.write(f"The average rise time based on the selected label across all frames is {average_rise_time}")
+                                rise_rate = np.round(popt_rise[1],4)
+                                st.write(f"The average rise rate based on the selected label across all frames is {rise_rate}")
+                                average_decay_time = np.round(nested_dict_new['Decay time'].mean(),4)
+                                st.write(f"The average decay time based on the selected label across all frames is {average_decay_time}")
+                                decay_rate = np.round(popt_decay[1],4)
+                                st.write(f"The average decay rate based on the selected label across all frames is {decay_rate}")                        
+                                average_duration = np.round(nested_dict_new['Duration'].mean(),4)
+                                st.write(f"The average duration based on the selected label across all frames is {average_duration}")
+                                average_amplitude = np.round(nested_dict_new['Amplitude'].mean(),4)
+                                st.write(f"The average amplitude based on the selected label across all frames is {average_amplitude}")
+                            st.subheader("Distribution plots based on selected label")    
+                            col_3, col_4 = st.columns(2)
+                            with col_3:                                
+                                sns.displot(data = nested_dict_new, x="Rise time",kind='hist')
+                                st.pyplot(plt.gcf())
+                            with col_4: 
+                                sns.displot(data = nested_dict_new, x="Decay time",kind='hist')
+                                st.pyplot(plt.gcf())
+                            col_5, col_6 = st.columns(2)    
+                            with col_5: 
+                                sns.displot(data = nested_dict_new, x="Duration",kind='hist')
+                                st.pyplot(plt.gcf())
+                            with col_6:     
+                                sns.displot(data = nested_dict_new, x="Amplitude",kind='hist')
+                                st.pyplot(plt.gcf())           
+                            st.warning('Navigating to another page from the sidebar will remove all selections from the current page')  
                     
                     
         if bleach_corr_check == 'Bleaching correction':
@@ -1225,7 +1268,8 @@ else:
                     #st.plotly_chart(figure_2, theme="streamlit", use_container_width=True)
                     st.plotly_chart(unsmoothed_figure, theme="streamlit", use_container_width=True)
                     st.plotly_chart(smoothed_figure, theme="streamlit", use_container_width=True)  
-                    st.write("No parameter information for the selected label can be found based on the trace")  
+                    st.write("No parameter information for the selected label can be found based on the trace") 
+                    nested_dict = {}
                 else:
                     if count_max == 1:
                         rise_df['Rise intensity'] = plot_df_corr.loc[(plot_df_corr['Smoothed Mean Intensity'] <= max_df_value) & (plot_df_corr['Smoothed Mean Intensity'] >= baseline_corr_each) & (plot_df_corr['Frame'] <= max(max_frame)) , 'Smoothed Mean Intensity']
@@ -1234,8 +1278,12 @@ else:
                         rise_df['Frame'] = rise_df.index
                         decay_df = decay_df[decay_df.columns[::-1]]
                         rise_df = rise_df[rise_df.columns[::-1]]
-                        #st.write(rise_df)
-                        missing_value_df = (decay_df.loc[decay_df['Frame'].diff() > 1, 'Frame'].min())-1
+                        test_missing_value_df = next((decay_df['Frame'].iloc[i] + 1 for i in range(len(decay_df['Frame'])-1) if decay_df['Frame'].iloc[i+1] - decay_df['Frame'].iloc[i] > 1), None)
+                        if test_missing_value_df is None:
+                            missing_value_df = None
+                        else:
+                            missing_value_df = test_missing_value_df - 1                         
+                        
                         missing_value_rise_df = (rise_df.loc[rise_df['Frame'].diff() > 1, 'Frame'].max())-1
                         #st.write(~rise_df['Rise intensity'].isin([baseline_each]).any())
                         if ~decay_df['Decay intensity'].isin([baseline_corr_each]).any():
@@ -1251,8 +1299,11 @@ else:
                             #st.write('here')
                             decay_df = decay_df.loc[decay_df['Frame'] <= missing_value_df]
                         else:
-                            baseline_frame = max(decay_df.loc[decay_df['Decay intensity'] == baseline_corr_each, 'Frame'])
-                            decay_df = decay_df.loc[(decay_df['Decay intensity'] >= baseline_corr_each) & (decay_df['Frame'] <= baseline_frame)]  
+                            if (decay_df['Decay intensity'] == baseline_corr_each).any():
+                                baseline_frame = max(decay_df.loc[decay_df['Decay intensity'] == baseline_corr_each, 'Frame'])
+                                decay_df = decay_df.loc[(decay_df['Decay intensity'] >= baseline_corr_each) & (decay_df['Frame'] <= baseline_frame)]  
+                            else:
+                                decay_df = decay_df
                             
                         if not pd.isna(missing_value_rise_df):
                             #st.write('here')
@@ -1275,7 +1326,11 @@ else:
                         decay_df = decay_df[decay_df.columns[::-1]]
                         rise_df = rise_df[rise_df.columns[::-1]]
                         #st.write(decay_df)
-                        missing_value_df = (decay_df.loc[decay_df['Frame'].diff() > 1, 'Frame'].min())-1
+                        test_missing_value_df = next((decay_df['Frame'].iloc[i] + 1 for i in range(len(decay_df['Frame'])-1) if decay_df['Frame'].iloc[i+1] - decay_df['Frame'].iloc[i] > 1), None)
+                        if test_missing_value_df is None:
+                            missing_value_df = None
+                        else:
+                            missing_value_df = test_missing_value_df - 1    
                         missing_value_rise_df = (rise_df.loc[rise_df['Frame'].diff() > 1, 'Frame'].max())-1
                         #st.write(np.any(rise_df['Rise intensity']) != baseline_each)
                         if ~decay_df['Decay intensity'].isin([baseline_corr_each]).any():
@@ -1290,8 +1345,11 @@ else:
                             #st.write('here')
                             decay_df = decay_df.loc[decay_df['Frame'] <= missing_value_df]
                         else:
-                            baseline_frame = max(decay_df.loc[decay_df['Decay intensity'] == baseline_corr_each, 'Frame'])
-                            decay_df = decay_df.loc[(decay_df['Decay intensity'] >= baseline_corr_each) & (decay_df['Frame'] <= baseline_frame)]  
+                            if (decay_df['Decay intensity'] == baseline_corr_each).any():
+                                baseline_frame = max(decay_df.loc[decay_df['Decay intensity'] == baseline_corr_each, 'Frame'])
+                                decay_df = decay_df.loc[(decay_df['Decay intensity'] >= baseline_corr_each) & (decay_df['Frame'] <= baseline_frame)]  
+                            else:
+                                decay_df = decay_df
                             
                         if not pd.isna(missing_value_rise_df):
                             #st.write('here')
@@ -1307,7 +1365,6 @@ else:
                     #st.write(a_est)
                     popt_decay, pcov_decay = curve_fit(mono_exp_decay, decay_df['Frame'], decay_df['Decay intensity'], p0=[a_est,b_est])
                     decay_curve_exp = np.round((mono_exp_decay(decay_df['Frame'], *popt_decay)),3)
-                    
                     a_est_rise = rise_df['Rise intensity'].iloc[0]
                     b_est_rise = np.mean(np.diff(rise_df['Rise intensity']))
                     #bounds = ([0, 0], [100, 100])
@@ -1326,49 +1383,54 @@ else:
     
             if st.button("Obtain the parameters for selected label",on_click=callback_sing) or st.session_state.button_clicked_sing_para:
                 nested_dict = (pd.DataFrame.from_dict(nested_dict)) 
-                nested_dict_new = nested_dict[nested_dict['Amplitude']>0.1*baseline_corr_each]
-                if nested_dict_new.empty:
+                if nested_dict.empty:
                     st.write("No parameter information for the selected label can be found based on the trace either because the trace doesn't cross the baseline or because the amplitude is below 10% increase")
                 else:
-                    st.subheader("**_Parameters for selected label across all frames_**")
-                    col_1, col_2 = st.columns(2)
-                    with col_1:
-                        nested_dict_new = nested_dict[(nested_dict['Amplitude']) == max((nested_dict['Amplitude']))]
-                        #st.write(nested_dict_new.shape[0])
-                        nested_dict_new["Number of Events"] = nested_dict_new.shape[0]
-                        st.write(nested_dict_new)
-                        individual_csv = convert_df(nested_dict_new)           
-                        st.download_button("Press to Download", individual_csv, 'individual_para_data.csv', "text/csv", key='individual_download-csv')
-                        
-                    with col_2:
-                        average_rise_time = np.round(nested_dict_new['Rise time'].mean(),4)
-                        st.write(f"The average rise time based on the selected labels across all frames is {average_rise_time}")
-                        rise_rate = np.round(popt_rise[1],4)
-                        st.write(f"The average rise rate based on the selected label across all frames is {rise_rate}")                        
-                        average_decay_time = np.round(nested_dict_new['Decay time'].mean(),4)
-                        st.write(f"The average decay time based on the selected labels across all frames is {average_decay_time}")
-                        decay_rate = np.round(popt_decay[1],4)
-                        st.write(f"The average decay rate based on the selected label across all frames is {decay_rate}")                           
-                        average_duration = np.round(nested_dict_new['Duration'].mean(),4)
-                        st.write(f"The average duration based on the selected labels across all frames is {average_duration}")
-                        average_amplitude = np.round(nested_dict_new['Amplitude'].mean(),4)
-                        st.write(f"The average amplitude based on the selected labels across all frames is {average_amplitude}")
-                    st.subheader("Distribution plots based on selected label")    
-                    col_3, col_4 = st.columns(2)
-                    with col_3:                                
-                        sns.displot(data = nested_dict_new, x="Rise time",kind='hist')
-                        st.pyplot(plt.gcf())
-                    with col_4: 
-                        sns.displot(data = nested_dict_new, x="Decay time",kind='hist')
-                        st.pyplot(plt.gcf())
-                    col_5, col_6 = st.columns(2)    
-                    with col_5: 
-                        sns.displot(data = nested_dict_new, x="Duration",kind='hist')
-                        st.pyplot(plt.gcf())
-                    with col_6:     
-                        sns.displot(data = nested_dict_new, x="Amplitude",kind='hist')
-                        st.pyplot(plt.gcf())           
-                    st.warning('Navigating to another page from the sidebar will remove all selections from the current page')
+                    nested_dict_new = nested_dict[nested_dict['Amplitude']>0.1*baseline_corr_each]
+                    #st.write(nested_dict['Amplitude'])
+                    if nested_dict_new.empty:
+                        st.write("No parameter information for the selected label can be found based on the trace either because the trace doesn't cross the baseline or because the amplitude is below 10% increase")                
+                
+                    else:
+                        st.subheader("**_Parameters for selected label across all frames_**")
+                        col_1, col_2 = st.columns(2)
+                        with col_1:
+                            nested_dict_new = nested_dict[(nested_dict['Amplitude']) == max((nested_dict['Amplitude']))]
+                            #st.write(nested_dict_new.shape[0])
+                            nested_dict_new["Number of Events"] = nested_dict_new.shape[0]
+                            st.write(nested_dict_new)
+                            individual_csv = convert_df(nested_dict_new)           
+                            st.download_button("Press to Download", individual_csv, 'individual_para_data.csv', "text/csv", key='individual_download-csv')
+                            
+                        with col_2:
+                            average_rise_time = np.round(nested_dict_new['Rise time'].mean(),4)
+                            st.write(f"The average rise time based on the selected labels across all frames is {average_rise_time}")
+                            rise_rate = np.round(popt_rise[1],4)
+                            st.write(f"The average rise rate based on the selected label across all frames is {rise_rate}")                        
+                            average_decay_time = np.round(nested_dict_new['Decay time'].mean(),4)
+                            st.write(f"The average decay time based on the selected labels across all frames is {average_decay_time}")
+                            decay_rate = np.round(popt_decay[1],4)
+                            st.write(f"The average decay rate based on the selected label across all frames is {decay_rate}")                           
+                            average_duration = np.round(nested_dict_new['Duration'].mean(),4)
+                            st.write(f"The average duration based on the selected labels across all frames is {average_duration}")
+                            average_amplitude = np.round(nested_dict_new['Amplitude'].mean(),4)
+                            st.write(f"The average amplitude based on the selected labels across all frames is {average_amplitude}")
+                        st.subheader("Distribution plots based on selected label")    
+                        col_3, col_4 = st.columns(2)
+                        with col_3:                                
+                            sns.displot(data = nested_dict_new, x="Rise time",kind='hist')
+                            st.pyplot(plt.gcf())
+                        with col_4: 
+                            sns.displot(data = nested_dict_new, x="Decay time",kind='hist')
+                            st.pyplot(plt.gcf())
+                        col_5, col_6 = st.columns(2)    
+                        with col_5: 
+                            sns.displot(data = nested_dict_new, x="Duration",kind='hist')
+                            st.pyplot(plt.gcf())
+                        with col_6:     
+                            sns.displot(data = nested_dict_new, x="Amplitude",kind='hist')
+                            st.pyplot(plt.gcf())           
+                        st.warning('Navigating to another page from the sidebar will remove all selections from the current page')
        
     ####################################  Parameter calcualtion for all the detected cells  ###############################################################################
         # if st.button("**_Go to Multiple Intensity Traces_**", help = 'Clicking on this switches to a new page and all selection in the current page will be lost'):
