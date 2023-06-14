@@ -2,7 +2,7 @@ csbdeep==0.7.3
 ffmpeg-python
 imageio==2.19.3
 imutils==0.5.4
-keras==2.9.0
+keras==2.12.0
 Keras-Applications==1.0.8
 Keras-Preprocessing==1.1.2
 numpy==1.21.5
@@ -23,6 +23,6 @@ streamlit-extras==0.2.7
 tensorboard==2.13.0
 tensorboard-data-server==0.7.1
 tensorboard-plugin-wit==1.8.1
-tensorflow==2.9.1
-tensorflow-estimator==2.9.0
+tensorflow==2.12.0
+tensorflow-estimator==2.12.0
 tensorflow-io-gcs-filesystem==0.26.0
