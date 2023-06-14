@@ -253,7 +253,7 @@ def Segment():
                     fill_color="rgba(255, 165, 0, 0)",  # Fixed fill color with some opacity
                     stroke_width=2,
                     stroke_color="rgba(255, 0, 0, 0.7)",
-                    background_image=Image.fromarray(raw_image_ani[0]),
+                    background_image=image_draw,
                     update_streamlit=True,
                     display_toolbar=True,
                     height=canvas_height,
