@@ -19,9 +19,9 @@ statsmodels==0.13.2
 streamlit==1.23.1
 streamlit-aggrid==0.3.3
 streamlit-drawable-canvas==0.9.3
-streamlit-extras==0.2.6
-tensorboard==2.9.1
-tensorboard-data-server==0.6.1
+streamlit-extras==0.2.7
+tensorboard==2.13.0
+tensorboard-data-server==0.7.1
 tensorboard-plugin-wit==1.8.1
 tensorflow==2.9.1
 tensorflow-estimator==2.9.0
