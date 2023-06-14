@@ -248,12 +248,12 @@ def Segment():
                 image_draw = Image.fromarray(raw_image_ani[0])  # Replace 'image.jpg' with the path to your image
                 canvas_height = raw_image_ani.shape[1]
                 canvas_width = raw_image_ani.shape[2]
-                st.image(image_draw)
+                
                 canvas_result = st_canvas(
                     fill_color="rgba(255, 165, 0, 0)",  # Fixed fill color with some opacity
                     stroke_width=2,
                     stroke_color="rgba(255, 0, 0, 0.7)",
-                    background_image=image_draw,
+                    background_image=Image.fromarray(raw_image_ani[0]),
                     update_streamlit=True,
                     display_toolbar=True,
                     height=canvas_height,
