@@ -458,7 +458,7 @@ else:
         
         
                 csv = convert_df(plot_df)           
-                st.download_button("Press to Download", csv, 'intensity_data.csv', "text/csv", key='download-csv')
+                st.download_button("Press to Download", csv, 'intensity_data.csv', "text/csv", key='download-csv_1')
                 #st.plotly_chart(figure, theme="streamlit", use_container_width=True)
                 #st.plotly_chart(figure_2, theme="streamlit", use_container_width=True)
                 
@@ -594,7 +594,7 @@ else:
             
             
                     csv = convert_df(plot_df)           
-                    st.download_button("Press to Download", csv, 'intensity_data.csv', "text/csv", key='download-csv')
+                    st.download_button("Press to Download", csv, 'intensity_data.csv', "text/csv", key='download-csv_2')
                     #st.plotly_chart(figure, theme="streamlit", use_container_width=True)
                     #st.plotly_chart(figure_2, theme="streamlit", use_container_width=True)
                     
@@ -709,32 +709,39 @@ else:
                     try:
                         popt_decay, pcov_decay = curve_fit(mono_exp_decay, decay_df['Frame'], decay_df['Decay intensity'], p0=[a_est,b_est])
                         
-                    except TypeError:
+                    except (TypeError, RuntimeError) as e:
+                        error_message = str(e)
+                        if error_message == "Optimal parameters not found: Number of calls to function has reached maxfev = 600":
+                            # Handle the error and continue to the next iteration
+                            pass
                         #st.write("here")
                         # Replace the error with a warning message
-                        warning_message = "Fitting cannot be performed"
-                        warnings.warn(warning_message, category=UserWarning)
-                        popt_decay, pcov_decay = None, None
-                        
+                        else:
+                            warning_message = "Fitting cannot be performed"
+                            warnings.warn(warning_message, category=UserWarning)
+                            popt_decay, pcov_decay = None, None
                     else: 
                         popt_decay, pcov_decay = curve_fit(mono_exp_decay, decay_df['Frame'], decay_df['Decay intensity'], p0=[a_est,b_est])
                         decay_curve_exp = np.round((mono_exp_decay(decay_df['Frame'], *popt_decay)),3)
-                        #st.write(popt_decay)
+                        
+                    
                     try:
                         popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est,b_est])
                         
-                    except TypeError:
+                    except (TypeError, RuntimeError) as e:
+                        error_message = str(e)
+                        if error_message == "Optimal parameters not found: Number of calls to function has reached maxfev = 600":
+                            pass
                         # Replace the error with a warning message
-                        warning_message = "Fitting cannot be performed"
-                        warnings.warn(warning_message, category=UserWarning)
-                        popt_rise, pcov_rise = None, None
-                        #bounds = ([0, 0], [100, 100])
-                        #st.write(a_est)
+                        else:                           
+                            warning_message = "Fitting cannot be performed"
+                            warnings.warn(warning_message, category=UserWarning)
+                            popt_rise, pcov_rise = None, None
+                            #bounds = ([0, 0], [100, 100])
+                            #st.write(a_est)
                     else:
                         popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est,b_est])
-                        rise_curve_exp = np.round((mono_exp_rise(rise_df['Frame'], *popt_rise)),3)                
-                        #st.write(popt_decay)
-                        #st.write(popt_rise)
+                        rise_curve_exp = np.round((mono_exp_rise(rise_df['Frame'], *popt_rise)),3)   
                     
                     unsmoothed_figure =  px.line(
                                         plot_df,
@@ -794,7 +801,7 @@ else:
             
                     
                     csv = convert_df(plot_df)           
-                    st.download_button("Press to Download", csv, 'intensity_data.csv', "text/csv", key='download-csv')
+                    st.download_button("Press to Download", csv, 'intensity_data.csv', "text/csv", key='download-csv_3')
                     #st.plotly_chart(figure, theme="streamlit", use_container_width=True)
                     #st.plotly_chart(figure_2, theme="streamlit", use_container_width=True)
                     st.plotly_chart(unsmoothed_figure, theme="streamlit", use_container_width=True)
@@ -1023,7 +1030,7 @@ else:
         
         
                 csv = convert_df(plot_df)           
-                st.download_button("Press to Download", csv, 'intensity_data.csv', "text/csv", key='download-csv')
+                st.download_button("Press to Download", csv, 'intensity_data.csv', "text/csv", key='download-csv_4')
                 #st.plotly_chart(figure, theme="streamlit", use_container_width=True)
                 #st.plotly_chart(figure_2, theme="streamlit", use_container_width=True)
                 
@@ -1187,7 +1194,7 @@ else:
         
                 
                 csv = convert_df(plot_df)           
-                st.download_button("Press to Download", csv, 'intensity_data.csv', "text/csv", key='download-csv')
+                st.download_button("Press to Download", csv, 'intensity_data.csv', "text/csv", key='download-csv_5')
                 #st.plotly_chart(figure, theme="streamlit", use_container_width=True)
                 #st.plotly_chart(figure_2, theme="streamlit", use_container_width=True)
                 st.plotly_chart(unsmoothed_figure, theme="streamlit", use_container_width=True)
@@ -1273,7 +1280,7 @@ else:
             
                     
                     csv = convert_df(plot_df)           
-                    st.download_button("Press to Download", csv, 'intensity_data.csv', "text/csv", key='download-csv')
+                    st.download_button("Press to Download", csv, 'intensity_data.csv', "text/csv", key='download-csv_6')
                     #st.plotly_chart(figure, theme="streamlit", use_container_width=True)
                     #st.plotly_chart(figure_2, theme="streamlit", use_container_width=True)
                     st.plotly_chart(unsmoothed_figure, theme="streamlit", use_container_width=True)
@@ -1386,32 +1393,37 @@ else:
                     try:
                         popt_decay, pcov_decay = curve_fit(mono_exp_decay, decay_df['Frame'], decay_df['Decay intensity'], p0=[a_est,b_est])
                         
-                    except TypeError:
+                    except (TypeError, RuntimeError) as e:
+                        error_message = str(e)
+                        if error_message == "Optimal parameters not found: Number of calls to function has reached maxfev = 600":
+                            # Handle the error and continue to the next iteration
+                            pass
                         #st.write("here")
                         # Replace the error with a warning message
-                        warning_message = "Fitting cannot be performed"
-                        warnings.warn(warning_message, category=UserWarning)
-                        popt_decay, pcov_decay = None, None
-                        
+                        else:
+                            warning_message = "Fitting cannot be performed"
+                            warnings.warn(warning_message, category=UserWarning)
+                            popt_decay, pcov_decay = None, None
                     else: 
                         popt_decay, pcov_decay = curve_fit(mono_exp_decay, decay_df['Frame'], decay_df['Decay intensity'], p0=[a_est,b_est])
                         decay_curve_exp = np.round((mono_exp_decay(decay_df['Frame'], *popt_decay)),3)
-                        #st.write(popt_decay)
                     try:
                         popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est,b_est])
                         
-                    except TypeError:
+                    except (TypeError, RuntimeError) as e:
+                        error_message = str(e)
+                        if error_message == "Optimal parameters not found: Number of calls to function has reached maxfev = 600":
+                            pass
                         # Replace the error with a warning message
-                        warning_message = "Fitting cannot be performed"
-                        warnings.warn(warning_message, category=UserWarning)
-                        popt_rise, pcov_rise = None, None
-                        #bounds = ([0, 0], [100, 100])
-                        #st.write(a_est)
+                        else:                           
+                            warning_message = "Fitting cannot be performed"
+                            warnings.warn(warning_message, category=UserWarning)
+                            popt_rise, pcov_rise = None, None
+                            #bounds = ([0, 0], [100, 100])
+                            #st.write(a_est)
                     else:
                         popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est,b_est])
-                        rise_curve_exp = np.round((mono_exp_rise(rise_df['Frame'], *popt_rise)),3)                
-                        #st.write(popt_decay)
-                        #st.write(popt_rise)                    
+                        rise_curve_exp = np.round((mono_exp_rise(rise_df['Frame'], *popt_rise)),3)   
    
                     phot_corr_figure.add_trace(go.Scatter(x=[0, raw_img_ani_pg_2.shape[0]], y=[baseline_corr_each, baseline_corr_each], mode='lines', name='Baseline', line=dict(color='Green', width=2)))
                     
