@@ -526,12 +526,12 @@ else:
                                 missing_value_df = test_missing_value_df - 1                         
                             missing_value_rise_df = (rise_df.loc[rise_df['Frame'].diff() > 1, 'Frame'].max())-1
                             #st.write(np.any(rise_df['Rise intensity']) != baseline_each)
-                            if ~decay_df['Decay intensity'].isin([baseline_each]).any():
-                                new_row_decay = {'Frame':  missing_value_df, 'Decay intensity': baseline_each}
-                                decay_df.loc[len(decay_df)] = new_row_decay
-                            if ~rise_df['Rise intensity'].isin([baseline_each]).any():
-                                new_row_rise = {'Frame':  missing_value_rise_df, 'Rise intensity': baseline_each}
-                                rise_df.loc[missing_value_rise_df] = new_row_rise
+                            # if ~decay_df['Decay intensity'].isin([baseline_each]).any():
+                            #     new_row_decay = {'Frame':  missing_value_df, 'Decay intensity': baseline_each}
+                            #     decay_df.loc[len(decay_df)] = new_row_decay
+                            # if ~rise_df['Rise intensity'].isin([baseline_each]).any():
+                            #     new_row_rise = {'Frame':  missing_value_rise_df, 'Rise intensity': baseline_each}
+                            #     rise_df.loc[missing_value_rise_df] = new_row_rise
                             #decay_df.loc[decay_df['Frame'] == missing_value_df, 'Decay intensity'] == baseline_each
                             #st.write(missing_value_rise_df)
                             if not pd.isna(missing_value_df):
@@ -582,7 +582,7 @@ else:
 
                             #st.write(popt_decay)
                         try:
-                            popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est,b_est])
+                            popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est_rise,b_est_rise])
                             
                         except (TypeError, RuntimeError) as e:
                             error_message = str(e)
@@ -596,7 +596,7 @@ else:
                                 #bounds = ([0, 0], [100, 100])
                                 #st.write(a_est)
                         else:
-                            popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est,b_est])
+                            popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est_rise,b_est_rise])
                             rise_curve_exp = np.round((mono_exp_rise(rise_df['Frame'], *popt_rise)),3)                
                             #st.write(popt_decay)
                             #st.write(popt_rise)
@@ -902,12 +902,12 @@ else:
                                 missing_value_df = test_missing_value_df - 1                         
                             missing_value_rise_df = (rise_df.loc[rise_df['Frame'].diff() > 1, 'Frame'].max())-1
                             #st.write(np.any(rise_df['Rise intensity']) != baseline_each)
-                            if ~decay_df['Decay intensity'].isin([baseline_corr_each]).any():
-                                new_row_decay = {'Frame':  missing_value_df, 'Decay intensity': baseline_corr_each}
-                                decay_df.loc[len(decay_df)] = new_row_decay
-                            if ~rise_df['Rise intensity'].isin([baseline_corr_each]).any():
-                                new_row_rise = {'Frame':  missing_value_rise_df, 'Rise intensity': baseline_corr_each}
-                                rise_df.loc[missing_value_rise_df] = new_row_rise
+                            # if ~decay_df['Decay intensity'].isin([baseline_corr_each]).any():
+                            #     new_row_decay = {'Frame':  missing_value_df, 'Decay intensity': baseline_corr_each}
+                            #     decay_df.loc[len(decay_df)] = new_row_decay
+                            # if ~rise_df['Rise intensity'].isin([baseline_corr_each]).any():
+                            #     new_row_rise = {'Frame':  missing_value_rise_df, 'Rise intensity': baseline_corr_each}
+                            #     rise_df.loc[missing_value_rise_df] = new_row_rise
                             #decay_df.loc[decay_df['Frame'] == missing_value_df, 'Decay intensity'] == baseline_each
                             #st.write(missing_value_rise_df)
                             if not pd.isna(missing_value_df):
@@ -958,7 +958,7 @@ else:
 
                             #st.write(popt_decay)
                         try:
-                            popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est,b_est])
+                            popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est_rise,b_est_rise])
                             
                         except (TypeError, RuntimeError) as e:
                             error_message = str(e)
@@ -972,7 +972,7 @@ else:
                                 #bounds = ([0, 0], [100, 100])
                                 #st.write(a_est)
                         else:
-                            popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est,b_est])
+                            popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est_rise,b_est_rise])
                             rise_curve_exp = np.round((mono_exp_rise(rise_df['Frame'], *popt_rise)),3)                
                             #st.write(popt_decay)
                             #st.write(popt_rise)

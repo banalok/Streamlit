@@ -376,72 +376,75 @@ def Segment():
                 label = st.session_state[f"super_im_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"]      
 
                 #p.write("Done!")  
-                props = measure.regionprops(label)   
-                diam = [props[obj_s]['equivalent_diameter_area'] for obj_s in range(0,len(props))]
-                labels_to_keep_len = len([prop['label'] for prop in props if prop['equivalent_diameter_area'] > 0.5*stat.mean(diam)])
-                labels_to_keep = list(range(1, labels_to_keep_len))
-                label_f = np.zeros_like(label, dtype= 'uint8')
-                for labels in labels_to_keep:
-                    label_f[label==labels] = labels    
-                #st.image(label_f,use_column_width=True,clamp = True)
-                props_to_sort = measure.regionprops(label_f)
-                centroid_positions = [prop_sort.centroid for prop_sort in props_to_sort]
-                sorted_indices = np.lexsort((np.array(centroid_positions)[:, 1], np.array(centroid_positions)[:, 0]))
-                # label the regions based on the sorted indices
-                final_label = np.zeros_like(label_f, dtype= 'uint8')
-                for i, idx in enumerate(sorted_indices, start=1):
-                    final_label[label_f == (idx + 1)] = i
-
-                    # st.write(seg_im.shape)
-                    # st.write("Segmented image")
-                    # st.image(seg_im,use_column_width=True,clamp = True) 
-                    # rgba_image = Image.fromarray(seg_im, "RGB")
-                    # #rgb_image = seg_im.convert("RGB")
-                    # rgb_image = np.array(rgba_image)
-                    # get_image_download_link(rgb_image,"segmented.png")
-                #st.write(final_label.shape)
-                #st.image(final_label,use_column_width=True,clamp = True)
-                st.session_state['final_label_pg_2'] = final_label
-                final_label_rgb = cv2.cvtColor(final_label, cv2.COLOR_GRAY2RGB)
-                super_im_rgb = cv2.cvtColor(super_im, cv2.COLOR_GRAY2RGB)
-                label_list_len = len([prop['label'] for prop in props_to_sort if prop['label']])
-                label_list = list(range(1,label_list_len+1))
-                st.session_state['label_list_pg_2'] = label_list
-                for label in np.unique(label_list):                                 ####chek label list####                            
-                  	 #if the label is zero, we are examining the 'background'
-                      #so simply ignore it
-                        if label == 0:
-                            continue                
-                        mask = np.zeros(CLAHE_img.shape, dtype="uint8")
-                        mask[final_label == label] = 255
-                        #detect contours in the mask and grab the largest one
-                        cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
-                            cv2.CHAIN_APPROX_SIMPLE)
-                        cnts = imutils.grab_contours(cnts)
-                        c = max(cnts, key=cv2.contourArea)
-                        # draw a circle enclosing the object
-                        ((x, y), r) = cv2.minEnclosingCircle(c)
-                        cv2.circle(final_label_rgb, (int(x), int(y)), int(r), (255, 0, 0), 1)
-                        cv2.putText(final_label_rgb, "{}".format(label), (int(x) - 10, int(y)),
-                         	cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)
-                        cv2.circle(super_im_rgb, (int(x), int(y)), int(r), (255, 0, 0), 1)
-                        cv2.putText(super_im_rgb, "{}".format(label), (int(x) - 10, int(y)),
-                         	cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)                          
-                #with st.expander("*_Show the segmented and labeled image_*"):
-                st.markdown("*_Segmented and labeled image overlayed on the collapsed image_*", help = 'The red circles just show the location of the segmented labels and are not the actual segmented labels themselves')
-                st.image(super_im_rgb,use_column_width=True,clamp = True)
-                st.markdown("*_Segmented and labeled image overlayed on a black background_*", help = 'The red circles just show the location of the segmented labels and are not the actual segmented labels themselves')
-                st.image(final_label_rgb,use_column_width=True,clamp = True)
-                st.session_state['final_label_rgb_pg_2'] = final_label_rgb
-                st.session_state['super_im_rgb_pg_2'] = super_im_rgb        
-                
-                # col_pg_1, col_pg_2, col_pg_3 = st.columns(3)
-                # with col_pg_1:
-                #     if st.button("**_Single Intensity Traces_**"):
-                #         switch_page('Single intensity traces')
-                # with col_pg_3:
-                #     if st.button("**_Multiple Intensity Traces_**"):
-                #         switch_page('📉 Multiple intensity traces')                                
+                props = measure.regionprops(label)
+                if len(props) == 0:
+                    st.warning("No region of interests found. Please use another file or try pre-processing.")
+                else:
+                    diam = [props[obj_s]['equivalent_diameter_area'] for obj_s in range(0,len(props))]
+                    labels_to_keep_len = len([prop['label'] for prop in props if prop['equivalent_diameter_area'] > 0.5*stat.mean(diam)])
+                    labels_to_keep = list(range(1, labels_to_keep_len))
+                    label_f = np.zeros_like(label, dtype= 'uint8')
+                    for labels in labels_to_keep:
+                        label_f[label==labels] = labels    
+                    #st.image(label_f,use_column_width=True,clamp = True)
+                    props_to_sort = measure.regionprops(label_f)
+                    centroid_positions = [prop_sort.centroid for prop_sort in props_to_sort]
+                    sorted_indices = np.lexsort((np.array(centroid_positions)[:, 1], np.array(centroid_positions)[:, 0]))
+                    # label the regions based on the sorted indices
+                    final_label = np.zeros_like(label_f, dtype= 'uint8')
+                    for i, idx in enumerate(sorted_indices, start=1):
+                        final_label[label_f == (idx + 1)] = i
+    
+                        # st.write(seg_im.shape)
+                        # st.write("Segmented image")
+                        # st.image(seg_im,use_column_width=True,clamp = True) 
+                        # rgba_image = Image.fromarray(seg_im, "RGB")
+                        # #rgb_image = seg_im.convert("RGB")
+                        # rgb_image = np.array(rgba_image)
+                        # get_image_download_link(rgb_image,"segmented.png")
+                    #st.write(final_label.shape)
+                    #st.image(final_label,use_column_width=True,clamp = True)
+                    st.session_state['final_label_pg_2'] = final_label
+                    final_label_rgb = cv2.cvtColor(final_label, cv2.COLOR_GRAY2RGB)
+                    super_im_rgb = cv2.cvtColor(super_im, cv2.COLOR_GRAY2RGB)
+                    label_list_len = len([prop['label'] for prop in props_to_sort if prop['label']])
+                    label_list = list(range(1,label_list_len+1))
+                    st.session_state['label_list_pg_2'] = label_list
+                    for label in np.unique(label_list):                                 ####chek label list####                            
+                      	 #if the label is zero, we are examining the 'background'
+                          #so simply ignore it
+                            if label == 0:
+                                continue                
+                            mask = np.zeros(CLAHE_img.shape, dtype="uint8")
+                            mask[final_label == label] = 255
+                            #detect contours in the mask and grab the largest one
+                            cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
+                                cv2.CHAIN_APPROX_SIMPLE)
+                            cnts = imutils.grab_contours(cnts)
+                            c = max(cnts, key=cv2.contourArea)
+                            # draw a circle enclosing the object
+                            ((x, y), r) = cv2.minEnclosingCircle(c)
+                            cv2.circle(final_label_rgb, (int(x), int(y)), int(r), (255, 0, 0), 1)
+                            cv2.putText(final_label_rgb, "{}".format(label), (int(x) - 10, int(y)),
+                             	cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)
+                            cv2.circle(super_im_rgb, (int(x), int(y)), int(r), (255, 0, 0), 1)
+                            cv2.putText(super_im_rgb, "{}".format(label), (int(x) - 10, int(y)),
+                             	cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)                          
+                    #with st.expander("*_Show the segmented and labeled image_*"):
+                    st.markdown("*_Segmented and labeled image overlayed on the collapsed image_*", help = 'The red circles just show the location of the segmented labels and are not the actual segmented labels themselves')
+                    st.image(super_im_rgb,use_column_width=True,clamp = True)
+                    st.markdown("*_Segmented and labeled image overlayed on a black background_*", help = 'The red circles just show the location of the segmented labels and are not the actual segmented labels themselves')
+                    st.image(final_label_rgb,use_column_width=True,clamp = True)
+                    st.session_state['final_label_rgb_pg_2'] = final_label_rgb
+                    st.session_state['super_im_rgb_pg_2'] = super_im_rgb        
+                    
+                    # col_pg_1, col_pg_2, col_pg_3 = st.columns(3)
+                    # with col_pg_1:
+                    #     if st.button("**_Single Intensity Traces_**"):
+                    #         switch_page('Single intensity traces')
+                    # with col_pg_3:
+                    #     if st.button("**_Multiple Intensity Traces_**"):
+                    #         switch_page('📉 Multiple intensity traces')                                
                 
          
                                                                          

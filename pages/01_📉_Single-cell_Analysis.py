@@ -670,12 +670,14 @@ else:
                             missing_value_df = test_missing_value_df - 1                         
                         missing_value_rise_df = (rise_df.loc[rise_df['Frame'].diff() > 1, 'Frame'].max())-1
                         #st.write(np.any(rise_df['Rise intensity']) != baseline_each)
-                        if ~decay_df['Decay intensity'].isin([baseline_each]).any():
-                            new_row_decay = {'Frame':  missing_value_df, 'Decay intensity': baseline_each}
-                            decay_df.loc[len(decay_df)] = new_row_decay
-                        if ~rise_df['Rise intensity'].isin([baseline_each]).any():
-                            new_row_rise = {'Frame':  missing_value_rise_df, 'Rise intensity': baseline_each}
-                            rise_df.loc[missing_value_rise_df] = new_row_rise
+                        # if ~decay_df['Decay intensity'].isin([baseline_each]).any():
+                        #     if missing_value_df is not None:
+                        #         new_row_decay = {'Frame':  missing_value_df, 'Decay intensity': baseline_each}
+                        #         decay_df.loc[len(decay_df)] = new_row_decay
+                        # if ~rise_df['Rise intensity'].isin([baseline_each]).any():
+                        #     if missing_value_rise_df is not None:
+                        #         new_row_rise = {'Frame':  missing_value_rise_df, 'Rise intensity': baseline_each}
+                        #         rise_df.loc[missing_value_rise_df] = new_row_rise
                         #decay_df.loc[decay_df['Frame'] == missing_value_df, 'Decay intensity'] == baseline_each
                         #st.write(missing_value_rise_df)
                         if not pd.isna(missing_value_df):
@@ -726,7 +728,7 @@ else:
                         
                     
                     try:
-                        popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est,b_est])
+                        popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est_rise,b_est_rise])
                         
                     except (TypeError, RuntimeError) as e:
                         error_message = str(e)
@@ -740,7 +742,7 @@ else:
                             #bounds = ([0, 0], [100, 100])
                             #st.write(a_est)
                     else:
-                        popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est,b_est])
+                        popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est_rise,b_est_rise])
                         rise_curve_exp = np.round((mono_exp_rise(rise_df['Frame'], *popt_rise)),3)   
                     
                     unsmoothed_figure =  px.line(
@@ -833,12 +835,14 @@ else:
                             with col_2:
                                 average_rise_time = np.round(nested_dict_new['Rise time'].mean(),4)
                                 st.write(f"The average rise time based on the selected label across all frames is {average_rise_time}")
-                                rise_rate = np.round(popt_rise[1],4)
-                                st.write(f"The average rise rate based on the selected label across all frames is {rise_rate}")
+                                if popt_rise is not None:
+                                    rise_rate = np.round(popt_rise[1],4)
+                                    st.write(f"The average rise rate based on the selected label across all frames is {rise_rate}")
                                 average_decay_time = np.round(nested_dict_new['Decay time'].mean(),4)
                                 st.write(f"The average decay time based on the selected label across all frames is {average_decay_time}")
-                                decay_rate = np.round(popt_decay[1],4)
-                                st.write(f"The average decay rate based on the selected label across all frames is {decay_rate}")                        
+                                if popt_decay is not None:
+                                    decay_rate = np.round(popt_decay[1],4)
+                                    st.write(f"The average decay rate based on the selected label across all frames is {decay_rate}")                        
                                 average_duration = np.round(nested_dict_new['Duration'].mean(),4)
                                 st.write(f"The average duration based on the selected label across all frames is {average_duration}")
                                 average_amplitude = np.round(nested_dict_new['Amplitude'].mean(),4)
@@ -1296,23 +1300,30 @@ else:
                         decay_df = decay_df[decay_df.columns[::-1]]
                         rise_df = rise_df[rise_df.columns[::-1]]
                         test_missing_value_df = next((decay_df['Frame'].iloc[i] + 1 for i in range(len(decay_df['Frame'])-1) if decay_df['Frame'].iloc[i+1] - decay_df['Frame'].iloc[i] > 1), None)
+                        
                         if test_missing_value_df is None:
                             missing_value_df = None
                         else:
-                            missing_value_df = test_missing_value_df - 1                         
+                            missing_value_df = test_missing_value_df - 1 
+                        
                         
                         missing_value_rise_df = (rise_df.loc[rise_df['Frame'].diff() > 1, 'Frame'].max())-1
+                        
                         #st.write(~rise_df['Rise intensity'].isin([baseline_each]).any())
-                        if ~decay_df['Decay intensity'].isin([baseline_corr_each]).any():
-                            new_row_decay = {'Frame':  missing_value_df, 'Decay intensity': baseline_corr_each}
-                            decay_df.loc[len(decay_df)] = new_row_decay
-                        if ~rise_df['Rise intensity'].isin([baseline_corr_each]).any():
-                            new_row_rise = {'Frame':  missing_value_rise_df, 'Rise intensity': baseline_corr_each}
-                            rise_df.loc[missing_value_rise_df] = new_row_rise
+                        # if ~decay_df['Decay intensity'].isin([baseline_corr_each]).any():
+                            
+                        #     if missing_value_df is not None:
+                        #         new_row_decay = {'Frame':  missing_value_df, 'Decay intensity': baseline_corr_each}
+                        #         decay_df.loc[len(decay_df)] = new_row_decay
+                                
+                        # if ~rise_df['Rise intensity'].isin([baseline_corr_each]).any():
+                        #     if missing_value_rise_df is not None:
+                        #         new_row_rise = {'Frame':  missing_value_rise_df, 'Rise intensity': baseline_corr_each}
+                        #         rise_df.loc[missing_value_rise_df] = new_row_rise
                         
                         #decay_df.loc[decay_df['Frame'] == missing_value_df, 'Decay intensity'] == baseline_each
                         #st.write(missing_value_rise_df)
-                        if not pd.isna(missing_value_df):
+                        if not pd.isna(missing_value_df):  #there is a missing value
                             #st.write('here')
                             decay_df = decay_df.loc[decay_df['Frame'] <= missing_value_df]
                         else:
@@ -1332,7 +1343,8 @@ else:
                                 rise_df = rise_df.loc[(rise_df['Rise intensity'] >= baseline_corr_each) & (rise_df['Frame'] >= baseline_frame)]  
                             else:
                                 rise_df = rise_df   
-                        #st.write(rise_df)
+                        
+                        st.write(rise_df)
                         #st.write(missing_value_df)
                         
                     if count_max > 1: 
@@ -1354,12 +1366,14 @@ else:
                             missing_value_df = test_missing_value_df - 1    
                         missing_value_rise_df = (rise_df.loc[rise_df['Frame'].diff() > 1, 'Frame'].max())-1
                         #st.write(np.any(rise_df['Rise intensity']) != baseline_each)
-                        if ~decay_df['Decay intensity'].isin([baseline_corr_each]).any():
-                            new_row_decay = {'Frame':  missing_value_df, 'Decay intensity': baseline_corr_each}
-                            decay_df.loc[len(decay_df)] = new_row_decay
-                        if ~rise_df['Rise intensity'].isin([baseline_corr_each]).any():
-                            new_row_rise = {'Frame':  missing_value_rise_df, 'Rise intensity': baseline_corr_each}
-                            rise_df.loc[missing_value_rise_df] = new_row_rise
+                        # if ~decay_df['Decay intensity'].isin([baseline_corr_each]).any():
+                        #     if missing_value_df is not None:
+                        #         new_row_decay = {'Frame':  missing_value_df, 'Decay intensity': baseline_corr_each}
+                        #         decay_df.loc[len(decay_df)] = new_row_decay
+                        # if ~rise_df['Rise intensity'].isin([baseline_corr_each]).any():
+                        #     if missing_value_rise_df is not None:
+                        #         new_row_rise = {'Frame':  missing_value_rise_df, 'Rise intensity': baseline_corr_each}
+                        #         rise_df.loc[missing_value_rise_df] = new_row_rise
                         #decay_df.loc[decay_df['Frame'] == missing_value_df, 'Decay intensity'] == baseline_each
                         #st.write(missing_value_rise_df)
                         if not pd.isna(missing_value_df):
@@ -1383,13 +1397,13 @@ else:
                             else:
                                 rise_df = rise_df            
                         #st.write(rise_df)
-
+                    
                     a_est = decay_df['Decay intensity'].iloc[0]
                     b_est = np.mean(np.diff(decay_df['Decay intensity']))
                     a_est_rise = rise_df['Rise intensity'].iloc[0]
                     b_est_rise = np.mean(np.diff(rise_df['Rise intensity']))
                     #bounds = ([0, 0], [100, 100])
-                    #st.write(a_est)
+                    
                     try:
                         popt_decay, pcov_decay = curve_fit(mono_exp_decay, decay_df['Frame'], decay_df['Decay intensity'], p0=[a_est,b_est])
                         
@@ -1408,7 +1422,7 @@ else:
                         popt_decay, pcov_decay = curve_fit(mono_exp_decay, decay_df['Frame'], decay_df['Decay intensity'], p0=[a_est,b_est])
                         decay_curve_exp = np.round((mono_exp_decay(decay_df['Frame'], *popt_decay)),3)
                     try:
-                        popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est,b_est])
+                        popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est_rise,b_est_rise])
                         
                     except (TypeError, RuntimeError) as e:
                         error_message = str(e)
@@ -1422,7 +1436,7 @@ else:
                             #bounds = ([0, 0], [100, 100])
                             #st.write(a_est)
                     else:
-                        popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est,b_est])
+                        popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est_rise,b_est_rise])
                         rise_curve_exp = np.round((mono_exp_rise(rise_df['Frame'], *popt_rise)),3)   
    
                     phot_corr_figure.add_trace(go.Scatter(x=[0, raw_img_ani_pg_2.shape[0]], y=[baseline_corr_each, baseline_corr_each], mode='lines', name='Baseline', line=dict(color='Green', width=2)))
@@ -1451,8 +1465,8 @@ else:
                         col_1, col_2 = st.columns(2)
                         with col_1:
                             nested_dict_new = nested_dict[(nested_dict['Amplitude']) == max((nested_dict['Amplitude']))]
-                            st.write(nested_dict_new.shape[0])
-                            #nested_dict_new["Number of Events"] = nested_dict_new.shape[0]
+                            #st.write(nested_dict_new.shape[0])
+                            nested_dict_new["Number of Events"] = nested_dict_new.shape[0]
                             st.write(nested_dict_new)
                             individual_csv = convert_df(nested_dict_new)           
                             st.download_button("Press to Download", individual_csv, 'individual_para_data.csv', "text/csv", key='individual_download-csv')
@@ -1460,12 +1474,14 @@ else:
                         with col_2:
                             average_rise_time = np.round(nested_dict_new['Rise time'].mean(),4)
                             st.write(f"The average rise time based on the selected labels across all frames is {average_rise_time}")
-                            rise_rate = np.round(popt_rise[1],4)
-                            st.write(f"The average rise rate based on the selected label across all frames is {rise_rate}")                        
+                            if popt_rise is not None:
+                                rise_rate = np.round(popt_rise[1],4)
+                                st.write(f"The average rise rate based on the selected label across all frames is {rise_rate}")                        
                             average_decay_time = np.round(nested_dict_new['Decay time'].mean(),4)
                             st.write(f"The average decay time based on the selected labels across all frames is {average_decay_time}")
-                            decay_rate = np.round(popt_decay[1],4)
-                            st.write(f"The average decay rate based on the selected label across all frames is {decay_rate}")                           
+                            if popt_decay is not None:
+                                decay_rate = np.round(popt_decay[1],4)
+                                st.write(f"The average decay rate based on the selected label across all frames is {decay_rate}")                           
                             average_duration = np.round(nested_dict_new['Duration'].mean(),4)
                             st.write(f"The average duration based on the selected labels across all frames is {average_duration}")
                             average_amplitude = np.round(nested_dict_new['Amplitude'].mean(),4)
