@@ -1033,6 +1033,7 @@ else:
                         nested_dict_final['Number of Events'] = nested_dict_final.groupby('Label')['Number of Events'].transform('count')
                         #nested_dict_final = nested_dict_final[(nested_dict_final['Amplitude']) == max((nested_dict_final['Amplitude']))]
                         #nested_dict_final["Number of Events"] = nested_dict_final.shape[0]
+                        nested_dict_final = nested_dict_final.reset_index(drop=True)
                         st.write(nested_dict_final)  
                         all_csv_bleach = convert_df(nested_dict_final)           
                         st.download_button("Press to Download", all_csv_bleach, 'all_data.csv', "text/csv", key='all_download-csv_bleach')
