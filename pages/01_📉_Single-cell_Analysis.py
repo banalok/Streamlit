@@ -551,7 +551,7 @@ else:
                 decay_df = pd.DataFrame()
                 rise_df = pd.DataFrame()
                 if ~((plot_df['Smoothed Mean Intensity'] <= baseline_each) & (plot_df['Frame'] > max(max_frame))).any(): ##trace crosses baseline but never comes back
-                    
+                    st.write("here")
                     unsmoothed_figure =  px.line(
                                         plot_df,
                                         x="Frame",
@@ -642,8 +642,12 @@ else:
                             #st.write('here')
                             rise_df = rise_df.loc[rise_df['Frame'] >= missing_value_rise_df]
                         else:
-                            baseline_frame = max(rise_df.loc[rise_df['Decay intensity'] == baseline_each, 'Frame'])
-                            rise_df = rise_df.loc[(rise_df['Decay intensity'] >= baseline_each) & (rise_df['Frame'] >= baseline_frame)]      
+                            if (rise_df['Rise intensity'] == baseline_each).any():
+                                #st.write(rise_df)
+                                baseline_frame = max(rise_df.loc[rise_df['Rise intensity'] == baseline_each, 'Frame'])
+                                rise_df = rise_df.loc[(rise_df['Rise intensity'] >= baseline_each) & (rise_df['Frame'] >= baseline_frame)]  
+                            else:
+                                rise_df = rise_df   
                         #st.write(rise_df)
                         #st.write(missing_value_df)
                         
@@ -688,8 +692,12 @@ else:
                             #st.write('here')
                             rise_df = rise_df.loc[rise_df['Frame'] >= missing_value_rise_df]
                         else:
-                            baseline_frame = max(rise_df.loc[rise_df['Decay intensity'] == baseline_each, 'Frame'])
-                            rise_df = rise_df.loc[(rise_df['Decay intensity'] >= baseline_each) & (rise_df['Frame'] >= baseline_frame)]               
+                            if (rise_df['Rise intensity'] == baseline_each).any():
+                                #st.write(rise_df)
+                                baseline_frame = max(rise_df.loc[rise_df['Rise intensity'] == baseline_each, 'Frame'])
+                                rise_df = rise_df.loc[(rise_df['Rise intensity'] >= baseline_each) & (rise_df['Frame'] >= baseline_frame)]  
+                            else:
+                                rise_df = rise_df            
                         #st.write(rise_df)
                     
                     a_est = decay_df['Decay intensity'].iloc[0]
@@ -707,6 +715,7 @@ else:
                         warning_message = "Fitting cannot be performed"
                         warnings.warn(warning_message, category=UserWarning)
                         popt_decay, pcov_decay = None, None
+                        
                     else: 
                         popt_decay, pcov_decay = curve_fit(mono_exp_decay, decay_df['Frame'], decay_df['Decay intensity'], p0=[a_est,b_est])
                         decay_curve_exp = np.round((mono_exp_decay(decay_df['Frame'], *popt_decay)),3)
@@ -761,7 +770,8 @@ else:
                     #                     yref='y'
                     #                     )    
                     
-                    smoothed_figure.add_trace(go.Scatter(x = decay_df['Frame'], y = decay_curve_exp, mode="markers", name='Decay Fit'))
+                    if popt_decay is not None and pcov_decay is not None:
+                        smoothed_figure.add_trace(go.Scatter(x = decay_df['Frame'], y = decay_curve_exp, mode="markers", name='Decay Fit'))
                     #smoothed_figure.add_trace(go.Scatter(x = rise_df['Frame'], y = rise_curve_exp, mode="markers", name='Rise Fit'))
                     #smoothed_figure.add_trace(go.Scatter(x = plot_df['Frame'], y = photobleach_interpol, mode="lines", name='Fitted and Interpolated',fillcolor='green'))
                     smoothed_figure.add_trace(go.Scatter(x=[0, raw_img_ani_pg_2.shape[0]], y=[baseline_each, baseline_each], mode='lines', name='Baseline', line=dict(color='Green', width=2)))
@@ -1309,8 +1319,12 @@ else:
                             #st.write('here')
                             rise_df = rise_df.loc[rise_df['Frame'] >= missing_value_rise_df]
                         else:
-                            baseline_frame = max(rise_df.loc[rise_df['Decay intensity'] == baseline_corr_each, 'Frame'])
-                            rise_df = rise_df.loc[(rise_df['Decay intensity'] >= baseline_corr_each) & (rise_df['Frame'] >= baseline_frame)]      
+                            if (rise_df['Rise intensity'] == baseline_corr_each).any():
+                                #st.write(rise_df)
+                                baseline_frame = max(rise_df.loc[rise_df['Rise intensity'] == baseline_corr_each, 'Frame'])
+                                rise_df = rise_df.loc[(rise_df['Rise intensity'] >= baseline_corr_each) & (rise_df['Frame'] >= baseline_frame)]  
+                            else:
+                                rise_df = rise_df   
                         #st.write(rise_df)
                         #st.write(missing_value_df)
                         
@@ -1355,25 +1369,54 @@ else:
                             #st.write('here')
                             rise_df = rise_df.loc[rise_df['Frame'] >= missing_value_rise_df]
                         else:
-                            baseline_frame = max(rise_df.loc[rise_df['Decay intensity'] == baseline_corr_each, 'Frame'])
-                            rise_df = rise_df.loc[(rise_df['Decay intensity'] >= baseline_corr_each) & (rise_df['Frame'] >= baseline_frame)]               
+                            if (rise_df['Rise intensity'] == baseline_corr_each).any():
+                                #st.write(rise_df)
+                                baseline_frame = max(rise_df.loc[rise_df['Rise intensity'] == baseline_corr_each, 'Frame'])
+                                rise_df = rise_df.loc[(rise_df['Rise intensity'] >= baseline_corr_each) & (rise_df['Frame'] >= baseline_frame)]  
+                            else:
+                                rise_df = rise_df            
                         #st.write(rise_df)
-                    
+
                     a_est = decay_df['Decay intensity'].iloc[0]
                     b_est = np.mean(np.diff(decay_df['Decay intensity']))
-                    #bounds = ([0, 0], [100, 100])
-                    #st.write(a_est)
-                    popt_decay, pcov_decay = curve_fit(mono_exp_decay, decay_df['Frame'], decay_df['Decay intensity'], p0=[a_est,b_est])
-                    decay_curve_exp = np.round((mono_exp_decay(decay_df['Frame'], *popt_decay)),3)
                     a_est_rise = rise_df['Rise intensity'].iloc[0]
                     b_est_rise = np.mean(np.diff(rise_df['Rise intensity']))
                     #bounds = ([0, 0], [100, 100])
                     #st.write(a_est)
-                    popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est,b_est])
-                    rise_curve_exp = np.round((mono_exp_rise(rise_df['Frame'], *popt_rise)),3)  
-    
+                    try:
+                        popt_decay, pcov_decay = curve_fit(mono_exp_decay, decay_df['Frame'], decay_df['Decay intensity'], p0=[a_est,b_est])
+                        
+                    except TypeError:
+                        #st.write("here")
+                        # Replace the error with a warning message
+                        warning_message = "Fitting cannot be performed"
+                        warnings.warn(warning_message, category=UserWarning)
+                        popt_decay, pcov_decay = None, None
+                        
+                    else: 
+                        popt_decay, pcov_decay = curve_fit(mono_exp_decay, decay_df['Frame'], decay_df['Decay intensity'], p0=[a_est,b_est])
+                        decay_curve_exp = np.round((mono_exp_decay(decay_df['Frame'], *popt_decay)),3)
+                        #st.write(popt_decay)
+                    try:
+                        popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est,b_est])
+                        
+                    except TypeError:
+                        # Replace the error with a warning message
+                        warning_message = "Fitting cannot be performed"
+                        warnings.warn(warning_message, category=UserWarning)
+                        popt_rise, pcov_rise = None, None
+                        #bounds = ([0, 0], [100, 100])
+                        #st.write(a_est)
+                    else:
+                        popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est,b_est])
+                        rise_curve_exp = np.round((mono_exp_rise(rise_df['Frame'], *popt_rise)),3)                
+                        #st.write(popt_decay)
+                        #st.write(popt_rise)                    
+   
                     phot_corr_figure.add_trace(go.Scatter(x=[0, raw_img_ani_pg_2.shape[0]], y=[baseline_corr_each, baseline_corr_each], mode='lines', name='Baseline', line=dict(color='Green', width=2)))
-                    phot_corr_figure.add_trace(go.Scatter(x = decay_df['Frame'], y = decay_curve_exp, mode="markers", name='Decay Fit'))
+                    
+                    if popt_decay is not None and pcov_decay is not None:
+                        phot_corr_figure.add_trace(go.Scatter(x = decay_df['Frame'], y = decay_curve_exp, mode="markers", name='Decay Fit'))
                     #phot_corr_figure.add_trace(go.Scatter(x = rise_df['Frame'], y = rise_curve_exp, mode="markers", name='Rise Fit'))                
                     st.plotly_chart(phot_corr_figure, theme="streamlit", use_container_width=True)  
                     st.plotly_chart(unsmoothed_area_figure, theme="streamlit", use_container_width=True)    
@@ -1396,8 +1439,8 @@ else:
                         col_1, col_2 = st.columns(2)
                         with col_1:
                             nested_dict_new = nested_dict[(nested_dict['Amplitude']) == max((nested_dict['Amplitude']))]
-                            #st.write(nested_dict_new.shape[0])
-                            nested_dict_new["Number of Events"] = nested_dict_new.shape[0]
+                            st.write(nested_dict_new.shape[0])
+                            #nested_dict_new["Number of Events"] = nested_dict_new.shape[0]
                             st.write(nested_dict_new)
                             individual_csv = convert_df(nested_dict_new)           
                             st.download_button("Press to Download", individual_csv, 'individual_para_data.csv', "text/csv", key='individual_download-csv')
