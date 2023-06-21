@@ -137,6 +137,33 @@ def mono_exp_decay(t, a, b):
 def mono_exp_rise(t, a, b):
     return a * np.exp(b * t)
 
+def find_b_est_decay(x_data, y_data):
+    decay_constants = []
+    for i in range(len(x_data)-1):
+        x1, y1 = x_data[i], y_data[i]
+        x2, y2 = x_data[i+1], y_data[i+1]
+        k = -math.log(y2/y1) / (x2-x1)
+        decay_constants.append(k)
+    
+    # Calculate average decay rate
+    avg_decay_rate = np.mean(decay_constants)
+    
+    return avg_decay_rate
+
+def find_b_est_rise(x_data, y_data):
+    
+    decay_constants = []
+    for i in range(len(x_data)-1):
+        x1, y1 = x_data[i], y_data[i]
+        x2, y2 = x_data[i+1], y_data[i+1]
+        k = math.log(y2/y1) / (x2-x1)
+        decay_constants.append(k)
+    
+    # Calculate average decay rate
+    avg_rise_rate = np.mean(decay_constants)
+    
+    return avg_rise_rate
+
 if "button_clicked_movav" not in st.session_state:
     st.session_state.button_clicked_movav = False
     
@@ -557,9 +584,9 @@ else:
                             #st.write(rise_df)
                         
                         a_est = decay_df['Decay intensity'].iloc[0]
-                        b_est = np.mean(np.diff(decay_df['Decay intensity']))
-                        a_est_rise = rise_df['Rise intensity'].iloc[0]
-                        b_est_rise = np.mean(np.diff(rise_df['Rise intensity']))
+                        b_est = find_b_est_decay(np.array(decay_df['Frame']), np.array(decay_df['Decay intensity']))
+                        a_est_rise = rise_df['Rise intensity'].iloc[-1]
+                        b_est_rise = find_b_est_rise(np.array(rise_df['Frame']), np.array(rise_df['Rise intensity']))
                         #bounds = ([0, 0], [100, 100])
                         #st.write(a_est)
                         try:
@@ -735,7 +762,7 @@ else:
                     exp_df_2['Frames'] = new_df_pro_transposed_smooth[fit_last_x:raw_img_ani_pg_2.shape[0]]['Frame']                   
                     exp_df = pd.concat([exp_df_1, exp_df_2], axis=0)
                     #st.write(exp_df)
-                    popt_exp, pcov_exp = curve_fit(mono_exp_decay, exp_df['Frames'], exp_df[f'Bleach intensity {i}'], p0=[40,0.002])
+                    popt_exp, pcov_exp = curve_fit(mono_exp_decay, exp_df['Frames'], exp_df[f'Bleach intensity {i}'], p0 = [np.max(exp_df['Frames']), find_b_est_decay(np.array(exp_df['Frames']), np.array(exp_df[f'Bleach intensity {i}']))])
                     photobleach_curve_exp = mono_exp_decay(new_df_pro_transposed_smooth['Frame'], *popt_exp)           
                     fit_exp_df = pd.DataFrame()
                     fit_exp_df['Frame'] = new_df_pro_transposed_smooth['Frame']
@@ -933,9 +960,9 @@ else:
                             #st.write(rise_df)
                         
                         a_est = decay_df['Decay intensity'].iloc[0]
-                        b_est = np.mean(np.diff(decay_df['Decay intensity']))
-                        a_est_rise = rise_df['Rise intensity'].iloc[0]
-                        b_est_rise = np.mean(np.diff(rise_df['Rise intensity']))
+                        b_est = find_b_est_decay(np.array(decay_df['Frame']), np.array(decay_df['Decay intensity']))
+                        a_est_rise = rise_df['Rise intensity'].iloc[-1]
+                        b_est_rise = find_b_est_rise(np.array(rise_df['Frame']), np.array(rise_df['Rise intensity']))
                         #bounds = ([0, 0], [100, 100])
                         #st.write(a_est)
                         try:
