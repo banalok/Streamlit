@@ -171,12 +171,11 @@ def Segment():
     
     if st.session_state.raw_file is not None:
         st.warning('Please reload the page to upload a new file') 
-        st.image(convert_16bit_to_8bit(st.session_state.raw_file), use_column_width=True, clamp=True)
+        st.image(st.session_state.raw_file, use_column_width=True, clamp=True)
 
     else:
         st.session_state.raw_file = st.file_uploader("*_Choose an image file_*")
-        st.write(type(st.session_state.raw_file))
-        #st.image(st.session_state.raw_file,use_column_width=True,clamp = True)
+        st.image(st.session_state.raw_file,use_column_width=True,clamp = True)
     
     if st.session_state.raw_file is not None:
         #plt.save(raw_file, cwd)
@@ -529,25 +528,6 @@ def fluo_change(intensity_mean, baseline):
 def smooth_plot(unsmoothed_intensity, window):
     smooth_df = (np.convolve(unsmoothed_intensity, np.ones((window)), mode = 'valid'))/window #ndimage.median_filter(unsmoothed_intensity,7)
     return smooth_df
-
-def convert_16bit_to_8bit(image_file):
-    # Open the image using PIL
-    image = Image.open(image_file)
-    
-    # Convert the image to 8-bit grayscale
-    image_8bit = image.convert('L')
-    
-    # Convert the PIL image to a NumPy array
-    image_array = np.array(image_8bit)
-    
-    # Create a new PIL image from the NumPy array
-    converted_image = Image.fromarray(image_array)
-    
-    # Save the converted image to a BytesIO object
-    converted_file = BytesIO()
-    converted_image.save(converted_file, format='PNG')
-    
-    return converted_file
 
 if __name__ == "__main__":
     st.set_page_config(page_title="Segmentation", page_icon=None, layout="centered", initial_sidebar_state="expanded", menu_items=None)
