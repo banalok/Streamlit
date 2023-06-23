@@ -183,7 +183,7 @@ def Segment():
         data_bytes = file_bytes.getvalue()
         file_bytes_8 = (np.frombuffer(data_bytes, dtype=np.uint8))
         file_bytes = BytesIO(file_bytes_8.tobytes())
-        #st.write(type(file_bytes))
+        st.write(type(file_bytes))
         #st.image(file_bytes,use_column_width=True,clamp = True) 
         ############use this script to load the image on the deployed app############################
         
