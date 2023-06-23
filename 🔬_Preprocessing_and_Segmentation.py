@@ -179,11 +179,7 @@ def Segment():
     if st.session_state.raw_file is not None:
         #plt.save(raw_file, cwd)
         ######use this script to load the image on the deployed app############
-        file_bytes = BytesIO(st.session_state.raw_file.read())
-        data_bytes = file_bytes.getvalue()
-        file_bytes_8 = (np.frombuffer(data_bytes, dtype=np.uint8))
-        file_bytes = BytesIO(file_bytes_8.tobytes())
-        st.write((file_bytes).dtype)
+        file_bytes = BytesIO(st.session_state.raw_file.read())     
         #st.image(file_bytes,use_column_width=True,clamp = True) 
         ############use this script to load the image on the deployed app############################
         
