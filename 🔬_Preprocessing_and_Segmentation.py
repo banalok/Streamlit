@@ -180,6 +180,7 @@ def Segment():
         #plt.save(raw_file, cwd)
         ######use this script to load the image on the deployed app############
         file_bytes = BytesIO(st.session_state.raw_file.read())
+        file_bytes = ((np.frombuffer(file_bytes, dtype=np.uint8) / 255.0) * 255).astype(np.uint8)
         #st.write(type(file_bytes))
         #st.image(file_bytes,use_column_width=True,clamp = True) 
         ############use this script to load the image on the deployed app############################
