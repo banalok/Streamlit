@@ -525,7 +525,7 @@ else:
                         
                         if count_max > 1: 
                                                     
-                            rise_df['Rise intensity'] = new_df_pro_transposed_smooth.loc[(new_df_pro_transposed_smooth[f'smooth cell {i}'] <= max_df_value) & (new_df_pro_transposed_smooth[f'smooth cell {i}'] >= baseline_each) & (new_df_pro_transposed_smooth['Frame'] <= max(max_frame)) , f'smooth cell {i}']
+                            rise_df['Rise intensity'] = new_df_pro_transposed_smooth.loc[(new_df_pro_transposed_smooth[f'smooth cell {i}'] <= max_df_value) & (new_df_pro_transposed_smooth[f'smooth cell {i}'] >= baseline_each) & (new_df_pro_transposed_smooth['Frame'] <= min(max_frame)) , f'smooth cell {i}']
                             first_index = rise_df.loc[rise_df['Rise intensity'] == max_df_value].index[-1]                    
                             rise_df.loc[first_index, 'Rise intensity'] *= 1.01                        
                             rise_df['Frame'] = rise_df.index
@@ -598,7 +598,7 @@ else:
                     else:
                         
                         if count_max == 1:
-                            rise_df['Rise intensity'] = new_df_pro_transposed_smooth.loc[(new_df_pro_transposed_smooth[f'smooth cell {i}'] <= max_df_value) & (new_df_pro_transposed_smooth[f'smooth cell {i}'] >= baseline_each) & (new_df_pro_transposed_smooth['Frame'] <= max(max_frame)) , f'smooth cell {i}']
+                            rise_df['Rise intensity'] = new_df_pro_transposed_smooth.loc[(new_df_pro_transposed_smooth[f'smooth cell {i}'] <= max_df_value) & (new_df_pro_transposed_smooth[f'smooth cell {i}'] >= baseline_each) & (new_df_pro_transposed_smooth['Frame'] <= min(max_frame)) , f'smooth cell {i}']
                             decay_df['Decay intensity'] = new_df_pro_transposed_smooth.loc[(new_df_pro_transposed_smooth[f'smooth cell {i}'] <= max_df_value) & (new_df_pro_transposed_smooth[f'smooth cell {i}'] >= baseline_each) & (new_df_pro_transposed_smooth['Frame'] >= max(max_frame)) , f'smooth cell {i}']
                             decay_df['Frame'] = decay_df.index
                             rise_df['Frame'] = rise_df.index
@@ -647,7 +647,7 @@ else:
                         if count_max > 1: 
                             decay_df['Decay intensity'] = new_df_pro_transposed_smooth.loc[(new_df_pro_transposed_smooth[f'smooth cell {i}'] <= max_df_value) & (new_df_pro_transposed_smooth[f'smooth cell {i}'] >= baseline_each) & (new_df_pro_transposed_smooth['Frame'] >= max(max_frame)) , f'smooth cell {i}']
                             last_index = decay_df.loc[decay_df['Decay intensity'] == max_df_value].index[-1]
-                            rise_df['Rise intensity'] = new_df_pro_transposed_smooth.loc[(new_df_pro_transposed_smooth[f'smooth cell {i}'] <= max_df_value) & (new_df_pro_transposed_smooth[f'smooth cell {i}'] >= baseline_each) & (new_df_pro_transposed_smooth['Frame'] <= max(max_frame)) , f'smooth cell {i}']
+                            rise_df['Rise intensity'] = new_df_pro_transposed_smooth.loc[(new_df_pro_transposed_smooth[f'smooth cell {i}'] <= max_df_value) & (new_df_pro_transposed_smooth[f'smooth cell {i}'] >= baseline_each) & (new_df_pro_transposed_smooth['Frame'] <= min(max_frame)) , f'smooth cell {i}']
                             first_index = decay_df.loc[decay_df['Decay intensity'] == max_df_value].index[0]                    
                             decay_df.loc[last_index, 'Decay intensity'] *= 1.01
                             rise_df.loc[first_index, 'Rise intensity'] *= 1.01
@@ -1011,7 +1011,7 @@ else:
                         
                         if count_max > 1: 
                                                     
-                            rise_df['Rise intensity'] = plot_df_corr.loc[(plot_df_corr[f'smooth cell {i}'] <= max_df_value) & (plot_df_corr[f'smooth cell {i}'] >= baseline_corr_each) & (plot_df_corr['Frame'] <= max(max_frame)) , f'smooth cell {i}']
+                            rise_df['Rise intensity'] = plot_df_corr.loc[(plot_df_corr[f'smooth cell {i}'] <= max_df_value) & (plot_df_corr[f'smooth cell {i}'] >= baseline_corr_each) & (plot_df_corr['Frame'] <= min(max_frame)) , f'smooth cell {i}']
                             first_index = rise_df.loc[rise_df['Rise intensity'] == max_df_value].index[-1]                    
                             rise_df.loc[first_index, 'Rise intensity'] *= 1.01                        
                             rise_df['Frame'] = rise_df.index
@@ -1134,7 +1134,7 @@ else:
                         if count_max > 1: 
                             decay_df['Decay intensity'] = plot_df_corr.loc[(plot_df_corr[f'smooth cell {i}'] <= max_df_value) & (plot_df_corr[f'smooth cell {i}'] >= baseline_corr_each) & (plot_df_corr['Frame'] >= max(max_frame)) , f'smooth cell {i}']
                             last_index = decay_df.loc[decay_df['Decay intensity'] == max_df_value].index[-1]
-                            rise_df['Rise intensity'] = plot_df_corr.loc[(new_df_pro_transposed_smooth[f'smooth cell {i}'] <= max_df_value) & (plot_df_corr[f'smooth cell {i}'] >= baseline_corr_each) & (plot_df_corr['Frame'] <= max(max_frame)) , f'smooth cell {i}']
+                            rise_df['Rise intensity'] = plot_df_corr.loc[(new_df_pro_transposed_smooth[f'smooth cell {i}'] <= max_df_value) & (plot_df_corr[f'smooth cell {i}'] >= baseline_corr_each) & (plot_df_corr['Frame'] <= min(max_frame)) , f'smooth cell {i}']
                             first_index = decay_df.loc[decay_df['Decay intensity'] == max_df_value].index[0]                    
                             decay_df.loc[last_index, 'Decay intensity'] *= 1.01
                             rise_df.loc[first_index, 'Rise intensity'] *= 1.01
