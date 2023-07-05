@@ -348,23 +348,26 @@ else:
         df_selected_transpose = df_selected_transpose.drop(index = ['label'])
         df_selected_transpose['Frames'] = list(range(0,df_selected_transpose.shape[0]))
         #st.dataframe(df_selected_transpose)
-        
+        frame_rate = st.number_input("Frame Rate (frames per second/fps)", min_value = 1, max_value = 100, value = 1)
+        df_selected_transpose['Time'] = df_selected_transpose['Frames']/frame_rate
         # create an empty list to store the traces
         traces = []
+        
         # loop through each column (excluding the x column)
-        for column in df_selected_transpose.columns[:-1]:    
+        for column in df_selected_transpose.columns[:-2]:    
             # create a trace for the current column
-            trace = go.Scatter(x=df_selected_transpose['Frames'], y=df_selected_transpose[column], name=column)
+            trace = go.Scatter(x=df_selected_transpose['Time'], y=df_selected_transpose[column], name=column)
             # add the trace to the list
             traces.append(trace)
         # create the plot
         fig = go.Figure(data=traces)
         # update the layout
-        fig.update_layout(title='Intensity Traces', xaxis_title='Frame', yaxis_title='Mean Intensity',height=900)
+        fig.update_layout(title='Intensity Traces', xaxis_title='Time', yaxis_title='Mean Intensity',height=900)
         # display the plot
         st.plotly_chart(fig, use_container_width=True) 
         
         st.write("*_Select the parameters to be applied on all labels_*")
+        
         
         bleach_corr_check = st.radio("Select one", ('No bleaching correction', 'Bleaching correction'), help='Analyze the trace as is (No bleaching correction) or fit mono-exponential curves and interpolate to correct for bleaching (Bleaching correction)')
         
@@ -393,6 +396,7 @@ else:
                     #st.write(new_df_pro_transposed)
                 new_df_pro_transposed_smooth['Frame'] = pd.DataFrame(list(range(0, df_selected.shape[1])))
                 new_df_pro_transposed_smooth = new_df_pro_transposed_smooth.iloc[:, [new_df_pro_transposed_smooth.shape[1] - 1] + list(range(new_df_pro_transposed_smooth.shape[1] - 1))]
+                new_df_pro_transposed_smooth['Time'] = new_df_pro_transposed_smooth['Frame']/frame_rate
                 
                 #get_data_indi = convert_df(new_df_pro_transposed_smooth)
                 #st.download_button("Press to Download", get_data_indi, 'indi_intensity_data.csv', "text/csv", key='indi_download-get_data')
@@ -403,7 +407,14 @@ else:
                 nested_dict_pro = {'Label':[], "Number of Events":[], "Rise time":[], "Rise Rate":[], "Decay time":[], "Decay Rate":[], "Duration":[], "Amplitude":[]}
 
                 for i in df_selected['label']:
+                    
                     baseline_each = new_df_pro_transposed_smooth.loc[(new_df_pro_transposed_smooth['Frame'] >= 0) & (new_df_pro_transposed_smooth['Frame'] <= baseline_smooth_x), f'smooth cell {i}'].mean()
+                    baseline_mean_each = new_df_pro_transposed_smooth.loc[(new_df_pro_transposed_smooth['Frame'] >= 0) & (new_df_pro_transposed_smooth['Frame'] <= baseline_smooth_x), float(f'{i}.0')].mean()
+                    new_df_pro_transposed_smooth[float(f'{i}.0')] = new_df_pro_transposed_smooth[float(f'{i}.0')]/baseline_mean_each
+                    
+                    #st.write(baseline_each)
+                    new_df_pro_transposed_smooth[f'smooth cell {i}'] = new_df_pro_transposed_smooth[f'smooth cell {i}']/baseline_each
+                    baseline_each = baseline_each/baseline_each                    
                     new_df_pro_transposed_smooth[f'delta_f/f_0_{i}'] = (new_df_pro_transposed_smooth[f'smooth cell {i}'] - baseline_each)/baseline_each 
                     keyval = {}
                     amp_keyval = {}
@@ -481,10 +492,109 @@ else:
                     max_frame = new_df_pro_transposed_smooth.loc[new_df_pro_transposed_smooth[f'smooth cell {i}'] == max_df_value, 'Frame']
                     decay_df = pd.DataFrame()
                     rise_df = pd.DataFrame()
-                    if ~((new_df_pro_transposed_smooth[f'smooth cell {i}'] <= baseline_each) & (new_df_pro_transposed_smooth['Frame'] > max(max_frame))).any(): ##trace crosses baseline but never comes back
+                    if ((new_df_pro_transposed_smooth.loc[new_df_pro_transposed_smooth["Frame"].gt(max(max_frame)), f'smooth cell {i}']).gt(baseline_each)).all(): ##trace crosses baseline but never comes back
                         #nested_dict_pro = {'Label':[], "Number of Events":[], "Rise time":[], "Rise Rate":[], "Decay time":[], "Decay Rate":[], "Duration":[], "Amplitude":[]}
-                        continue
+                       if count_max == 1:
+                        rise_df['Rise intensity'] = new_df_pro_transposed_smooth.loc[(new_df_pro_transposed_smooth[f'smooth cell {i}'] <= max_df_value) & (new_df_pro_transposed_smooth[f'smooth cell {i}'] >= baseline_each) & (new_df_pro_transposed_smooth['Frame'] <= max(max_frame)) , f'smooth cell {i}']
+                        rise_df['Frame'] = rise_df.index
+                        rise_df = rise_df[rise_df.columns[::-1]]
+                        missing_value_rise_df = (rise_df.loc[rise_df['Frame'].diff() > 1, 'Frame'].max())-1
+                        #st.write(~rise_df['Rise intensity'].isin([baseline_each]).any())
+                        # if ~decay_df['Decay intensity'].isin([baseline_each]).any():
+                        #     new_row_decay = {'Frame':  missing_value_df, 'Decay intensity': baseline_each}
+                        #     decay_df.loc[len(decay_df)] = new_row_decay
+                        # if ~rise_df['Rise intensity'].isin([baseline_each]).any():
+                        #     new_row_rise = {'Frame':  missing_value_rise_df, 'Rise intensity': baseline_each}
+                        #     rise_df.loc[missing_value_rise_df] = new_row_rise
                         
+                        #decay_df.loc[decay_df['Frame'] == missing_value_df, 'Decay intensity'] == baseline_each
+                        #st.write(missing_value_df)
+                            
+                        if not pd.isna(missing_value_rise_df):
+                            #st.write('here')
+                            rise_df = rise_df.loc[rise_df['Frame'] >= missing_value_rise_df]
+                        else:
+                            if (rise_df['Rise intensity'] == baseline_each).any():
+                                #st.write(rise_df)
+                                baseline_frame = max(rise_df.loc[rise_df['Rise intensity'] == baseline_each, 'Frame'])
+                                rise_df = rise_df.loc[(rise_df['Rise intensity'] >= baseline_each) & (rise_df['Frame'] >= baseline_frame)]  
+                            else:
+                                rise_df = rise_df   
+                        
+                        #st.write(missing_value_df)
+                        
+                        if count_max > 1: 
+                                                    
+                            rise_df['Rise intensity'] = new_df_pro_transposed_smooth.loc[(new_df_pro_transposed_smooth[f'smooth cell {i}'] <= max_df_value) & (new_df_pro_transposed_smooth[f'smooth cell {i}'] >= baseline_each) & (new_df_pro_transposed_smooth['Frame'] <= max(max_frame)) , f'smooth cell {i}']
+                            first_index = rise_df.loc[rise_df['Rise intensity'] == max_df_value].index[-1]                    
+                            rise_df.loc[first_index, 'Rise intensity'] *= 1.01                        
+                            rise_df['Frame'] = rise_df.index
+                            rise_df = rise_df[rise_df.columns[::-1]]
+                            #st.write(decay_df)
+                            
+                            missing_value_rise_df = (rise_df.loc[rise_df['Frame'].diff() > 1, 'Frame'].max())-1
+                            #st.write(np.any(rise_df['Rise intensity']) != baseline_each)
+                            # if ~decay_df['Decay intensity'].isin([baseline_each]).any():
+                            #     if missing_value_df is not None:
+                            #         new_row_decay = {'Frame':  missing_value_df, 'Decay intensity': baseline_each}
+                            #         decay_df.loc[len(decay_df)] = new_row_decay
+                            # if ~rise_df['Rise intensity'].isin([baseline_each]).any():
+                            #     if missing_value_rise_df is not None:
+                            #         new_row_rise = {'Frame':  missing_value_rise_df, 'Rise intensity': baseline_each}
+                            #         rise_df.loc[missing_value_rise_df] = new_row_rise
+                            #decay_df.loc[decay_df['Frame'] == missing_value_df, 'Decay intensity'] == baseline_each
+                            #st.write(missing_value_rise_df)
+                                
+                            if not pd.isna(missing_value_rise_df):
+                                #st.write('here')
+                                rise_df = rise_df.loc[rise_df['Frame'] >= missing_value_rise_df]
+                            else:
+                                if (rise_df['Rise intensity'] == baseline_each).any():
+                                    #st.write(rise_df)
+                                    baseline_frame = max(rise_df.loc[rise_df['Rise intensity'] == baseline_each, 'Frame'])
+                                    rise_df = rise_df.loc[(rise_df['Rise intensity'] >= baseline_each) & (rise_df['Frame'] >= baseline_frame)]  
+                                else:
+                                    rise_df = rise_df          
+                                       
+                        a_est_rise = rise_df['Rise intensity'].iloc[-1]
+                        b_est_rise = find_b_est_rise(np.array(rise_df['Frame']), np.array(rise_df['Rise intensity']))
+                        #bounds = ([0, 0], [100, 100])
+                        
+                        popt_decay, pcov_decay = None, None                        
+                        
+                        try:
+                            popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est_rise,b_est_rise])
+                            
+                        except (TypeError, RuntimeError) as e:
+                            error_message = str(e)
+                            if error_message == "Optimal parameters not found: Number of calls to function has reached maxfev = 600":
+                                pass
+                            # Replace the error with a warning message
+                            else:                           
+                                warning_message = "Fitting cannot be performed"
+                                warnings.warn(warning_message, category=UserWarning)
+                                popt_rise, pcov_rise = None, None
+                                #bounds = ([0, 0], [100, 100])
+                                #st.write(a_est)
+                        else:
+                            popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est_rise,b_est_rise])
+                            rise_curve_exp = np.round((mono_exp_rise(rise_df['Frame'], *popt_rise)),3)  
+                            
+                        signal_rise = (max(max_frame) - rise_df['Frame'].iloc[0])/frame_rate
+                        amplitude_each = max_df_value - baseline_each
+                        if (amplitude_each > 0.1*baseline_each) and (pcov_decay is None) and (popt_decay is None):
+                            nested_dict_pro["Label"].append(i)
+                            nested_dict_pro["Number of Events"].append(None)
+                            nested_dict_pro["Rise time"].append(signal_rise)
+                            nested_dict_pro["Decay time"].append(None)
+                            nested_dict_pro["Duration"].append(None)
+                            nested_dict_pro["Amplitude"].append(amplitude_each) 
+                            if popt_rise is not None:
+                                rise_rate = np.round(popt_rise[1],4)
+                                nested_dict_pro["Rise Rate"].append(rise_rate)
+                            else:
+                                nested_dict_pro["Rise Rate"].append(None)
+                            nested_dict_pro["Decay Rate"].append(None)
                     else:
                         
                         if count_max == 1:
@@ -644,9 +754,9 @@ else:
                                 #st.write(f"The signal decay frame is {int(signal_decay_frame)}")
                                 event_num = count_items
                                 amplitude_each = item[1]
-                                signal_rise = int(peak_frame)-int(signal_start_frame)
-                                signal_decay = int(signal_decay_frame)-int(peak_frame)
-                                signal_duration = int(signal_decay_frame)-int(signal_start_frame)
+                                signal_rise = (int(peak_frame)-int(signal_start_frame))/frame_rate
+                                signal_decay = (int(signal_decay_frame)-int(peak_frame))/frame_rate
+                                signal_duration = (int(signal_decay_frame)-int(signal_start_frame))/frame_rate
     
                                 if (amplitude_each > 0.1*baseline_each) and (popt_rise is not None) and (popt_decay is not None):
                                     nested_dict_pro["Label"].append(i)
@@ -660,9 +770,9 @@ else:
                                     decay_rate = np.round(popt_decay[1],4)
                                     nested_dict_pro["Decay Rate"].append(decay_rate)
                                 
-                                nested_dict_final = nested_dict_pro.copy()
+                                
                 #st.dataframe(new_df_pro_transposed_smooth, 1000,200)
-                    
+                nested_dict_final = nested_dict_pro.copy()  
                 st.write(new_df_pro_transposed_smooth)
                 multi_csv = convert_df(new_df_pro_transposed_smooth)           
                 st.download_button("Press to Download",  multi_csv, 'multi_cell_data.csv', "text/csv", key='download_multi_-csv')                
@@ -676,6 +786,7 @@ else:
                     col_7, col_8 = st.columns(2)
                     
                     with col_7: 
+                        nested_dict_final = nested_dict_final[nested_dict_final.groupby('Label')['Amplitude'].transform(max) == nested_dict_final['Amplitude']]
                         nested_dict_final['Number of Events'] = nested_dict_final.groupby('Label')['Number of Events'].transform('count')
 
                         st.write(nested_dict_final)  
@@ -683,15 +794,15 @@ else:
                         st.download_button("Press to Download", all_csv, 'all_data.csv', "text/csv", key='all_download-csv')
                     with col_8:
                         average_rise_time = np.round(nested_dict_final['Rise time'].mean(),4)
-                        st.write(f"The average rise time based on selected labels across all frames is {average_rise_time}")
+                        st.write(f"The average rise time based on selected labels across all frames is {average_rise_time} s")
                         average_rise_rate = np.round(nested_dict_final['Rise Rate'].mean(),4)
-                        st.write(f"The average rise rate based on selected labels across all frames is {average_rise_rate}")
+                        st.write(f"The average rise rate based on selected labels across all frames is {average_rise_rate} per s")
                         average_decay_time = np.round(nested_dict_final['Decay time'].mean(),4)
-                        st.write(f"The average decay time based on selected labels across all frames is {average_decay_time}")
+                        st.write(f"The average decay time based on selected labels across all frames is {average_decay_time} s")
                         average_decay_rate = np.round(nested_dict_final['Decay Rate'].mean(),4)
-                        st.write(f"The average decay rate based on selected labels across all frames is {average_decay_rate}")
+                        st.write(f"The average decay rate based on selected labels across all frames is {average_decay_rate} per s")
                         average_duration = np.round(nested_dict_final['Duration'].mean(),4)
-                        st.write(f"The average duration based on selected labels across all frames is {average_duration}")
+                        st.write(f"The average duration based on selected labels across all frames is {average_duration} s")
                         average_amplitude = np.round(nested_dict_final['Amplitude'].mean(),4)
                         st.write(f"The average amplitude based on selected labels across all frames is {average_amplitude}")
                         
@@ -717,8 +828,8 @@ else:
         if bleach_corr_check == 'Bleaching correction':
             smooth_plot_x = st.slider("*_Moving Average Window_*", min_value=1, max_value=5, help = "Adjust to smooth the mean intensity trace below. Moving average of 1 would mean the original 'Mean Intensity' trace")
             baseline_smooth_x = st.slider("*_Choose frame number(s) to average their corresponding intensity values for baseline calculation_*", min_value = 0, max_value = raw_img_ani_pg_2.shape[0]-1, value = 10,  key='smooth_multi')
-            fit_first_x = st.slider("*_Choose the number of first few frame number(s) to fit a mono-exponential decay_*", min_value = 1, max_value = 30, value = 30,  key='smooth_fit_first_multi')
-            fit_last_x = st.slider("*_Choose the number of last few frame number(s) to fit a mono-exponential decay_*", 1, 30, value = 30, key='smooth_fit_last_multi')
+            fit_first_x = st.slider("*_Choose the number of first few frame number(s) to fit a mono-exponential decay_*", min_value = 1, max_value = int(np.floor(raw_img_ani_pg_2.shape[0]/2)), value = 30,  key='smooth_fit_first_multi')
+            fit_last_x = st.slider("*_Choose the number of last few frame number(s) to fit a mono-exponential decay_*", 1, int(np.floor(raw_img_ani_pg_2.shape[0]/2)), value = 30, key='smooth_fit_last_multi')
             fit_last_x = raw_img_ani_pg_2.shape[0] - 1 - fit_last_x
             
             if st.button("Obtain the parameters for selected labels",on_click=callback_movav) or st.session_state.button_clicked_movav:
@@ -737,11 +848,13 @@ else:
                     new_df_pro_transposed_smooth = pd.concat([new_df_pro_transposed_smooth.reset_index(drop=True), (np.round(df_pro_transposed_smooth[f'smooth cell {i}'],3)).reset_index(drop=True)],axis=1)
                     new_df_missing_values = pd.isna(new_df_pro_transposed_smooth[f"smooth cell {i}"])
                     new_df_pro_transposed_smooth.loc[new_df_missing_values, f'smooth cell {i}'] = new_df_pro_transposed_smooth.loc[new_df_missing_values, i]                               
+
                     
                     #st.write(new_df_pro_transposed)
                 new_df_pro_transposed_smooth['Frame'] = pd.DataFrame(list(range(0, df_selected.shape[1])))
                 new_df_pro_transposed_smooth = new_df_pro_transposed_smooth.iloc[:, [new_df_pro_transposed_smooth.shape[1] - 1] + list(range(new_df_pro_transposed_smooth.shape[1] - 1))]
-                
+                new_df_pro_transposed_smooth['Time'] = new_df_pro_transposed_smooth['Frame']/frame_rate
+ 
                 #get_data_indi = convert_df(new_df_pro_transposed_smooth)
                 #st.download_button("Press to Download", get_data_indi, 'indi_intensity_data.csv', "text/csv", key='indi_download-get_data')
                 
@@ -753,7 +866,10 @@ else:
                 
                 plot_df_corr = pd.DataFrame()
                 plot_df_corr['Frame'] = new_df_pro_transposed_smooth['Frame']
+                plot_df_corr['Time'] = plot_df_corr['Frame']/frame_rate
                 for i in df_selected['label']: 
+                    
+                    
                     column_corr_first = new_df_pro_transposed_smooth.loc[(new_df_pro_transposed_smooth['Frame'] >= 0) & (new_df_pro_transposed_smooth['Frame'] <= fit_first_x), f'smooth cell {i}']
                     exp_df_1 = pd.DataFrame({f'Bleach intensity {i}': column_corr_first})
                     exp_df_1['Frames'] = new_df_pro_transposed_smooth[0:fit_first_x+1]['Frame']
@@ -780,6 +896,10 @@ else:
                     plot_df_corr = pd.concat([plot_df_corr.reset_index(drop=True), plot_df_corr_value_delta],axis=1)
                     #plot_df_corr = pd.concat([plot_df_corr.reset_index(drop=True), (np.round(plot_df_corr[f'smooth cell {i}'],3)).reset_index(drop=True)],axis=1)
                     #plot_df_corr = pd.concat([plot_df_corr.reset_index(drop=True), (np.round(plot_df_corr[f'delta_f/f_0_{i}'],3)).reset_index(drop=True)],axis=1)
+                    
+                    #st.write(plot_df_corr)
+                    plot_df_corr[f'smooth cell {i}'] = plot_df_corr[f'smooth cell {i}']/baseline_corr_each
+                    baseline_corr_each = baseline_corr_each/baseline_corr_each 
                     
                     keyval = {}
                     amp_keyval = {}
@@ -857,9 +977,110 @@ else:
                     max_frame = plot_df_corr.loc[plot_df_corr[f'smooth cell {i}'] == max_df_value, 'Frame']
                     decay_df = pd.DataFrame()
                     rise_df = pd.DataFrame()
-                    if ~((plot_df_corr[f'smooth cell {i}'] <= baseline_corr_each) & (plot_df_corr['Frame'] > max(max_frame))).any(): ##trace crosses baseline but never comes back
+
+                    if ((plot_df_corr.loc[plot_df_corr["Frame"].gt(max(max_frame)), f'smooth cell {i}']).gt(baseline_corr_each)).all(): ##trace crosses baseline but never comes back
                         #nested_dict_pro = {'Label':[], "Number of Events":[], "Rise time":[], "Rise Rate":[], "Decay time":[], "Decay Rate":[], "Duration":[], "Amplitude":[]}
-                        continue
+                       if count_max == 1:
+                        rise_df['Rise intensity'] = plot_df_corr.loc[(plot_df_corr[f'smooth cell {i}'] <= max_df_value) & (plot_df_corr[f'smooth cell {i}'] >= baseline_corr_each) & (plot_df_corr['Frame'] <= max(max_frame)) , f'smooth cell {i}']
+                        rise_df['Frame'] = rise_df.index
+                        rise_df = rise_df[rise_df.columns[::-1]]
+                        missing_value_rise_df = (rise_df.loc[rise_df['Frame'].diff() > 1, 'Frame'].max())-1
+                        #st.write(~rise_df['Rise intensity'].isin([baseline_each]).any())
+                        # if ~decay_df['Decay intensity'].isin([baseline_each]).any():
+                        #     new_row_decay = {'Frame':  missing_value_df, 'Decay intensity': baseline_each}
+                        #     decay_df.loc[len(decay_df)] = new_row_decay
+                        # if ~rise_df['Rise intensity'].isin([baseline_each]).any():
+                        #     new_row_rise = {'Frame':  missing_value_rise_df, 'Rise intensity': baseline_each}
+                        #     rise_df.loc[missing_value_rise_df] = new_row_rise
+                        
+                        #decay_df.loc[decay_df['Frame'] == missing_value_df, 'Decay intensity'] == baseline_each
+                        #st.write(missing_value_df)
+                            
+                        if not pd.isna(missing_value_rise_df):
+                            #st.write('here')
+                            rise_df = rise_df.loc[rise_df['Frame'] >= missing_value_rise_df]
+                        else:
+                            if (rise_df['Rise intensity'] == baseline_corr_each).any():
+                                #st.write(rise_df)
+                                baseline_frame = max(rise_df.loc[rise_df['Rise intensity'] == baseline_corr_each, 'Frame'])
+                                rise_df = rise_df.loc[(rise_df['Rise intensity'] >= baseline_corr_each) & (rise_df['Frame'] >= baseline_frame)]  
+                            else:
+                                rise_df = rise_df   
+                        
+                        #st.write(missing_value_df)
+                        
+                        if count_max > 1: 
+                                                    
+                            rise_df['Rise intensity'] = plot_df_corr.loc[(plot_df_corr[f'smooth cell {i}'] <= max_df_value) & (plot_df_corr[f'smooth cell {i}'] >= baseline_corr_each) & (plot_df_corr['Frame'] <= max(max_frame)) , f'smooth cell {i}']
+                            first_index = rise_df.loc[rise_df['Rise intensity'] == max_df_value].index[-1]                    
+                            rise_df.loc[first_index, 'Rise intensity'] *= 1.01                        
+                            rise_df['Frame'] = rise_df.index
+                            rise_df = rise_df[rise_df.columns[::-1]]
+                            #st.write(decay_df)
+                            
+                            missing_value_rise_df = (rise_df.loc[rise_df['Frame'].diff() > 1, 'Frame'].max())-1
+                            #st.write(np.any(rise_df['Rise intensity']) != baseline_each)
+                            # if ~decay_df['Decay intensity'].isin([baseline_each]).any():
+                            #     if missing_value_df is not None:
+                            #         new_row_decay = {'Frame':  missing_value_df, 'Decay intensity': baseline_each}
+                            #         decay_df.loc[len(decay_df)] = new_row_decay
+                            # if ~rise_df['Rise intensity'].isin([baseline_each]).any():
+                            #     if missing_value_rise_df is not None:
+                            #         new_row_rise = {'Frame':  missing_value_rise_df, 'Rise intensity': baseline_each}
+                            #         rise_df.loc[missing_value_rise_df] = new_row_rise
+                            #decay_df.loc[decay_df['Frame'] == missing_value_df, 'Decay intensity'] == baseline_each
+                            #st.write(missing_value_rise_df)
+                                
+                            if not pd.isna(missing_value_rise_df):
+                                #st.write('here')
+                                rise_df = rise_df.loc[rise_df['Frame'] >= missing_value_rise_df]
+                            else:
+                                if (rise_df['Rise intensity'] == baseline_corr_each).any():
+                                    #st.write(rise_df)
+                                    baseline_frame = max(rise_df.loc[rise_df['Rise intensity'] == baseline_corr_each, 'Frame'])
+                                    rise_df = rise_df.loc[(rise_df['Rise intensity'] >= baseline_corr_each) & (rise_df['Frame'] >= baseline_frame)]  
+                                else:
+                                    rise_df = rise_df          
+                                       
+                        a_est_rise = rise_df['Rise intensity'].iloc[-1]
+                        b_est_rise = find_b_est_rise(np.array(rise_df['Frame']), np.array(rise_df['Rise intensity']))
+                        #bounds = ([0, 0], [100, 100])
+                        
+                        popt_decay, pcov_decay = None, None                        
+                        
+                        try:
+                            popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est_rise,b_est_rise])
+                            
+                        except (TypeError, RuntimeError) as e:
+                            error_message = str(e)
+                            if error_message == "Optimal parameters not found: Number of calls to function has reached maxfev = 600":
+                                pass
+                            # Replace the error with a warning message
+                            else:                           
+                                warning_message = "Fitting cannot be performed"
+                                warnings.warn(warning_message, category=UserWarning)
+                                popt_rise, pcov_rise = None, None
+                                #bounds = ([0, 0], [100, 100])
+                                #st.write(a_est)
+                        else:
+                            popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est_rise,b_est_rise])
+                            rise_curve_exp = np.round((mono_exp_rise(rise_df['Frame'], *popt_rise)),3)  
+                            
+                        signal_rise = (max(max_frame) - rise_df['Frame'].iloc[0])/frame_rate
+                        amplitude_each = max_df_value - baseline_corr_each
+                        if (amplitude_each > 0.1*baseline_corr_each) and (pcov_decay is None) and (popt_decay is None):
+                            nested_dict_pro["Label"].append(i)
+                            nested_dict_pro["Number of Events"].append(None)
+                            nested_dict_pro["Rise time"].append(signal_rise)
+                            nested_dict_pro["Decay time"].append(None)
+                            nested_dict_pro["Duration"].append(None)
+                            nested_dict_pro["Amplitude"].append(amplitude_each) 
+                            if popt_rise is not None:
+                                rise_rate = np.round(popt_rise[1],4)
+                                nested_dict_pro["Rise Rate"].append(rise_rate)
+                            else:
+                                nested_dict_pro["Rise Rate"].append(None)
+                            nested_dict_pro["Decay Rate"].append(None)
                         
                     else:
                         
@@ -1004,7 +1225,6 @@ else:
                             #st.write(popt_decay)
                             #st.write(popt_rise)
                             
-                            
                             # st.write(i)
                             # st.write(nested_dict_final)
                         count_items = 0
@@ -1020,9 +1240,9 @@ else:
                                 #st.write(f"The signal decay frame is {int(signal_decay_frame)}")
                                 event_num = count_items
                                 amplitude_each = item[1]
-                                signal_rise = int(peak_frame)-int(signal_start_frame)
-                                signal_decay = int(signal_decay_frame)-int(peak_frame)
-                                signal_duration = int(signal_decay_frame)-int(signal_start_frame)
+                                signal_rise = (int(peak_frame)-int(signal_start_frame))/frame_rate
+                                signal_decay = (int(signal_decay_frame)-int(peak_frame))/frame_rate
+                                signal_duration = (int(signal_decay_frame)-int(signal_start_frame))/frame_rate
     
                                 if (amplitude_each > 0.1*baseline_corr_each) and (popt_rise is not None) and (popt_decay is not None):
                                     nested_dict_pro["Label"].append(i)
@@ -1036,13 +1256,13 @@ else:
                                     decay_rate = np.round(popt_decay[1],4)
                                     nested_dict_pro["Decay Rate"].append(decay_rate)
                                 
-                                nested_dict_final = nested_dict_pro.copy()
+                nested_dict_final = nested_dict_pro.copy()               
                 
                 st.write('*_The original intensity data_*')  
                 st.dataframe(new_df_pro_transposed_smooth, 1000,200)
                 multi_csv_bleach = convert_df(new_df_pro_transposed_smooth)           
                 st.download_button("Press to Download",  multi_csv_bleach, 'multi_cell_data.csv', "text/csv", key='download_multi_-csv_bleach')   
-                st.write('*_The Photobleaching-corrected data_*')
+                st.write('*_The normalized Photobleaching-corrected data_*')
                 st.dataframe(plot_df_corr, 1000,200)
                 multi_csv_corr = convert_df(plot_df_corr)  
                 st.download_button("Press to Download",  multi_csv_corr, 'multi_cell_data_corr.csv', "text/csv", key='download_multi_-csv_bleach_corr')   
@@ -1066,15 +1286,15 @@ else:
                         st.download_button("Press to Download", all_csv_bleach, 'all_data.csv', "text/csv", key='all_download-csv_bleach')
                     with col_8:
                         average_rise_time = np.round(nested_dict_final['Rise time'].mean(),4)
-                        st.write(f"The average rise time based on selected labels across all frames is {average_rise_time}")
+                        st.write(f"The average rise time based on selected labels across all frames is {average_rise_time} s")
                         average_rise_rate = np.round(nested_dict_final['Rise Rate'].mean(),4)
-                        st.write(f"The average rise rate based on selected labels across all frames is {average_rise_rate}")
+                        st.write(f"The average rise rate based on selected labels across all frames is {average_rise_rate} per s")
                         average_decay_time = np.round(nested_dict_final['Decay time'].mean(),4)
-                        st.write(f"The average decay time based on selected labels across all frames is {average_decay_time}")
+                        st.write(f"The average decay time based on selected labels across all frames is {average_decay_time} s")
                         average_decay_rate = np.round(nested_dict_final['Decay Rate'].mean(),4)
-                        st.write(f"The average decay rate based on selected labels across all frames is {average_decay_rate}")
+                        st.write(f"The average decay rate based on selected labels across all frames is {average_decay_rate} per s")
                         average_duration = np.round(nested_dict_final['Duration'].mean(),4)
-                        st.write(f"The average duration based on selected labels across all frames is {average_duration}")
+                        st.write(f"The average duration based on selected labels across all frames is {average_duration} s")
                         average_amplitude = np.round(nested_dict_final['Amplitude'].mean(),4)
                         st.write(f"The average amplitude based on selected labels across all frames is {average_amplitude}")
                         
