@@ -348,7 +348,7 @@ else:
         df_selected_transpose = df_selected_transpose.drop(index = ['label'])
         df_selected_transpose['Frames'] = list(range(0,df_selected_transpose.shape[0]))
         #st.dataframe(df_selected_transpose)
-        frame_rate = st.number_input("Frame Rate (frames per second/fps)", min_value = 1, max_value = 100, value = 1)
+        frame_rate = st.number_input("Frame Rate (frames per second/fps)", min_value = 0.1, max_value = 100.0, value = 1.0, step = 0.1, format = "%.1f", help = "Type the values between 0.1 and 100.0 (inclusive). Takes values in steps of 0.1. Default is 1.0")
         df_selected_transpose['Time'] = df_selected_transpose['Frames']/frame_rate
         # create an empty list to store the traces
         traces = []
@@ -362,7 +362,7 @@ else:
         # create the plot
         fig = go.Figure(data=traces)
         # update the layout
-        fig.update_layout(title='Intensity Traces', xaxis_title='Time', yaxis_title='Mean Intensity',height=900)
+        fig.update_layout(title='Original sIntensity Traces', xaxis_title='Time', yaxis_title='Mean Intensity',height=900)
         # display the plot
         st.plotly_chart(fig, use_container_width=True) 
         
@@ -769,8 +769,8 @@ else:
                                     nested_dict_pro["Rise Rate"].append(rise_rate)
                                     decay_rate = np.round(popt_decay[1],4)
                                     nested_dict_pro["Decay Rate"].append(decay_rate)
-                                
-                                
+                
+                                    
                 #st.dataframe(new_df_pro_transposed_smooth, 1000,200)
                 nested_dict_final = nested_dict_pro.copy()  
                 st.write(new_df_pro_transposed_smooth)
@@ -778,6 +778,20 @@ else:
                 st.download_button("Press to Download",  multi_csv, 'multi_cell_data.csv', "text/csv", key='download_multi_-csv')                
                 #st.write(nested_dict_final)
                 nested_dict_final = (pd.DataFrame.from_dict(nested_dict_final))
+                traces_smooth = []                    
+                column_new_df = new_df_pro_transposed_smooth.columns              
+                for smooth_column in column_new_df:    
+                    if "smooth cell" in str(smooth_column):
+                        # create a trace for the current column
+                        trace_smooth = go.Scatter(x=new_df_pro_transposed_smooth['Time'], y=new_df_pro_transposed_smooth[smooth_column], name=smooth_column)
+                        # add the trace to the list
+                        traces_smooth.append(trace_smooth)
+                # create the plot
+                fig_smooth = go.Figure(data=traces_smooth)
+                # update the layout
+                fig_smooth.update_layout(title='Normalized Intensity Traces', xaxis_title='Time', yaxis_title='Normalized Intensity',height=900)
+                # display the plot
+                st.plotly_chart(fig_smooth, use_container_width=True)                      
                 
                 if nested_dict_final.empty:
                     pass
@@ -1268,6 +1282,21 @@ else:
                 st.download_button("Press to Download",  multi_csv_corr, 'multi_cell_data_corr.csv', "text/csv", key='download_multi_-csv_bleach_corr')   
                 #st.write(nested_dict_final)
                 nested_dict_final = (pd.DataFrame.from_dict(nested_dict_final))
+                
+                traces_smooth_corr = []                    
+                column_new_df_corr = plot_df_corr.columns              
+                for smooth_column_corr in column_new_df_corr:    
+                    if "smooth cell" in str(smooth_column_corr):
+                        # create a trace for the current column
+                        trace_smooth_corr = go.Scatter(x=plot_df_corr['Time'], y=plot_df_corr[smooth_column_corr], name=smooth_column_corr)
+                        # add the trace to the list
+                        traces_smooth_corr.append(trace_smooth_corr)
+                # create the plot
+                fig_smooth_corr = go.Figure(data=traces_smooth_corr)
+                # update the layout
+                fig_smooth_corr.update_layout(title='Corrected and Normalized Intensity Traces', xaxis_title='Time', yaxis_title='Corrected and Normalized Intensity',height=900)
+                # display the plot
+                st.plotly_chart(fig_smooth_corr, use_container_width=True)   
                 
                 if nested_dict_final.empty:
                     pass
