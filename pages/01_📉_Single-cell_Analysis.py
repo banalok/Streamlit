@@ -620,7 +620,7 @@ else:
                                                 
                         rise_df['Rise intensity'] = plot_df.loc[(plot_df['Smoothed Mean Intensity'] <= max_df_value) & (plot_df['Smoothed Mean Intensity'] >= baseline_each) & (plot_df['Frame'] <= min(max_frame)) , 'Smoothed Mean Intensity']
                         first_index = rise_df.loc[rise_df['Rise intensity'] == max_df_value].index[-1]                    
-                        rise_df.loc[first_index, 'Rise intensity'] *= 1.01                        
+                        #rise_df.loc[first_index, 'Rise intensity'] *= 1.01                        
                         rise_df['Frame'] = rise_df.index
                         rise_df = rise_df[rise_df.columns[::-1]]
                         #st.write(decay_df)
@@ -783,9 +783,9 @@ else:
                         decay_df['Decay intensity'] = plot_df.loc[(plot_df['Smoothed Mean Intensity'] <= max_df_value) & (plot_df['Smoothed Mean Intensity'] >= baseline_each) & (plot_df['Frame'] >= max(max_frame)) , 'Smoothed Mean Intensity']
                         last_index = decay_df.loc[decay_df['Decay intensity'] == max_df_value].index[-1]
                         rise_df['Rise intensity'] = plot_df.loc[(plot_df['Smoothed Mean Intensity'] <= max_df_value) & (plot_df['Smoothed Mean Intensity'] >= baseline_each) & (plot_df['Frame'] <= min(max_frame)) , 'Smoothed Mean Intensity']
-                        first_index = decay_df.loc[decay_df['Decay intensity'] == max_df_value].index[0]                    
-                        decay_df.loc[last_index, 'Decay intensity'] *= 1.01
-                        rise_df.loc[first_index, 'Rise intensity'] *= 1.01
+                        first_index = rise_df.loc[rise_df['Rise intensity'] == max_df_value].index[0]                  
+                        #decay_df.loc[last_index, 'Decay intensity'] *= 1.01
+                        #rise_df.loc[first_index, 'Rise intensity'] *= 1.01
                         decay_df['Frame'] = decay_df.index
                         rise_df['Frame'] = rise_df.index
                         decay_df = decay_df[decay_df.columns[::-1]]
@@ -946,8 +946,9 @@ else:
                     if nested_dict.empty:
                         st.write("No parameter information for the selected label can be found based on the trace either because the trace doesn't cross the baseline or because the amplitude is below 10% increase")
                     else:
-                        nested_dict = nested_dict[nested_dict['Amplitude']==(nested_dict['Amplitude']).max()]  
+                        nested_dict = nested_dict[nested_dict['Amplitude']==(nested_dict['Amplitude']).max()]                          
                         nested_dict_new = nested_dict[nested_dict['Amplitude']>0.1*baseline_each]
+                        
                         #st.write(nested_dict['Amplitude'])
                         if nested_dict_new.empty:
                             st.write("No parameter information for the selected label can be found based on the trace either because the trace doesn't cross the baseline or because the amplitude is below 10% increase")
@@ -1346,6 +1347,7 @@ else:
                 #st.write(plot_df.dtypes)
                 #####test by setting a some equal high values#########plot_df.loc[plot_df['Frame'] == 39, 'Smoothed Mean Intensity'] = max_df_value ##plot_df.loc[plot_df['Frame'] == 69, 'Smoothed Mean Intensity'] = baseline_each
                 count_max = plot_df_corr['Smoothed Mean Intensity'].eq(max_df_value).sum()
+                #st.write(count_max)
                 max_frame = plot_df_corr.loc[plot_df_corr['Smoothed Mean Intensity'] == max_df_value, 'Frame']
                 decay_df = pd.DataFrame()
                 rise_df = pd.DataFrame()
@@ -1384,7 +1386,7 @@ else:
                                                 
                         rise_df['Rise intensity'] = plot_df_corr.loc[(plot_df_corr['Smoothed Mean Intensity'] <= max_df_value) & (plot_df_corr['Smoothed Mean Intensity'] >= baseline_corr_each) & (plot_df_corr['Frame'] <= min(max_frame)) , 'Smoothed Mean Intensity']
                         first_index = rise_df.loc[rise_df['Rise intensity'] == max_df_value].index[-1]                    
-                        rise_df.loc[first_index, 'Rise intensity'] *= 1.01                        
+                        #rise_df.loc[first_index, 'Rise intensity'] *= 1.01                        
                         rise_df['Frame'] = rise_df.index
                         rise_df = rise_df[rise_df.columns[::-1]]
                         #st.write(decay_df)
@@ -1581,9 +1583,9 @@ else:
                         decay_df['Decay intensity'] = plot_df_corr.loc[(plot_df_corr['Smoothed Mean Intensity'] <= max_df_value) & (plot_df_corr['Smoothed Mean Intensity'] >= baseline_corr_each) & (plot_df_corr['Frame'] >= max(max_frame)) , 'Smoothed Mean Intensity']
                         last_index = decay_df.loc[decay_df['Decay intensity'] == max_df_value].index[-1]
                         rise_df['Rise intensity'] = plot_df_corr.loc[(plot_df_corr['Smoothed Mean Intensity'] <= max_df_value) & (plot_df_corr['Smoothed Mean Intensity'] >= baseline_corr_each) & (plot_df_corr['Frame'] <= min(max_frame)) , 'Smoothed Mean Intensity']
-                        first_index = decay_df.loc[decay_df['Decay intensity'] == max_df_value].index[0]                    
-                        decay_df.loc[last_index, 'Decay intensity'] *= 1.01
-                        rise_df.loc[first_index, 'Rise intensity'] *= 1.01
+                        first_index = rise_df.loc[rise_df['Rise intensity'] == max_df_value].index[0]
+                        #decay_df.loc[last_index, 'Decay intensity'] *= 1.01
+                        #rise_df.loc[first_index, 'Rise intensity'] *= 1.01
                         decay_df['Frame'] = decay_df.index
                         rise_df['Frame'] = rise_df.index
                         decay_df = decay_df[decay_df.columns[::-1]]
@@ -1695,6 +1697,7 @@ else:
                         col_1, col_2 = st.columns(2)
                         with col_1:
                             nested_dict_new = nested_dict[(nested_dict['Amplitude']) == max((nested_dict['Amplitude']))]
+                            
                             #st.write(nested_dict_new.shape[0])
                             nested_dict_new["Number of Events"] = nested_dict_new.shape[0]
                             st.write(nested_dict_new)
