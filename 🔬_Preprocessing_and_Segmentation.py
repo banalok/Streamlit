@@ -354,9 +354,9 @@ def Segment():
                 CLAHE_img = cv2.cvtColor(updated_lab_img22, cv2.COLOR_LAB2RGB)
                 CLAHE_img = CLAHE_img[:,:,0] 
                 CLAHE_img_array.append(CLAHE_img) 
-                
-                super_im = super_im + weight*CLAHE_img 
-            super_im = (np.round(super_im)).astype('uint8')
+                super_im = np.maximum(super_im, CLAHE_img)
+                #super_im = super_im + weight*CLAHE_img 
+            #super_im = (np.round(super_im)).astype('uint8')
             super_im[super_im>255]=255
             #with st.expander("**_Show Processed Frames_**"):
             st.write('*_Processed Frames_*')
