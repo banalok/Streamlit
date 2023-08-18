@@ -385,7 +385,7 @@ def Segment():
                 else:
                     diam = [props[obj_s]['equivalent_diameter_area'] for obj_s in range(0,len(props))]
                     labels_to_keep_len = len([prop['label'] for prop in props if prop['equivalent_diameter_area'] > 0.5*stat.mean(diam)])
-                    labels_to_keep = list(range(1, labels_to_keep_len))
+                    labels_to_keep = list(range(1, labels_to_keep_len+1))
                     label_f = np.zeros_like(label, dtype= 'uint8')
                     for labels in labels_to_keep:
                         label_f[label==labels] = labels    
