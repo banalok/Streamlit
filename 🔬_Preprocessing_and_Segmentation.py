@@ -440,7 +440,7 @@ def Segment():
                     st.image(final_label_rgb,use_column_width=True,clamp = True)
                     st.session_state['final_label_rgb_pg_2'] = final_label_rgb
                     st.session_state['super_im_rgb_pg_2'] = super_im_rgb        
-                    st.write('test')
+                    
                     # col_pg_1, col_pg_2, col_pg_3 = st.columns(3)
                     # with col_pg_1:
                     #     if st.button("**_Single Intensity Traces_**"):
