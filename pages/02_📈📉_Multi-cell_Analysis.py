@@ -959,8 +959,8 @@ else:
                                 popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est_rise,b_est_rise])
                                 rise_curve_exp = np.round((mono_exp_rise(rise_df['Frame'], *popt_rise)),3) 
                                 nested_dict_pro["Rise Rate"].append(np.round(popt_rise[1], 4))
-                            nested_dict_final = nested_dict_pro.copy()  
-                            nested_dict_final = (pd.DataFrame.from_dict(nested_dict_final))
+                            #nested_dict_final = nested_dict_pro.copy()  
+                            #nested_dict_final = (pd.DataFrame.from_dict(nested_dict_final))
                             
                     elif baseline_recovery_frame_input ==   'Average Frame Value': 
                         for i in df_selected['label']:
@@ -1032,13 +1032,14 @@ else:
                                 popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est_rise,b_est_rise])
                                 rise_curve_exp = np.round((mono_exp_rise(rise_df['Frame'], *popt_rise)),3) 
                                 nested_dict_pro["Rise Rate"].append(np.round(popt_rise[1], 4))
-                            nested_dict_final = nested_dict_pro.copy()  
-                            nested_dict_final = (pd.DataFrame.from_dict(nested_dict_final))
+                            #nested_dict_final = nested_dict_pro.copy()  
+                            #nested_dict_final = (pd.DataFrame.from_dict(nested_dict_final))
                             
                 st.write(new_df_pro_transposed_smooth)
                 multi_csv = convert_df(new_df_pro_transposed_smooth)           
                 st.download_button("Press to Download",  multi_csv, 'multi_cell_data.csv', "text/csv", key='download_multi_-csv_stat')                
                 #st.write(nested_dict_final)
+                nested_dict_final = nested_dict_pro.copy()
                 nested_dict_final = (pd.DataFrame.from_dict(nested_dict_final)) 
                 if nested_dict_final.empty:
                     pass
