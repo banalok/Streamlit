@@ -331,7 +331,7 @@ def Segment():
                 st.session_state.hist_x = st.slider("*_Histogram Equalization cliplimit factor (CLAHE)_*", min_value = 1,max_value = 20, step = 1, value = st.session_state.hist_x, on_change=callback_off)
             
             CLAHE_img_array = []
-            super_im = np.zeros_like(raw_image_ani[0][:,:,0])   #size of one of the image
+            super_im = np.zeros_like(raw_image_ani[0][:,:,0])   #size of one of the images
             
             weight = 1/raw_image_ani.shape[0]                      
             for frame_num in range(0,raw_image_ani.shape[0]):
@@ -368,7 +368,7 @@ def Segment():
             super_im = super_im.astype(np.int32)
             super_im[super_im>255]=255
             super_im = super_im.astype(np.uint8)
-            st.write(super_im.shape)
+            #st.write(super_im.shape)
             #with st.expander("**_Show Processed Frames_**"):
             st.write('*_Processed Frames_*')
             image_frame_num_pro = st.number_input(f"(0 - {raw_image_ani.shape[0]-1})", min_value = 0, max_value = raw_image_ani.shape[0]-1, step = 1,key='num_2')

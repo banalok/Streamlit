@@ -143,8 +143,9 @@ def find_b_est_decay(x_data, y_data):
         x1, y1 = x_data[i], y_data[i]
         x2, y2 = x_data[i+1], y_data[i+1]
         try:
-            k = -math.log(y2/y1) / (x2-x1)
-            decay_constants.append(k)
+            if y1 > 0 and y2 > 0 and x2 != x1:
+                k = -math.log(y2/y1) / (x2-x1)
+                decay_constants.append(k)
         except ValueError as e:
             decay_constants.append(0)
     
@@ -160,8 +161,9 @@ def find_b_est_rise(x_data, y_data):
         x1, y1 = x_data[i], y_data[i]
         x2, y2 = x_data[i+1], y_data[i+1]
         try:
-            k = math.log(y2/y1) / (x2-x1)
-            rise_constants.append(k)
+            if y1 > 0 and y2 > 0 and x2 != x1:
+                k = math.log(y2/y1) / (x2-x1)
+                rise_constants.append(k)
         except ValueError as e:
             rise_constants.append(0)
     
@@ -173,9 +175,16 @@ def find_b_est_rise(x_data, y_data):
 if "button_clicked_movav" not in st.session_state:
     st.session_state.button_clicked_movav = False
     
+if "button_clicked_movav_sta" not in st.session_state:
+    st.session_state.button_clicked_movav_sta = False
+    
 def callback_movav():
     #Button was clicked
     st.session_state.button_clicked_movav = True
+    
+def callback_movav_sta():
+    #Button was clicked
+    st.session_state.button_clicked_movav_sta = True
     
 if 'all_param_table' not in st.session_state:
     st.session_state.all_param_table = False
@@ -225,75 +234,151 @@ if 'label_list_pg_2' not in st.session_state:
     pass  
 else:
     label_list_pg_2 = st.session_state['label_list_pg_2'] 
-    
-    data = list(np.unique(label_list_pg_2)) 
-    
-    df_pro = pd.DataFrame(data, columns=['label'])
-    col_arr = []
-    
-    for frames_pro in range(0,raw_img_ani_pg_2.shape[0]):
-        props_pro = measure.regionprops_table(label_fin, intensity_image=background_corr_pg_2[frames_pro][:,:,0],   #markers
-                                              properties=['label','intensity_mean','image_intensity'])
-        col = []
-        label_array = props_pro['label']
-        intensity_im = props_pro['image_intensity']
-        #col_arr.append(intensity_im)                        
-        for lab in label_array:                          
-            mask_label = label_array == lab
-            intensity_values = intensity_im[mask_label]
-            col.append(intensity_values)
-        col_arr.append((np.array(col)).ravel())
+    if 'area_thres_x' not in st.session_state:
+        st.session_state['area_thres_x'] = st.number_input("*_Choose the area threshold percentage_*", min_value=0.00, max_value=1.00, value=0.30,step = 0.01, format="%0.2f", help = f"Default is 0.3. Pixels below 30% of the maximum ({np.amax(raw_img_ani_pg_2)}) are not counted to get the bright area of labels", key='area_thres_1')
+    if 'df_pro' not in st.session_state:
+        label_fin = st.session_state['final_label_pg_2']
+               
+        data = list(np.unique(label_list_pg_2)) 
         
-        df_single = pd.DataFrame(props_pro)
-        #df_single['area'] = df_single[df_single['area']>df_single['intensity_mean'].mean()]['area']
-        df_single['intensity_mean'] = np.round(df_single['intensity_mean'],3)
-        #df_single.rename(columns = {'area' : f'area_{frames_pro}'}, inplace=True)
-        df_single.rename(columns = {'intensity_mean' : f'intensity_mean_{frames_pro}'}, inplace=True)
-        df_single.rename(columns = {'image_intensity' : f'image_intensity_{frames_pro}'}, inplace=True)
-        #df_single.rename(columns = {'solidity' : f'solidity_{frames_pro}'}, inplace=True)
-        df_pro = pd.merge(df_pro, df_single, on = 'label', how = 'outer')                                                 
-    #st.write(col_arr[0].shape)
-    #df_pro.drop([0], inplace=True)
-    
-    ######## #################  ################# ###############Interactive table################################################################
-    area_thres_x = st.slider("*_Choose the area threshold percentage_*", min_value=0.0, max_value=1.0, value=0.3, format="%0.1f", help = f"Default is 0.3. Pixels below 30% of the maximum ({np.amax(raw_img_ani_pg_2)}) are not counted to get the bright area of labels", key='area_thres')
-    #df_pro = df_pro.drop(df_pro[df_pro['label'] == 255].index)
-    for frame_col in range(0, raw_img_ani_pg_2.shape[0]):
-        pixel_counts = []
-        for label_val in df_pro['label']:
-            intensity_image = col_arr[frame_col][label_val-1]
-            count = np.sum(np.greater(intensity_image, area_thres_x*np.amax(raw_img_ani_pg_2[frame_col]))) #df_pro[f'intensity_mean_{frames_pro}'].mean()))
-            pixel_counts.append(count)
-        #st.write(type(np.amax(raw_image_ani[frame_col])))
-        pixel_var = f'Bright_pixel_area_{frame_col}'
-        #df_pro[pixel_var] = pixel_counts
-        pixel_counts_df = pd.DataFrame(pixel_counts,columns = [pixel_var])
-        df_pro = pd.concat((df_pro, pixel_counts_df),axis=1)   
-                         
-    
-    # pixels_to_add = []   
-    # for frame_col in range(0, raw_image_ani.shape[0]):                                    
-    #     pixel_var = f'pixel_count_{frame_col}'
-    #     pixel_counts = []
-    #     for label_val in df_pro['label']:
-    #         #st.write("HERE")
-    #         intensity_image = col_arr[frame_col][label_val-1]
-    #         count = np.sum(np.greater(intensity_image, 0.5*np.amax(raw_image_ani))) #df_pro[f'intensity_mean_{frames_pro}'].mean()))
-    #         pixel_counts.append(count)  
-    #     pixels_to_add.append({pixel_var: pixel_counts})
+        st.session_state['df_pro'] = pd.DataFrame(data, columns=['label'])
+        col_arr = []
         
-    # df_pro = pd.concat([df_pro, pd.DataFrame(pixels_to_add)], axis=1)  
-    #st.write(df_pro["pixel_count_40"].dtype)
-    
-    for drop_frame in range(0, raw_img_ani_pg_2.shape[0]):  
-       df_pro.drop([f'image_intensity_{drop_frame}'], axis=1, inplace=True) 
-    st.session_state['df_pro_pg_2'] = df_pro
-    st.dataframe(df_pro, 1000, 200)
-    get_data_indi = convert_df(df_pro)
-    st.download_button("Press to Download", get_data_indi, 'label_intensity_data.csv', "text/csv", key='label_download-get_data')
+        for frames_pro in range(0,raw_img_ani_pg_2.shape[0]):
+            props_pro = measure.regionprops_table(label_fin, intensity_image=background_corr_pg_2[frames_pro][:,:,0],   #markers
+                                                  properties=['label','intensity_mean','image_intensity'])
+            col = []
+            label_array = props_pro['label']
+            intensity_im = props_pro['image_intensity']
+            #col_arr.append(intensity_im)                        
+            for lab in label_array:                          
+                mask_label = label_array == lab
+                intensity_values = intensity_im[mask_label]
+                col.append(intensity_values)
+            col_arr.append((np.array(col)).ravel())
+            
+            df_single = pd.DataFrame(props_pro)
+            #df_single['area'] = df_single[df_single['area']>df_single['intensity_mean'].mean()]['area']
+            df_single['intensity_mean'] = np.round(df_single['intensity_mean'],3)
+            #df_single.rename(columns = {'area' : f'area_{frames_pro}'}, inplace=True)
+            df_single.rename(columns = {'intensity_mean' : f'intensity_mean_{frames_pro}'}, inplace=True)
+            df_single.rename(columns = {'image_intensity' : f'image_intensity_{frames_pro}'}, inplace=True)
+            #df_single.rename(columns = {'solidity' : f'solidity_{frames_pro}'}, inplace=True)
+            st.session_state['df_pro'] = pd.merge(st.session_state['df_pro'], df_single, on = 'label', how = 'outer')                                                 
+        #st.write(col_arr[0].shape)
+        #df_pro.drop([0], inplace=True)
+        
+        ######## #################  ################# ###############Interactive table################################################################
+        #df_pro = df_pro.drop(df_pro[df_pro['label'] == 255].index)
+        for frame_col in range(0, raw_img_ani_pg_2.shape[0]):
+            pixel_counts = []
+            for label_val in st.session_state['df_pro']['label']:
+                intensity_image = col_arr[frame_col][label_val-1]
+                count = np.sum(np.greater(intensity_image, st.session_state['area_thres_x']*np.amax(raw_img_ani_pg_2[frame_col]))) #df_pro[f'intensity_mean_{frames_pro}'].mean()))
+                pixel_counts.append(count)
+            #st.write(type(np.amax(raw_image_ani[frame_col])))
+            pixel_var = f'Bright_pixel_area_{frame_col}'
+            #df_pro[pixel_var] = pixel_counts
+            pixel_counts_df = pd.DataFrame(pixel_counts,columns = [pixel_var])
+            st.session_state['df_pro'] = pd.concat((st.session_state['df_pro'], pixel_counts_df),axis=1)   
+                             
+        
+        # pixels_to_add = []   
+        # for frame_col in range(0, raw_image_ani.shape[0]):                                    
+        #     pixel_var = f'pixel_count_{frame_col}'
+        #     pixel_counts = []
+        #     for label_val in df_pro['label']:
+        #         #st.write("HERE")
+        #         intensity_image = col_arr[frame_col][label_val-1]
+        #         count = np.sum(np.greater(intensity_image, 0.5*np.amax(raw_image_ani))) #df_pro[f'intensity_mean_{frames_pro}'].mean()))
+        #         pixel_counts.append(count)  
+        #     pixels_to_add.append({pixel_var: pixel_counts})
+            
+        # df_pro = pd.concat([df_pro, pd.DataFrame(pixels_to_add)], axis=1)  
+        #st.write(df_pro["pixel_count_40"].dtype)
+        
+        for drop_frame in range(0, raw_img_ani_pg_2.shape[0]):  
+           st.session_state['df_pro'].drop([f'image_intensity_{drop_frame}'], axis=1, inplace=True) 
+        #st.session_state['df_pro_pg_2'] = df_pro
+        st.dataframe(st.session_state['df_pro'], 1000, 200)
+        get_data_indi = convert_df(st.session_state['df_pro'])
+        st.download_button("Press to Download", get_data_indi, 'label_intensity_data.csv', "text/csv", key='label_download-get_data') 
+    else:
+        label_fin = st.session_state['final_label_pg_2']
+        area_thres_x = st.number_input("*_Choose the area threshold percentage_*", min_value=0.00, max_value=1.00, value=0.30,step = 0.01, format="%0.2f", help = f"Default is 0.3. Pixels below 30% of the maximum ({np.amax(raw_img_ani_pg_2)}) are not counted to get the bright area of labels", key='area_thres')
+        if area_thres_x == st.session_state['area_thres_x']:
+            st.dataframe(st.session_state['df_pro'], 1000, 200)
+            get_data_indi = convert_df(st.session_state['df_pro'])
+            st.download_button("Press to Download", get_data_indi, 'label_intensity_data.csv', "text/csv", key='label_download-get_data')      
+        else:
+            st.session_state['area_thres_x'] = area_thres_x
+            data = list(np.unique(label_list_pg_2)) 
+            
+            st.session_state['df_pro'] = pd.DataFrame(data, columns=['label'])
+            col_arr = []
+            
+            for frames_pro in range(0,raw_img_ani_pg_2.shape[0]):
+                props_pro = measure.regionprops_table(label_fin, intensity_image=background_corr_pg_2[frames_pro][:,:,0],   #markers
+                                                      properties=['label','intensity_mean','image_intensity'])
+                col = []
+                label_array = props_pro['label']
+                intensity_im = props_pro['image_intensity']
+                #col_arr.append(intensity_im)                        
+                for lab in label_array:                          
+                    mask_label = label_array == lab
+                    intensity_values = intensity_im[mask_label]
+                    col.append(intensity_values)
+                col_arr.append((np.array(col)).ravel())
+                
+                df_single = pd.DataFrame(props_pro)
+                #df_single['area'] = df_single[df_single['area']>df_single['intensity_mean'].mean()]['area']
+                df_single['intensity_mean'] = np.round(df_single['intensity_mean'],3)
+                #df_single.rename(columns = {'area' : f'area_{frames_pro}'}, inplace=True)
+                df_single.rename(columns = {'intensity_mean' : f'intensity_mean_{frames_pro}'}, inplace=True)
+                df_single.rename(columns = {'image_intensity' : f'image_intensity_{frames_pro}'}, inplace=True)
+                #df_single.rename(columns = {'solidity' : f'solidity_{frames_pro}'}, inplace=True)
+                st.session_state['df_pro'] = pd.merge(st.session_state['df_pro'], df_single, on = 'label', how = 'outer')                                                 
+            #st.write(col_arr[0].shape)
+            #df_pro.drop([0], inplace=True)
+            
+            ######## #################  ################# ###############Interactive table################################################################
+            #df_pro = df_pro.drop(df_pro[df_pro['label'] == 255].index)
+            for frame_col in range(0, raw_img_ani_pg_2.shape[0]):
+                pixel_counts = []
+                for label_val in st.session_state['df_pro']['label']:
+                    intensity_image = col_arr[frame_col][label_val-1]
+                    count = np.sum(np.greater(intensity_image, st.session_state['area_thres_x']*np.amax(raw_img_ani_pg_2[frame_col]))) #df_pro[f'intensity_mean_{frames_pro}'].mean()))
+                    pixel_counts.append(count)
+                #st.write(type(np.amax(raw_image_ani[frame_col])))
+                pixel_var = f'Bright_pixel_area_{frame_col}'
+                #df_pro[pixel_var] = pixel_counts
+                pixel_counts_df = pd.DataFrame(pixel_counts,columns = [pixel_var])
+                st.session_state['df_pro'] = pd.concat((st.session_state['df_pro'], pixel_counts_df),axis=1)   
+                                 
+            
+            # pixels_to_add = []   
+            # for frame_col in range(0, raw_image_ani.shape[0]):                                    
+            #     pixel_var = f'pixel_count_{frame_col}'
+            #     pixel_counts = []
+            #     for label_val in df_pro['label']:
+            #         #st.write("HERE")
+            #         intensity_image = col_arr[frame_col][label_val-1]
+            #         count = np.sum(np.greater(intensity_image, 0.5*np.amax(raw_image_ani))) #df_pro[f'intensity_mean_{frames_pro}'].mean()))
+            #         pixel_counts.append(count)  
+            #     pixels_to_add.append({pixel_var: pixel_counts})
+                
+            # df_pro = pd.concat([df_pro, pd.DataFrame(pixels_to_add)], axis=1)  
+            #st.write(df_pro["pixel_count_40"].dtype)
+            
+            for drop_frame in range(0, raw_img_ani_pg_2.shape[0]):  
+               st.session_state['df_pro'].drop([f'image_intensity_{drop_frame}'], axis=1, inplace=True) 
+            #st.session_state['df_pro_pg_2'] = df_pro
+            st.dataframe(st.session_state['df_pro'], 1000, 200)
+            get_data_indi = convert_df(st.session_state['df_pro'])
+            st.download_button("Press to Download", get_data_indi, 'label_intensity_data.csv', "text/csv", key='label_download-get_data')  
     #st.dataframe(df_pro, 1000, 200)
     st.write('*_Select label(s) to explore_*')    
-    gb = GridOptionsBuilder.from_dataframe(df_pro)                       
+    gb = GridOptionsBuilder.from_dataframe(st.session_state['df_pro'])                       
     gb.configure_pagination(paginationAutoPageSize=True) #Add pagination
     gb.configure_side_bar() #Add a sidebar
     #gb.configure_selection('multiple', use_checkbox=True, groupSelectsChildren="Group checkbox select children") #Enable multi-row selection
@@ -304,7 +389,7 @@ else:
     gridOptions["columnDefs"][0]["headerCheckboxSelection"]=True
     
     grid_response_m = AgGrid(
-        df_pro,
+        st.session_state['df_pro'],
         gridOptions=gridOptions,
         data_return_mode='AS_INPUT', 
         update_mode=GridUpdateMode.SELECTION_CHANGED,    #'MODEL_CHANGED',
@@ -368,7 +453,7 @@ else:
         # create the plot
         fig = go.Figure(data=traces)
         # update the layout
-        fig.update_layout(title='Original sIntensity Traces', xaxis_title='Time', yaxis_title='Mean Intensity',height=900)
+        fig.update_layout(title='Original Intensity Traces', xaxis_title='Time', yaxis_title='Mean Intensity',height=900)
         # display the plot
         st.plotly_chart(fig, use_container_width=True) 
         
@@ -379,10 +464,10 @@ else:
         
         if bleach_corr_check == 'No bleaching correction':
             baseline_peak_selection = st.radio("Select one", ('Static', 'Dynamic'), help='Select "Static" to manually select single values for the baseline, peak and recovery frames; otherwise, select "Dynamic"')
-            smooth_plot_x = st.slider("*_Moving Average Window_*", min_value=1, max_value=5, help = "Adjust to smooth the mean intensity trace below. Moving average of 1 would mean the original 'Mean Intensity' trace")
+            smooth_plot_x = st.number_input("*_Moving Average Window_*", min_value=1, max_value=5, help = "Adjust to smooth the mean intensity trace below. Moving average of 1 would mean the original 'Mean Intensity' trace")
             if baseline_peak_selection == "Dynamic":            
                 
-                baseline_smooth_x = st.slider("*_Choose frame number(s) to average their corresponding intensity values for baseline calculation_*", min_value = 0, max_value = raw_img_ani_pg_2.shape[0]-1, value = 10,  key='smooth_multi_0')
+                baseline_smooth_x = st.number_input("*_Choose frame number(s) to average their corresponding intensity values for baseline calculation_*", min_value = 0, max_value = raw_img_ani_pg_2.shape[0]-1, value = 10,  key='smooth_multi_0')
                 
                 if st.button("Obtain the parameters for selected labels",on_click=callback_movav) or st.session_state.button_clicked_movav:
                     
@@ -856,7 +941,7 @@ else:
                 if baseline_recovery_frame_input ==   'Single Frame Value':                                     
                     baseline__frame_static = st.number_input("Baseline Intensity Frame number",  min_value=0, max_value=raw_img_ani_pg_2.shape[0]-1)
                 elif baseline_recovery_frame_input ==   'Average Frame Value': 
-                    baseline_smooth_x = st.slider("*_Choose frame number(s) to average their corresponding intensity values for baseline calculation_*", min_value = 0, max_value = raw_img_ani_pg_2.shape[0]-1, value = 10,  key='smooth')
+                    baseline_smooth_x = st.number_input("*_Choose frame number(s) to average their corresponding intensity values for baseline calculation_*", min_value = 0, max_value = raw_img_ani_pg_2.shape[0]-1, value = 10,  key='smooth')
                     baseline__frame_static = int(sum(range(baseline_smooth_x + 1)) / (baseline_smooth_x + 1))
                 df_pro_pixel_remove = df_selected_1.drop(columns=df_selected.filter(regex='^Bright_pixel_area_').columns)
                 #df_pro_pixel_remove = df_pro_pixel_remove.drop(columns=df_pro.filter(regex='^area').columns)
@@ -877,7 +962,7 @@ else:
                 new_df_pro_transposed_smooth = new_df_pro_transposed_smooth.iloc[:, [new_df_pro_transposed_smooth.shape[1] - 1] + list(range(new_df_pro_transposed_smooth.shape[1] - 1))]
                 new_df_pro_transposed_smooth['Time'] = new_df_pro_transposed_smooth['Frame']/frame_rate
                 
-                if st.button("Obtain the parameters for selected labels",on_click=callback_movav) or st.session_state.button_clicked_movav:           
+                if st.button("Obtain the parameters for selected labels",on_click=callback_movav_sta):       
                     st.warning("The parameters for all labels are obtained using the same set of selections.")                   
                     #st.write(new_df_pro_transposed)
           
@@ -959,9 +1044,9 @@ else:
                                 popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est_rise,b_est_rise])
                                 rise_curve_exp = np.round((mono_exp_rise(rise_df['Frame'], *popt_rise)),3) 
                                 nested_dict_pro["Rise Rate"].append(np.round(popt_rise[1], 4))
-                            #nested_dict_final = nested_dict_pro.copy()  
-                            #nested_dict_final = (pd.DataFrame.from_dict(nested_dict_final))
-                            
+                            nested_dict_final = nested_dict_pro.copy()  
+                            nested_dict_final = (pd.DataFrame.from_dict(nested_dict_final))
+                            #st.write(nested_dict_final)
                     elif baseline_recovery_frame_input ==   'Average Frame Value': 
                         for i in df_selected['label']:
                             baseline_each = new_df_pro_transposed_smooth.loc[(new_df_pro_transposed_smooth['Frame'] >= 0) & (new_df_pro_transposed_smooth['Frame'] <= baseline_smooth_x), f'smooth cell {i}'].mean()
@@ -1032,51 +1117,65 @@ else:
                                 popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est_rise,b_est_rise])
                                 rise_curve_exp = np.round((mono_exp_rise(rise_df['Frame'], *popt_rise)),3) 
                                 nested_dict_pro["Rise Rate"].append(np.round(popt_rise[1], 4))
-                            #nested_dict_final = nested_dict_pro.copy()  
-                            #nested_dict_final = (pd.DataFrame.from_dict(nested_dict_final))
+                            nested_dict_final = nested_dict_pro.copy()  
+                            nested_dict_final = (pd.DataFrame.from_dict(nested_dict_final))
                             
-                st.write(new_df_pro_transposed_smooth)
-                multi_csv = convert_df(new_df_pro_transposed_smooth)           
-                st.download_button("Press to Download",  multi_csv, 'multi_cell_data.csv', "text/csv", key='download_multi_-csv_stat')                
-                #st.write(nested_dict_final)
-                nested_dict_final = nested_dict_pro.copy()
-                nested_dict_final = (pd.DataFrame.from_dict(nested_dict_final)) 
-                if nested_dict_final.empty:
-                    pass
-                else:                              
-                    st.subheader("**_Parameters for selected labels_**")
-                    col_7, col_8 = st.columns(2)
-                    
-                    with col_7: 
-                        nested_dict_final = nested_dict_final[nested_dict_final.groupby('Label')['Amplitude'].transform(max) == nested_dict_final['Amplitude']]
-                        nested_dict_final['Number of Events'] = nested_dict_final.groupby('Label')['Number of Events'].transform('count')
-
-                        st.write(nested_dict_final)  
-                        all_csv = convert_df(nested_dict_final)           
-                        st.download_button("Press to Download", all_csv, 'all_data.csv', "text/csv", key='all_download-csv')
-                    with col_8:
-                        average_rise_time = np.round(nested_dict_final['Rise time'].mean(),4)
-                        st.write(f"The average rise time based on selected labels across all frames is {average_rise_time} s")
-                        average_rise_rate = np.round(nested_dict_final['Rise Rate'].mean(),4)
-                        st.write(f"The average rise rate based on selected labels across all frames is {average_rise_rate} per s")
-                        average_decay_time = np.round(nested_dict_final['Decay time'].mean(),4)
-                        st.write(f"The average decay time based on selected labels across all frames is {average_decay_time} s")
-                        average_decay_rate = np.round(nested_dict_final['Decay Rate'].mean(),4)
-                        st.write(f"The average decay rate based on selected labels across all frames is {average_decay_rate} per s")
-                        average_duration = np.round(nested_dict_final['Duration'].mean(),4)
-                        st.write(f"The average duration based on selected labels across all frames is {average_duration} s")
-                        average_amplitude = np.round(nested_dict_final['Amplitude'].mean(),4)
-                        st.write(f"The average amplitude based on selected labels across all frames is {average_amplitude}")                
+                    st.write(new_df_pro_transposed_smooth)
+                    multi_csv = convert_df(new_df_pro_transposed_smooth)           
+                    st.download_button("Press to Download",  multi_csv, 'multi_cell_data.csv', "text/csv", key='download_multi_-csv_stat')                
+                    #st.write(nested_dict_final)
+                    #nested_dict_final = nested_dict_pro.copy()
+                    #nested_dict_final = (pd.DataFrame.from_dict(nested_dict_final)) 
+                    traces_smooth = []                    
+                    column_new_df = new_df_pro_transposed_smooth.columns              
+                    for smooth_column in column_new_df:    
+                        if "smooth cell" in str(smooth_column):
+                            # create a trace for the current column
+                            trace_smooth = go.Scatter(x=new_df_pro_transposed_smooth['Time'], y=new_df_pro_transposed_smooth[smooth_column], name=smooth_column)
+                            # add the trace to the list
+                            traces_smooth.append(trace_smooth)
+                    # create the plot
+                    fig_smooth = go.Figure(data=traces_smooth)
+                    # update the layout
+                    fig_smooth.update_layout(title='Normalized Intensity Traces', xaxis_title='Time', yaxis_title='Normalized Intensity',height=900)
+                    # display the plot
+                    st.plotly_chart(fig_smooth, use_container_width=True)                       
+                    if nested_dict_final.empty:
+                        pass
+                    else:                              
+                        st.subheader("**_Parameters for selected labels_**")
+                        col_7, col_8 = st.columns(2)
+                        
+                        with col_7: 
+                            nested_dict_final = nested_dict_final[nested_dict_final.groupby('Label')['Amplitude'].transform(max) == nested_dict_final['Amplitude']]
+                            nested_dict_final['Number of Events'] = nested_dict_final.groupby('Label')['Number of Events'].transform('count')
+    
+                            st.write(nested_dict_final)  
+                            all_csv = convert_df(nested_dict_final)           
+                            st.download_button("Press to Download", all_csv, 'all_data.csv', "text/csv", key='all_download-csv')
+                        with col_8:
+                            average_rise_time = np.round(nested_dict_final['Rise time'].mean(),4)
+                            st.write(f"The average rise time based on selected labels across all frames is {average_rise_time} s")
+                            average_rise_rate = np.round(nested_dict_final['Rise Rate'].mean(),4)
+                            st.write(f"The average rise rate based on selected labels across all frames is {average_rise_rate} per s")
+                            average_decay_time = np.round(nested_dict_final['Decay time'].mean(),4)
+                            st.write(f"The average decay time based on selected labels across all frames is {average_decay_time} s")
+                            average_decay_rate = np.round(nested_dict_final['Decay Rate'].mean(),4)
+                            st.write(f"The average decay rate based on selected labels across all frames is {average_decay_rate} per s")
+                            average_duration = np.round(nested_dict_final['Duration'].mean(),4)
+                            st.write(f"The average duration based on selected labels across all frames is {average_duration} s")
+                            average_amplitude = np.round(nested_dict_final['Amplitude'].mean(),4)
+                            st.write(f"The average amplitude based on selected labels across all frames is {average_amplitude}")                
              
                 
         if bleach_corr_check == 'Bleaching correction':
             baseline_peak_selection = st.radio("Select one", ('Static', 'Dynamic'), help='Select "Static" to manually select single values for the baseline, peak and recovery frames; otherwise, select "Dynamic"')
-            smooth_plot_x = st.slider("*_Moving Average Window_*", min_value=1, max_value=5, help = "Adjust to smooth the mean intensity trace below. Moving average of 1 would mean the original 'Mean Intensity' trace")
-            fit_first_x = st.slider("*_Choose the number of first few frame number(s) to fit a mono-exponential decay_*", min_value = 1, max_value = int(np.floor(raw_img_ani_pg_2.shape[0]/2)), value = 30,  key='smooth_fit_first_multi')
-            fit_last_x = st.slider("*_Choose the number of last few frame number(s) to fit a mono-exponential decay_*", 1, int(np.floor(raw_img_ani_pg_2.shape[0]/2)), value = 30, key='smooth_fit_last_multi')
+            smooth_plot_x = st.number_input("*_Moving Average Window_*", min_value=1, max_value=5, help = "Adjust to smooth the mean intensity trace below. Moving average of 1 would mean the original 'Mean Intensity' trace")
+            fit_first_x = st.number_input("*_Choose the number of first few frame number(s) to fit a mono-exponential decay_*", min_value = 1, max_value = int(np.floor(raw_img_ani_pg_2.shape[0]/2)), value = 30,  key='smooth_fit_first_multi')
+            fit_last_x = st.number_input("*_Choose the number of last few frame number(s) to fit a mono-exponential decay_*", 1, int(np.floor(raw_img_ani_pg_2.shape[0]/2)), value = 30, key='smooth_fit_last_multi')
             fit_last_x = raw_img_ani_pg_2.shape[0] - 1 - fit_last_x
             if baseline_peak_selection == "Dynamic": 
-                baseline_smooth_x = st.slider("*_Choose frame number(s) to average their corresponding intensity values for baseline calculation_*", min_value = 0, max_value = raw_img_ani_pg_2.shape[0]-1, value = 10,  key='smooth_multi_0') 
+                baseline_smooth_x = st.number_input("*_Choose frame number(s) to average their corresponding intensity values for baseline calculation_*", min_value = 0, max_value = raw_img_ani_pg_2.shape[0]-1, value = 10,  key='smooth_multi_0') 
                 if st.button("Obtain the parameters for selected labels",on_click=callback_movav) or st.session_state.button_clicked_movav:
                     
                     st.warning("The parameters for all labels are obtained using the same set of selections.")
@@ -1585,7 +1684,7 @@ else:
                 if baseline_recovery_frame_input ==   'Single Frame Value':                                     
                     baseline__frame_static = st.number_input("Baseline Intensity Frame number",  min_value=0, max_value=raw_img_ani_pg_2.shape[0]-1)
                 elif baseline_recovery_frame_input ==   'Average Frame Value': 
-                    baseline_smooth_x = st.slider("*_Choose frame number(s) to average their corresponding intensity values for baseline calculation_*", min_value = 0, max_value = raw_img_ani_pg_2.shape[0]-1, value = 10,  key='smooth')
+                    baseline_smooth_x = st.number_input("*_Choose frame number(s) to average their corresponding intensity values for baseline calculation_*", min_value = 0, max_value = raw_img_ani_pg_2.shape[0]-1, value = 10,  key='smooth')
                     baseline__frame_static = int(sum(range(baseline_smooth_x + 1)) / (baseline_smooth_x + 1))
                     
                 df_pro_pixel_remove = df_selected_1.drop(columns=df_selected.filter(regex='^Bright_pixel_area_').columns)
@@ -1595,7 +1694,7 @@ else:
                 new_df_pro_transposed_smooth.drop(new_df_pro_transposed_smooth.index[0], inplace=True)      
                 peak__frame_static = st.number_input("Peak Intensity Frame number",  min_value=0, max_value=raw_img_ani_pg_2.shape[0]-1, value = int((raw_img_ani_pg_2.shape[0])/2)) 
                 recovery_baseline__frame_static = st.number_input("Recovery Intensity Frame number",  min_value=0, max_value=raw_img_ani_pg_2.shape[0]-1, value = int(raw_img_ani_pg_2.shape[0])-1)
-                if st.button("Obtain the parameters for selected labels",on_click=callback_movav) or st.session_state.button_clicked_movav:
+                if st.button("Obtain the parameters for selected labels",on_click=callback_movav_sta) or st.session_state.button_clicked_movav_sta:
                     st.warning("The parameters for all labels are obtained using the same set of selections.")
                     df_pro_pixel_remove = df_selected_1.drop(columns=df_selected.filter(regex='^Bright_pixel_area_').columns)
                     #df_pro_pixel_remove = df_pro_pixel_remove.drop(columns=df_pro.filter(regex='^area').columns)
@@ -1789,36 +1888,50 @@ else:
                             nested_dict_final = nested_dict_pro.copy()  
                             nested_dict_final = (pd.DataFrame.from_dict(nested_dict_final))                            
                                            
-                st.write(plot_df_corr)
-                multi_csv = convert_df(plot_df_corr)           
-                st.download_button("Press to Download",  multi_csv, 'multi_cell_data.csv', "text/csv", key='download_multi_-csv_stat_corr')                
-                #st.write(nested_dict_final)
-                nested_dict_final = (pd.DataFrame.from_dict(nested_dict_final)) 
-                if nested_dict_final.empty:
-                    pass
-                else:                              
-                    st.subheader("**_Parameters for selected labels_**")
-                    col_7, col_8 = st.columns(2)
-                    
-                    with col_7: 
-                        nested_dict_final = nested_dict_final[nested_dict_final.groupby('Label')['Amplitude'].transform(max) == nested_dict_final['Amplitude']]
-                        nested_dict_final['Number of Events'] = nested_dict_final.groupby('Label')['Number of Events'].transform('count')
-
-                        st.write(nested_dict_final)  
-                        all_csv = convert_df(nested_dict_final)           
-                        st.download_button("Press to Download", all_csv, 'all_data.csv', "text/csv", key='all_download-csv_corr')
-                    with col_8:
-                        average_rise_time = np.round(nested_dict_final['Rise time'].mean(),4)
-                        st.write(f"The average rise time based on selected labels across all frames is {average_rise_time} s")
-                        average_rise_rate = np.round(nested_dict_final['Rise Rate'].mean(),4)
-                        st.write(f"The average rise rate based on selected labels across all frames is {average_rise_rate} per s")
-                        average_decay_time = np.round(nested_dict_final['Decay time'].mean(),4)
-                        st.write(f"The average decay time based on selected labels across all frames is {average_decay_time} s")
-                        average_decay_rate = np.round(nested_dict_final['Decay Rate'].mean(),4)
-                        st.write(f"The average decay rate based on selected labels across all frames is {average_decay_rate} per s")
-                        average_duration = np.round(nested_dict_final['Duration'].mean(),4)
-                        st.write(f"The average duration based on selected labels across all frames is {average_duration} s")
-                        average_amplitude = np.round(nested_dict_final['Amplitude'].mean(),4)
-                        st.write(f"The average amplitude based on selected labels across all frames is {average_amplitude}")      
-
+                    st.write(plot_df_corr)
+                    multi_csv = convert_df(plot_df_corr)           
+                    st.download_button("Press to Download",  multi_csv, 'multi_cell_data.csv', "text/csv", key='download_multi_-csv_stat_corr')                
+                    #st.write(nested_dict_final)
+                    nested_dict_final = (pd.DataFrame.from_dict(nested_dict_final)) 
+                    traces_smooth_corr = []                    
+                    column_new_df_corr = plot_df_corr.columns              
+                    for smooth_column_corr in column_new_df_corr:    
+                        if "smooth cell" in str(smooth_column_corr):
+                            # create a trace for the current column
+                            trace_smooth_corr = go.Scatter(x=plot_df_corr['Time'], y=plot_df_corr[smooth_column_corr], name=smooth_column_corr)
+                            # add the trace to the list
+                            traces_smooth_corr.append(trace_smooth_corr)
+                    # create the plot
+                    fig_smooth_corr = go.Figure(data=traces_smooth_corr)
+                    # update the layout
+                    fig_smooth_corr.update_layout(title='Corrected and Normalized Intensity Traces', xaxis_title='Time', yaxis_title='Corrected and Normalized Intensity',height=900)
+                    # display the plot
+                    st.plotly_chart(fig_smooth_corr, use_container_width=True)                       
+                    if nested_dict_final.empty:
+                        pass
+                    else:                              
+                        st.subheader("**_Parameters for selected labels_**")
+                        col_7, col_8 = st.columns(2)
+                        
+                        with col_7: 
+                            nested_dict_final = nested_dict_final[nested_dict_final.groupby('Label')['Amplitude'].transform(max) == nested_dict_final['Amplitude']]
+                            nested_dict_final['Number of Events'] = nested_dict_final.groupby('Label')['Number of Events'].transform('count')
+    
+                            st.write(nested_dict_final)  
+                            all_csv = convert_df(nested_dict_final)           
+                            st.download_button("Press to Download", all_csv, 'all_data.csv', "text/csv", key='all_download-csv_corr')
+                        with col_8:
+                            average_rise_time = np.round(nested_dict_final['Rise time'].mean(),4)
+                            st.write(f"The average rise time based on selected labels across all frames is {average_rise_time} s")
+                            average_rise_rate = np.round(nested_dict_final['Rise Rate'].mean(),4)
+                            st.write(f"The average rise rate based on selected labels across all frames is {average_rise_rate} per s")
+                            average_decay_time = np.round(nested_dict_final['Decay time'].mean(),4)
+                            st.write(f"The average decay time based on selected labels across all frames is {average_decay_time} s")
+                            average_decay_rate = np.round(nested_dict_final['Decay Rate'].mean(),4)
+                            st.write(f"The average decay rate based on selected labels across all frames is {average_decay_rate} per s")
+                            average_duration = np.round(nested_dict_final['Duration'].mean(),4)
+                            st.write(f"The average duration based on selected labels across all frames is {average_duration} s")
+                            average_amplitude = np.round(nested_dict_final['Amplitude'].mean(),4)
+                            st.write(f"The average amplitude based on selected labels across all frames is {average_amplitude}")      
+                        st.warning('Navigating to another page from the sidebar will remove all selections from the current page')
                     #st.write(new_df_pro_transposed_smooth)
