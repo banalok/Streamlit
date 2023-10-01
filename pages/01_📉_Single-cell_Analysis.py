@@ -118,7 +118,7 @@ def intensity(df_1, multi_tif_img, window):
     for frames_pro in range(0,multi_tif_img.shape[0]):
             #new_df = pd.DataFrame(frames_pro, df_pro[f'intensity_mean_{frames_pro}'].mean(),  columns = ['Frames', 'Mean Intensity'])
         mean_intensity.append(df_1[f'intensity_mean_{frames_pro}'].mean()) #[0]
-        p_count.append(df_1[f'Bright_pixel_area_{frames_pro}'].mean()) #[0]
+        p_count.append(np.float64(df_1[f'Bright_pixel_area_{frames_pro}'].mean())) #[0]
             # new_df = pd.DataFrame.from_dict({'Frame': frames_pro, 'Mean Intensity': df_pro[f'intensity_mean_{frames_pro}'].mean()})
             # img_frames = pd.merge(img_frames, new_df, on = "Frame")
         #st.write(df_1[f'pixel_count_{frames_pro}'])
@@ -220,14 +220,14 @@ if 'super_im_rgb_pg_2' not in st.session_state:
     pass
 else:
     super_im_pg_2 = st.session_state['super_im_rgb_pg_2']
-    st.write('*_Segmented and labeled image overlayed on the collapsed image_*')
+    st.write('*_Automatically labeled objects on the collapsed image_*')
     st.image(super_im_pg_2,use_column_width=True,clamp = True)
     
 if 'final_label_rgb_pg_2' not in st.session_state:
     st.warning("Please generate the segmented and labeled image from the 'Preprocessing and Segmentation' page, and click on 'Single-cell Analysis' before proceeding")
 else:
     label = st.session_state['final_label_rgb_pg_2']
-    st.write('*_Segmented and labeled image on a black background_*')
+    st.write('*_Automatically (or automatically plus manually) segmented and labeled objects on a black background_*')
     st.image(label,use_column_width=True,clamp = True)
     
 if 'final_label_pg_2' not in st.session_state:
@@ -236,10 +236,9 @@ else:
     if 'area_thres_x' not in st.session_state:
         st.session_state['area_thres_x'] = st.number_input("*_Choose the area threshold percentage_*", min_value=0.00, max_value=1.00, value=0.30,step = 0.01, format="%0.2f", help = f"Default is 0.3. Pixels below 30% of the maximum ({np.amax(raw_img_ani_pg_2)}) are not counted to get the bright area of labels", key='area_thres_1')
     if 'df_pro' not in st.session_state:
-        label_fin = st.session_state['final_label_pg_2']
-               
-        data = list(np.unique(label_list_pg_2)) 
-        
+        #st.session_state['area_thres_x'] = st.number_input("*_Choose the area threshold percentage_*", min_value=0.00, max_value=1.00, value=0.30,step = 0.01, format="%0.2f", help = f"Default is 0.3. Pixels below 30% of the maximum ({np.amax(raw_img_ani_pg_2)}) are not counted to get the bright area of labels", key='area_thres_n')
+        label_fin = st.session_state['final_label_pg_2']            
+        data = list(np.unique(label_list_pg_2))        
         st.session_state['df_pro'] = pd.DataFrame(data, columns=['label'])
         col_arr = []
         
@@ -248,6 +247,7 @@ else:
                                                   properties=['label','intensity_mean','image_intensity'])
             col = []
             label_array = props_pro['label']
+            #st.write(props_pro)
             intensity_im = props_pro['image_intensity']
             #col_arr.append(intensity_im)                        
             for lab in label_array:                          
@@ -255,7 +255,6 @@ else:
                 intensity_values = intensity_im[mask_label]
                 col.append(intensity_values)
             col_arr.append((np.array(col)).ravel())
-            
             df_single = pd.DataFrame(props_pro)
             #df_single['area'] = df_single[df_single['area']>df_single['intensity_mean'].mean()]['area']
             df_single['intensity_mean'] = np.round(df_single['intensity_mean'],3)
@@ -274,11 +273,11 @@ else:
             for label_val in st.session_state['df_pro']['label']:
                 intensity_image = col_arr[frame_col][label_val-1]
                 count = np.sum(np.greater(intensity_image, st.session_state['area_thres_x']*np.amax(raw_img_ani_pg_2[frame_col]))) #df_pro[f'intensity_mean_{frames_pro}'].mean()))
-                pixel_counts.append(count)
+                pixel_counts.append(np.float64(count))
             #st.write(type(np.amax(raw_image_ani[frame_col])))
             pixel_var = f'Bright_pixel_area_{frame_col}'
             #df_pro[pixel_var] = pixel_counts
-            pixel_counts_df = pd.DataFrame(pixel_counts,columns = [pixel_var])
+            pixel_counts_df = pd.DataFrame(pixel_counts,columns = [pixel_var],dtype = np.float64)
             st.session_state['df_pro'] = pd.concat((st.session_state['df_pro'], pixel_counts_df),axis=1)   
                              
         
@@ -304,15 +303,15 @@ else:
         st.download_button("Press to Download", get_data_indi, 'label_intensity_data.csv', "text/csv", key='label_download-get_data') 
     else:
         label_fin = st.session_state['final_label_pg_2']
-        area_thres_x = st.number_input("*_Choose the area threshold percentage_*", min_value=0.00, max_value=1.00, value=0.30,step = 0.01, format="%0.2f", help = f"Default is 0.3. Pixels below 30% of the maximum ({np.amax(raw_img_ani_pg_2)}) are not counted to get the bright area of labels", key='area_thres')
+        area_thres_x = st.number_input("*_Choose the area threshold percentage_*", min_value=0.00, max_value=1.00, value=0.3,step = 0.01, format="%0.2f", help = f"Default is 0.3. Pixels below 30% of the maximum ({np.amax(raw_img_ani_pg_2)}) are not counted to get the bright area of labels", key='area_thres')
         if area_thres_x == st.session_state['area_thres_x']:
             st.dataframe(st.session_state['df_pro'], 1000, 200)
             get_data_indi = convert_df(st.session_state['df_pro'])
-            st.download_button("Press to Download", get_data_indi, 'label_intensity_data.csv', "text/csv", key='label_download-get_data')      
+            st.download_button("Press to Download", get_data_indi, 'label_intensity_data.csv', "text/csv", key='label_download-get_data') 
+            st.session_state['area_thres_x'] = area_thres_x
         else:
             st.session_state['area_thres_x'] = area_thres_x
             data = list(np.unique(label_list_pg_2)) 
-            
             st.session_state['df_pro'] = pd.DataFrame(data, columns=['label'])
             col_arr = []
             
@@ -347,11 +346,11 @@ else:
                 for label_val in st.session_state['df_pro']['label']:
                     intensity_image = col_arr[frame_col][label_val-1]
                     count = np.sum(np.greater(intensity_image, st.session_state['area_thres_x']*np.amax(raw_img_ani_pg_2[frame_col]))) #df_pro[f'intensity_mean_{frames_pro}'].mean()))
-                    pixel_counts.append(count)
+                    pixel_counts.append(np.float64(count))
                 #st.write(type(np.amax(raw_image_ani[frame_col])))
                 pixel_var = f'Bright_pixel_area_{frame_col}'
                 #df_pro[pixel_var] = pixel_counts
-                pixel_counts_df = pd.DataFrame(pixel_counts,columns = [pixel_var])
+                pixel_counts_df = pd.DataFrame(pixel_counts,columns = [pixel_var], dtype = np.float64)
                 st.session_state['df_pro'] = pd.concat((st.session_state['df_pro'], pixel_counts_df),axis=1)   
                                  
             
@@ -376,13 +375,16 @@ else:
             get_data_indi = convert_df(st.session_state['df_pro'])
             st.download_button("Press to Download", get_data_indi, 'label_intensity_data.csv', "text/csv", key='label_download-get_data')                        
     st.write('*_Select a label to explore_*')
+    #st.write(st.session_state['df_pro'].columns[0])
     
+    if "selected_aggrid" not in st.session_state:
+        st.session_state["selected_aggrid"] = []
     gb = GridOptionsBuilder.from_dataframe(st.session_state['df_pro'])                       
     gb.configure_pagination(paginationAutoPageSize=True) #Add pagination
     gb.configure_side_bar() #Add a sidebar
     #gb.configure_selection('multiple', use_checkbox=True, groupSelectsChildren="Group checkbox select children") #Enable multi-row selection
-    gb.configure_selection(selection_mode="single", use_checkbox=True, groupSelectsChildren="Group checkbox select children", pre_selected_rows=[]) #list(range(0, len(df_pro))))  #[str(st.session_state.selected_row)]
-               
+    gb.configure_selection(selection_mode="single", use_checkbox=True, groupSelectsChildren="Group checkbox select children", pre_selected_rows=st.session_state["selected_aggrid"]) #list(range(0, len(df_pro))))  #[str(st.session_state.selected_row)]
+    gb.configure_columns(st.session_state['df_pro'].columns, editable=True)           
     gridOptions = gb.build()
     #gridOptions["columnDefs"][0]["checkboxSelection"]=True
     #gridOptions["columnDefs"][0]["headerCheckboxSelection"]=True
@@ -399,11 +401,14 @@ else:
         enable_enterprise_modules=True,
         height=350, 
         width='100%',
+        #reload_data=True,
         key='table_key'
     )
     
     data = grid_response['data']
     selected = grid_response['selected_rows'] 
+    st.session_state["selected_aggrid"] = selected
+        
     # if len(selected) != 0:
     #     st.write(selected[0])
         # st.session_state.selected_row = selected_rows[0]['_selectedRowNodeInfo']['nodeRowIndex']
@@ -419,7 +424,7 @@ else:
         
             # Create a polygon from the coordinates
             poly = polygon(coords[:, 0], coords[:, 1])
-        
+            #st.write(poly)
             # Set the color of the polygon to red
             color_poly = (255, 0, 0)
         
@@ -936,7 +941,7 @@ else:
                                 popt_decay, pcov_decay = None, None
                         else: 
                             popt_decay, pcov_decay = curve_fit(mono_exp_decay, decay_df['Frame'], decay_df['Decay intensity'], p0=[a_est,b_est])
-                            decay_curve_exp = np.round((mono_exp_decay(decay_df['Frame'], *popt_decay)),3)
+                            decay_curve_exp = mono_exp_decay(decay_df['Frame'], *popt_decay)
                             
                         
                         try:
@@ -1052,7 +1057,8 @@ else:
                 plot_df['delta_f/f_0'] = (plot_df['Smoothed Mean Intensity'] - baseline_each)/baseline_each 
                 plot_df['Time'] = plot_df['Frame']/frame_rate
                 max_df_value = plot_df['Smoothed Mean Intensity'].max()
-                peak_default_value = plot_df.loc[plot_df['Smoothed Mean Intensity'] == max_df_value, 'Frame']
+                peak_default_value = max(plot_df.loc[plot_df['Smoothed Mean Intensity'] == max_df_value, 'Frame'])
+                
                 peak__frame_static = st.number_input("Peak Intensity Frame number",  min_value=0, max_value=raw_img_ani_pg_2.shape[0]-1, value = int(peak_default_value)) 
                 filtered_peak_each = plot_df.query("Frame == @peak__frame_static")
                 max_df_value = filtered_peak_each['Smoothed Mean Intensity'].iloc[0]
@@ -1100,7 +1106,8 @@ else:
                         popt_decay, pcov_decay = None, None
                 else: 
                     popt_decay, pcov_decay = curve_fit(mono_exp_decay, decay_df['Frame'], decay_df['Decay intensity'], p0=[a_est,b_est])
-                    decay_curve_exp = np.round((mono_exp_decay(decay_df['Frame'], *popt_decay)),3)
+                    decay_curve_exp = mono_exp_decay(decay_df['Frame'], *popt_decay)
+                    
                 try:
                     popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est_rise,b_est_rise])
                     
@@ -1865,7 +1872,7 @@ else:
                                 popt_decay, pcov_decay = None, None
                         else: 
                             popt_decay, pcov_decay = curve_fit(mono_exp_decay, decay_df['Frame'], decay_df['Decay intensity'], p0=[a_est,b_est])
-                            decay_curve_exp = np.round((mono_exp_decay(decay_df['Frame'], *popt_decay)),3)
+                            decay_curve_exp = mono_exp_decay(decay_df['Frame'], *popt_decay)
                         try:
                             popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est_rise,b_est_rise])
                             
@@ -2054,7 +2061,7 @@ else:
                 st.write('*_The normalized Photobleaching-corrected data_*')
                 st.dataframe(plot_df_corr, 1000,200)
                 
-                peak_default_value = plot_df_corr.loc[plot_df_corr['Smoothed Mean Intensity'] == (plot_df_corr['Smoothed Mean Intensity']).max(), "Frame"]                
+                peak_default_value = max(plot_df_corr.loc[plot_df_corr['Smoothed Mean Intensity'] == (plot_df_corr['Smoothed Mean Intensity']).max(), "Frame"])               
                 peak__frame_static = st.number_input("Peak Intensity Frame number",  min_value=0, max_value=raw_img_ani_pg_2.shape[0]-1, value = int(peak_default_value)) 
                 filtered_peak_each = plot_df_corr.query("Frame == @peak__frame_static")
                 max_df_value = filtered_peak_each['Smoothed Mean Intensity'].iloc[0]
@@ -2100,7 +2107,7 @@ else:
                         popt_decay, pcov_decay = None, None
                 else: 
                     popt_decay, pcov_decay = curve_fit(mono_exp_decay, decay_df['Frame'], decay_df['Decay intensity'], p0=[a_est,b_est])
-                    decay_curve_exp = np.round((mono_exp_decay(decay_df['Frame'], *popt_decay)),3)
+                    decay_curve_exp = mono_exp_decay(decay_df['Frame'], *popt_decay)
                 try:
                     popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est_rise,b_est_rise])
                     

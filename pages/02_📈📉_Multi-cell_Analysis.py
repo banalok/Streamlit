@@ -105,7 +105,7 @@ def intensity(df_1, multi_tif_img, window):
     for frames_pro in range(0,multi_tif_img.shape[0]):
             #new_df = pd.DataFrame(frames_pro, df_pro[f'intensity_mean_{frames_pro}'].mean(),  columns = ['Frames', 'Mean Intensity'])
         mean_intensity.append(df_1[f'intensity_mean_{frames_pro}'].mean()) #[0]
-        p_count.append(df_1[f'Bright_pixel_area_{frames_pro}'].mean()) #[0]
+        p_count.append(np.flot64(df_1[f'Bright_pixel_area_{frames_pro}'].mean())) #[0]
             # new_df = pd.DataFrame.from_dict({'Frame': frames_pro, 'Mean Intensity': df_pro[f'intensity_mean_{frames_pro}'].mean()})
             # img_frames = pd.merge(img_frames, new_df, on = "Frame")
         #st.write(df_1[f'pixel_count_{frames_pro}'])
@@ -214,14 +214,14 @@ if 'super_im_rgb_pg_2' not in st.session_state:
     pass
 else:
     super_im_pg_2 = st.session_state['super_im_rgb_pg_2']
-    st.write('*_Segmented and labeled image overlayed on the collapsed image_*')
+    st.write('*_Automatically labeled objects on the collapsed image_*')
     st.image(super_im_pg_2,use_column_width=True,clamp = True)
 
 if 'final_label_rgb_pg_2' not in st.session_state:
     st.warning("Please generate the segmented and labeled image from the 'Preprocessing and Segmentation' page, and click on 'Single-cell Analysis' before proceeding")
 else:
     label = st.session_state['final_label_rgb_pg_2']
-    st.write('*_Segmented and labeled image on a black background_*')
+    st.write('*_Automatically (or automatically plus manually) segmented and labeled objects on a black background_*')
     st.image(label,use_column_width=True,clamp = True)
     
 if 'final_label_pg_2' not in st.session_state:
@@ -275,7 +275,7 @@ else:
             for label_val in st.session_state['df_pro']['label']:
                 intensity_image = col_arr[frame_col][label_val-1]
                 count = np.sum(np.greater(intensity_image, st.session_state['area_thres_x']*np.amax(raw_img_ani_pg_2[frame_col]))) #df_pro[f'intensity_mean_{frames_pro}'].mean()))
-                pixel_counts.append(count)
+                pixel_counts.append(np.float64(count))
             #st.write(type(np.amax(raw_image_ani[frame_col])))
             pixel_var = f'Bright_pixel_area_{frame_col}'
             #df_pro[pixel_var] = pixel_counts
@@ -348,7 +348,7 @@ else:
                 for label_val in st.session_state['df_pro']['label']:
                     intensity_image = col_arr[frame_col][label_val-1]
                     count = np.sum(np.greater(intensity_image, st.session_state['area_thres_x']*np.amax(raw_img_ani_pg_2[frame_col]))) #df_pro[f'intensity_mean_{frames_pro}'].mean()))
-                    pixel_counts.append(count)
+                    pixel_counts.append(np.float64(count))
                 #st.write(type(np.amax(raw_image_ani[frame_col])))
                 pixel_var = f'Bright_pixel_area_{frame_col}'
                 #df_pro[pixel_var] = pixel_counts
@@ -400,6 +400,7 @@ else:
         enable_enterprise_modules=True,
         height=350, 
         width='100%',
+        #reload_data=True,
         key='table_m_key'
     )
     
@@ -812,7 +813,7 @@ else:
                                     popt_decay, pcov_decay = None, None
                             else: 
                                 popt_decay, pcov_decay = curve_fit(mono_exp_decay, decay_df['Frame'], decay_df['Decay intensity'], p0=[a_est,b_est])
-                                decay_curve_exp = np.round((mono_exp_decay(decay_df['Frame'], *popt_decay)),3)
+                                decay_curve_exp = mono_exp_decay(decay_df['Frame'], *popt_decay)
     
                                 #st.write(popt_decay)
                             try:
@@ -1022,7 +1023,7 @@ else:
                                     nested_dict_pro["Decay Rate"].append(popt_decay)
                             else: 
                                 popt_decay, pcov_decay = curve_fit(mono_exp_decay, decay_df['Frame'], decay_df['Decay intensity'], p0=[a_est,b_est])
-                                decay_curve_exp = np.round((mono_exp_decay(decay_df['Frame'], *popt_decay)),3)
+                                decay_curve_exp = mono_exp_decay(decay_df['Frame'], *popt_decay)
                                 nested_dict_pro["Decay Rate"].append(np.round(popt_decay[1],4))
                                 
                             try:
@@ -1096,7 +1097,7 @@ else:
                                     nested_dict_pro["Decay Rate"].append(popt_decay)
                             else: 
                                 popt_decay, pcov_decay = curve_fit(mono_exp_decay, decay_df['Frame'], decay_df['Decay intensity'], p0=[a_est,b_est])
-                                decay_curve_exp = np.round((mono_exp_decay(decay_df['Frame'], *popt_decay)),3)
+                                decay_curve_exp = mono_exp_decay(decay_df['Frame'], *popt_decay)
                                 nested_dict_pro["Decay Rate"].append(np.round(popt_decay[1], 4))
                             try:
                                 popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est_rise,b_est_rise])
@@ -1547,7 +1548,7 @@ else:
                                     popt_decay, pcov_decay = None, None
                             else: 
                                 popt_decay, pcov_decay = curve_fit(mono_exp_decay, decay_df['Frame'], decay_df['Decay intensity'], p0=[a_est,b_est])
-                                decay_curve_exp = np.round((mono_exp_decay(decay_df['Frame'], *popt_decay)),3)
+                                decay_curve_exp = mono_exp_decay(decay_df['Frame'], *popt_decay)
     
                                 #st.write(popt_decay)
                             try:
@@ -1788,7 +1789,7 @@ else:
                                     nested_dict_pro["Decay Rate"].append(popt_decay)
                             else: 
                                 popt_decay, pcov_decay = curve_fit(mono_exp_decay, decay_df['Frame'], decay_df['Decay intensity'], p0=[a_est,b_est])
-                                decay_curve_exp = np.round((mono_exp_decay(decay_df['Frame'], *popt_decay)),3)
+                                decay_curve_exp = mono_exp_decay(decay_df['Frame'], *popt_decay)
                                 nested_dict_pro["Decay Rate"].append(np.round(popt_decay[1],4))
                                 
                             try:
@@ -1862,7 +1863,7 @@ else:
                                     nested_dict_pro["Decay Rate"].append(popt_decay)
                             else: 
                                 popt_decay, pcov_decay = curve_fit(mono_exp_decay, decay_df['Frame'], decay_df['Decay intensity'], p0=[a_est,b_est])
-                                decay_curve_exp = np.round((mono_exp_decay(decay_df['Frame'], *popt_decay)),3)
+                                decay_curve_exp = mono_exp_decay(decay_df['Frame'], *popt_decay)
                                 nested_dict_pro["Decay Rate"].append(np.round(popt_decay[1],4))
                                 
                             try:
