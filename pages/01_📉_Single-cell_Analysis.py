@@ -135,6 +135,15 @@ def intensity(df_1, multi_tif_img, window):
     #new_d.rename(columns = {1 : 'Bright Pixel Number'}, inplace=True)
     return new_d 
 
+def get_intensity_for_timepoint(intensity_image, label_layer):
+    stats = measure.regionprops_table(label_layer, intensity_image=intensity_image, properties=['intensity_mean'])
+    return stats['intensity_mean']
+
+def get_intensity(intensity_image_stack, labels_layer_stack):
+    return [get_intensity_for_timepoint(intensity_image, label_layer) 
+            for intensity_image, label_layer 
+            in zip(intensity_image_stack, labels_layer_stack)]
+
 def fluo_change(intensity_mean, baseline):
     delta_F = intensity_mean - baseline
     change_f = delta_F/baseline
@@ -241,34 +250,39 @@ else:
         data = list(np.unique(label_list_pg_2))        
         st.session_state['df_pro'] = pd.DataFrame(data, columns=['label'])
         col_arr = []
+        props_pro = get_intensity(background_corr_pg_2[:, :, :, 0], [label_fin] * raw_img_ani_pg_2.shape[0])  
+        props_pro = pd.DataFrame(props_pro).T
+        props_pro['label'] = data
         
+        # for intensity_pro in range(0,raw_img_ani_pg_2.shape[0]):
+        #     props_pro.rename(columns = {intensity_pro : f'intensity_mean_{intensity_pro}'}, inplace=True)
+        #st.write(props_pro)
         for frames_pro in range(0,raw_img_ani_pg_2.shape[0]):
-            props_pro = measure.regionprops_table(label_fin, intensity_image=background_corr_pg_2[frames_pro][:,:,0],   #markers
-                                                  properties=['label','intensity_mean','image_intensity'])
+            #props_pro = measure.regionprops_table(label_fin, intensity_image=background_corr_pg_2[frames_pro][:,:,0],   #markers
+                                                  #properties=['label','intensity_mean'])
             col = []
             label_array = props_pro['label']
-            #st.write(props_pro)
-            intensity_im = props_pro['image_intensity']
+            intensity_im = background_corr_pg_2[frames_pro][:,:,0]
             #col_arr.append(intensity_im)                        
-            for lab in label_array:                          
-                mask_label = label_array == lab
+            for lab in label_array:
+                mask_label = label_fin == lab
+                #st.write(mask_label)
                 intensity_values = intensity_im[mask_label]
                 col.append(intensity_values)
             col_arr.append((np.array(col)).ravel())
-            df_single = pd.DataFrame(props_pro)
+            df_single = props_pro
             #df_single['area'] = df_single[df_single['area']>df_single['intensity_mean'].mean()]['area']
-            df_single['intensity_mean'] = np.round(df_single['intensity_mean'],3)
-            #df_single.rename(columns = {'area' : f'area_{frames_pro}'}, inplace=True)
-            df_single.rename(columns = {'intensity_mean' : f'intensity_mean_{frames_pro}'}, inplace=True)
-            df_single.rename(columns = {'image_intensity' : f'image_intensity_{frames_pro}'}, inplace=True)
-            #df_single.rename(columns = {'solidity' : f'solidity_{frames_pro}'}, inplace=True)
-            st.session_state['df_pro'] = pd.merge(st.session_state['df_pro'], df_single, on = 'label', how = 'outer')                                                 
-        #st.write(col_arr[0].shape)
+            df_single.rename(columns = {frames_pro : f'intensity_mean_{frames_pro}'}, inplace=True)
+            df_single[f'intensity_mean_{frames_pro}'] = np.round(df_single[f'intensity_mean_{frames_pro}'],3)
+
+        st.session_state['df_pro'] = pd.merge(st.session_state['df_pro'], df_single, on = 'label', how = 'outer')                                                 
+        
         #df_pro.drop([0], inplace=True)
         
         ######## #################  ################# ###############Interactive table################################################################
         #df_pro = df_pro.drop(df_pro[df_pro['label'] == 255].index)
         for frame_col in range(0, raw_img_ani_pg_2.shape[0]):
+            
             pixel_counts = []
             for label_val in st.session_state['df_pro']['label']:
                 intensity_image = col_arr[frame_col][label_val-1]
@@ -279,24 +293,9 @@ else:
             #df_pro[pixel_var] = pixel_counts
             pixel_counts_df = pd.DataFrame(pixel_counts,columns = [pixel_var],dtype = np.float64)
             st.session_state['df_pro'] = pd.concat((st.session_state['df_pro'], pixel_counts_df),axis=1)   
-                             
-        
-        # pixels_to_add = []   
-        # for frame_col in range(0, raw_image_ani.shape[0]):                                    
-        #     pixel_var = f'pixel_count_{frame_col}'
-        #     pixel_counts = []
-        #     for label_val in df_pro['label']:
-        #         #st.write("HERE")
-        #         intensity_image = col_arr[frame_col][label_val-1]
-        #         count = np.sum(np.greater(intensity_image, 0.5*np.amax(raw_image_ani))) #df_pro[f'intensity_mean_{frames_pro}'].mean()))
-        #         pixel_counts.append(count)  
-        #     pixels_to_add.append({pixel_var: pixel_counts})
-            
-        # df_pro = pd.concat([df_pro, pd.DataFrame(pixels_to_add)], axis=1)  
-        #st.write(df_pro["pixel_count_40"].dtype)
-        
-        for drop_frame in range(0, raw_img_ani_pg_2.shape[0]):  
-           st.session_state['df_pro'].drop([f'image_intensity_{drop_frame}'], axis=1, inplace=True) 
+
+        # for drop_frame in range(0, raw_img_ani_pg_2.shape[0]):  
+        #    st.session_state['df_pro'].drop([f'image_intensity_{drop_frame}'], axis=1, inplace=True) 
         #st.session_state['df_pro_pg_2'] = df_pro
         st.dataframe(st.session_state['df_pro'], 1000, 200)
         get_data_indi = convert_df(st.session_state['df_pro'])
@@ -311,37 +310,43 @@ else:
             st.session_state['area_thres_x'] = area_thres_x
         else:
             st.session_state['area_thres_x'] = area_thres_x
-            data = list(np.unique(label_list_pg_2)) 
+                 
+            data = list(np.unique(label_list_pg_2))        
             st.session_state['df_pro'] = pd.DataFrame(data, columns=['label'])
             col_arr = []
+            props_pro = get_intensity(background_corr_pg_2[:, :, :, 0], [label_fin] * raw_img_ani_pg_2.shape[0])  
+            props_pro = pd.DataFrame(props_pro).T
+            props_pro['label'] = data
             
+            # for intensity_pro in range(0,raw_img_ani_pg_2.shape[0]):
+            #     props_pro.rename(columns = {intensity_pro : f'intensity_mean_{intensity_pro}'}, inplace=True)
+            #st.write(props_pro)
             for frames_pro in range(0,raw_img_ani_pg_2.shape[0]):
-                props_pro = measure.regionprops_table(label_fin, intensity_image=background_corr_pg_2[frames_pro][:,:,0],   #markers
-                                                      properties=['label','intensity_mean','image_intensity'])
+                #props_pro = measure.regionprops_table(label_fin, intensity_image=background_corr_pg_2[frames_pro][:,:,0],   #markers
+                                                      #properties=['label','intensity_mean'])
                 col = []
                 label_array = props_pro['label']
-                intensity_im = props_pro['image_intensity']
+                intensity_im = background_corr_pg_2[frames_pro][:,:,0]
                 #col_arr.append(intensity_im)                        
-                for lab in label_array:                          
-                    mask_label = label_array == lab
+                for lab in label_array:
+                    mask_label = label_fin == lab
+                    #st.write(mask_label)
                     intensity_values = intensity_im[mask_label]
                     col.append(intensity_values)
                 col_arr.append((np.array(col)).ravel())
-                
-                df_single = pd.DataFrame(props_pro)
+                df_single = props_pro
                 #df_single['area'] = df_single[df_single['area']>df_single['intensity_mean'].mean()]['area']
-                df_single['intensity_mean'] = np.round(df_single['intensity_mean'],3)
-                #df_single.rename(columns = {'area' : f'area_{frames_pro}'}, inplace=True)
-                df_single.rename(columns = {'intensity_mean' : f'intensity_mean_{frames_pro}'}, inplace=True)
-                df_single.rename(columns = {'image_intensity' : f'image_intensity_{frames_pro}'}, inplace=True)
-                #df_single.rename(columns = {'solidity' : f'solidity_{frames_pro}'}, inplace=True)
-                st.session_state['df_pro'] = pd.merge(st.session_state['df_pro'], df_single, on = 'label', how = 'outer')                                                 
-            #st.write(col_arr[0].shape)
+                df_single.rename(columns = {frames_pro : f'intensity_mean_{frames_pro}'}, inplace=True)
+                df_single[f'intensity_mean_{frames_pro}'] = np.round(df_single[f'intensity_mean_{frames_pro}'],3)
+    
+            st.session_state['df_pro'] = pd.merge(st.session_state['df_pro'], df_single, on = 'label', how = 'outer')                                                 
+            
             #df_pro.drop([0], inplace=True)
             
             ######## #################  ################# ###############Interactive table################################################################
             #df_pro = df_pro.drop(df_pro[df_pro['label'] == 255].index)
             for frame_col in range(0, raw_img_ani_pg_2.shape[0]):
+                
                 pixel_counts = []
                 for label_val in st.session_state['df_pro']['label']:
                     intensity_image = col_arr[frame_col][label_val-1]
@@ -350,30 +355,15 @@ else:
                 #st.write(type(np.amax(raw_image_ani[frame_col])))
                 pixel_var = f'Bright_pixel_area_{frame_col}'
                 #df_pro[pixel_var] = pixel_counts
-                pixel_counts_df = pd.DataFrame(pixel_counts,columns = [pixel_var], dtype = np.float64)
+                pixel_counts_df = pd.DataFrame(pixel_counts,columns = [pixel_var],dtype = np.float64)
                 st.session_state['df_pro'] = pd.concat((st.session_state['df_pro'], pixel_counts_df),axis=1)   
-                                 
-            
-            # pixels_to_add = []   
-            # for frame_col in range(0, raw_image_ani.shape[0]):                                    
-            #     pixel_var = f'pixel_count_{frame_col}'
-            #     pixel_counts = []
-            #     for label_val in df_pro['label']:
-            #         #st.write("HERE")
-            #         intensity_image = col_arr[frame_col][label_val-1]
-            #         count = np.sum(np.greater(intensity_image, 0.5*np.amax(raw_image_ani))) #df_pro[f'intensity_mean_{frames_pro}'].mean()))
-            #         pixel_counts.append(count)  
-            #     pixels_to_add.append({pixel_var: pixel_counts})
-                
-            # df_pro = pd.concat([df_pro, pd.DataFrame(pixels_to_add)], axis=1)  
-            #st.write(df_pro["pixel_count_40"].dtype)
-            
-            for drop_frame in range(0, raw_img_ani_pg_2.shape[0]):  
-               st.session_state['df_pro'].drop([f'image_intensity_{drop_frame}'], axis=1, inplace=True) 
+    
+            # for drop_frame in range(0, raw_img_ani_pg_2.shape[0]):  
+            #    st.session_state['df_pro'].drop([f'image_intensity_{drop_frame}'], axis=1, inplace=True) 
             #st.session_state['df_pro_pg_2'] = df_pro
             st.dataframe(st.session_state['df_pro'], 1000, 200)
             get_data_indi = convert_df(st.session_state['df_pro'])
-            st.download_button("Press to Download", get_data_indi, 'label_intensity_data.csv', "text/csv", key='label_download-get_data')                        
+            st.download_button("Press to Download", get_data_indi, 'label_intensity_data.csv', "text/csv", key='label_download-get_data_st')                       
     st.write('*_Select a label to explore_*')
     #st.write(st.session_state['df_pro'].columns[0])
     
