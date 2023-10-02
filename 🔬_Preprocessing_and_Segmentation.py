@@ -278,6 +278,9 @@ def Segment():
                 
             st.session_state['background_corr_pg_2'] = background_corr_img
             
+            if 'gauss_x' not in st.session_state:
+                st.session_state.gauss_x = None
+            
             if 'med_x' not in st.session_state:
                 st.session_state.med_x = None
     
@@ -290,35 +293,39 @@ def Segment():
             if 'hist_x' not in st.session_state:
                 st.session_state.hist_x = None
 
-             
-            if st.session_state.med_x is None:
-                st.session_state.med_x = st.slider("*_Median Blur Kernel size_*", min_value = 1,max_value = 100, step = 2,help = "Filters are applied to all frames. Check 'Processed Frames' below", on_change=callback_off)
+            if st.session_state.gauss_x is None:
+                st.session_state.gauss_x = st.slider("*_Gaussian Blur Kernel size_*", min_value = -1,max_value = 100, step = 2,help = "Filters are applied to all frames. Check 'Processed Frames' below. -1 means no blur.", on_change=callback_off)
             else:
-                st.session_state.med_x = st.slider('*_Median Blur Kernel size_*', min_value = 1,max_value = 100, value = st.session_state.med_x, step = 2,help = "Filters are applied to all frames. Check 'Processed Frames' below", on_change=callback_off)
+                st.session_state.gauss_x = st.slider('*_Gaussian Blur Kernel size_*', min_value = -1,max_value = 100, value = st.session_state.gauss_x, step = 2,help = "Filters are applied to all frames. Check 'Processed Frames' below. -1 means no blur.", on_change=callback_off)            
+    
+            if st.session_state.med_x is None:
+                st.session_state.med_x = st.slider("*_Median Blur Kernel size_*", min_value = -1,max_value = 100, step = 2,help = "Filters are applied to all frames. Check 'Processed Frames' below. -1 means no blur.", on_change=callback_off)
+            else:
+                st.session_state.med_x = st.slider('*_Median Blur Kernel size_*', min_value = -1,max_value = 100, value = st.session_state.med_x, step = 2,help = "Filters are applied to all frames. Check 'Processed Frames' below. -1 means no blur.", on_change=callback_off)
                 
             if st.session_state.bri_x is None:            
-                st.session_state.bri_x = st.slider('*_Change Brightness_*',min_value = 0,max_value = 255, on_change=callback_off)
+                st.session_state.bri_x = st.slider('*_Change Brightness_*',min_value = -255,max_value = 255,value = 0, on_change=callback_off)
             else:
-                st.session_state.bri_x = st.slider('*_Change Brightness_*',min_value = 0,max_value = 255, value = st.session_state.bri_x, on_change=callback_off)                
+                st.session_state.bri_x = st.slider('*_Change Brightness_*',min_value = -255,max_value = 255, value = st.session_state.bri_x, on_change=callback_off)                
             
             if st.session_state.con_x is None:
-                st.session_state.con_x = st.slider('*_Change Contrast_*',min_value = 0,max_value = 255, on_change=callback_off)
+                st.session_state.con_x = st.slider('*_Change Contrast_*',min_value = -255,max_value = 255,value = 0, on_change=callback_off)
             else:
-                st.session_state.con_x = st.slider('*_Change Contrast_*',min_value = 0,max_value = 255, value = st.session_state.con_x, on_change=callback_off)
+                st.session_state.con_x = st.slider('*_Change Contrast_*',min_value = -255,max_value = 255, value = st.session_state.con_x, on_change=callback_off)
                 
             if st.session_state.hist_x is None:   
                 st.session_state.hist_x = st.slider("*_Histogram Equalization cliplimit factor (CLAHE)_*", min_value = 1,max_value = 20, step = 1, on_change=callback_off)
             else:
                 st.session_state.hist_x = st.slider("*_Histogram Equalization cliplimit factor (CLAHE)_*", min_value = 1,max_value = 20, step = 1, value = st.session_state.hist_x, on_change=callback_off)
             
-            if f"CLAHE_img_array_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}" not in st.session_state and f"super_im_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}" not in st.session_state:
-                st.session_state[f"CLAHE_img_array_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] = None
-                st.session_state[f"super_im__{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] = None
+            if f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}" not in st.session_state and f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}" not in st.session_state:
+                st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] = None
+                st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] = None
                             
-            if (st.session_state[f"CLAHE_img_array_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] is None) and (st.session_state[f"super_im__{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] is None):
+            if (st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] is None) and (st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] is None):
                 
-                st.session_state[f"CLAHE_img_array_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] = []
-                st.session_state[f"super_im_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] = np.zeros_like(raw_image_ani[0][:,:,0])   #size of one of the images
+                st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] = []
+                st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] = np.zeros_like(raw_image_ani[0][:,:,0])   #size of one of the images
                 
                 weight = 1/raw_image_ani.shape[0]                      
                 for frame_num in range(0,raw_image_ani.shape[0]):
@@ -329,11 +336,16 @@ def Segment():
                     # raw_second_pixels = min(raw_image_f[:,:,0][raw_image_f[:,:,0][:,:]!=0])            
                     # raw_image_f[raw_image_f > (255 - raw_second_pixels)] = 255 - raw_second_pixels
                     # raw_image = raw_image_f + raw_second_pixels
-                     
-                    
+                    if st.session_state.gauss_x == -1:
+                       blur_gauss = raw_image 
+                    else:
+                       blur_gauss = cv2.GaussianBlur(raw_image, (st.session_state.gauss_x, st.session_state.gauss_x), sigmaX=0)
                     #mean_of_mean.append(cv2.mean(raw_image[:,:,0])[0])  #find mean pixel value of each frame of the whole gray image
                     
-                    blur_median_proc2 = cv2.medianBlur(raw_image, st.session_state.med_x)               
+                    if st.session_state.gauss_x == -1:
+                        blur_median_proc2 = blur_gauss
+                    else:
+                        blur_median_proc2 = cv2.medianBlur(blur_gauss, st.session_state.med_x)               
                                 
                     bri_con2 = apply_brightness_contrast(blur_median_proc2, st.session_state.bri_x, st.session_state.con_x)
                     #st.image(bri_con2,use_column_width=True,clamp = True)
@@ -349,52 +361,52 @@ def Segment():
                     updated_lab_img22 = cv2.merge((clahe_img2,a2,b2))
                     CLAHE_img = cv2.cvtColor(updated_lab_img22, cv2.COLOR_LAB2RGB)
                     CLAHE_img = CLAHE_img[:,:,0] 
-                    st.session_state[f"CLAHE_img_array_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"].append(CLAHE_img) 
+                    st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"].append(CLAHE_img) 
                     
                     #super_im = super_im + weight*CLAHE_img 
-                    st.session_state[f"super_im_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] = np.maximum(st.session_state[f"super_im_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"], CLAHE_img)    
+                    st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] = np.maximum(st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"], CLAHE_img)    
                 
-                st.session_state[f"super_im_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] = st.session_state[f"super_im_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"].astype(np.int32)
-                st.session_state[f"super_im_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][st.session_state[f"super_im_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"]>255]=255
-                st.session_state[f"super_im_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] = st.session_state[f"super_im_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"].astype(np.uint8)
+                st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"].astype(np.int32)
+                st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"]>255]=255
+                st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"].astype(np.uint8)
                 #with st.expander("**_Show Processed Frames_**"):
                 st.write('*_Processed Frames_*')
                 image_frame_num_pro = st.number_input(f"(0 - {raw_image_ani.shape[0]-1})", min_value = 0, max_value = raw_image_ani.shape[0]-1, step = 1,key='num_2')
                 if image_frame_num==0:
-                    st.image(st.session_state[f"CLAHE_img_array_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] [0],use_column_width=True,clamp = True)
+                    st.image(st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] [0],use_column_width=True,clamp = True)
                 elif image_frame_num >= 1:
-                    st.image(st.session_state[f"CLAHE_img_array_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] [image_frame_num_pro],use_column_width=True,clamp = True)
+                    st.image(st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] [image_frame_num_pro],use_column_width=True,clamp = True)
             
                 st.markdown("**_The Collapsed Image_**")
                 #with st.expander("*_Show_*"):
-                st.image(st.session_state[f"super_im_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"], use_column_width=True,clamp = True) 
-                st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"]
+                st.image(st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"], use_column_width=True,clamp = True) 
+                st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"]
                 # _, binary_image = cv2.threshold(st.session_state['Collapsed_Image'], 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
                 # st.image(binary_image,use_column_width=True,clamp = True )
             else:
                 st.write('*_Processed Frames_*')
                 image_frame_num_pro = st.number_input(f"(0 - {raw_image_ani.shape[0]-1})", min_value = 0, max_value = raw_image_ani.shape[0]-1, step = 1,key='num_2')
                 if image_frame_num==0:
-                    st.image(st.session_state[f"CLAHE_img_array_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0],use_column_width=True,clamp = True)
+                    st.image(st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0],use_column_width=True,clamp = True)
                 elif image_frame_num >= 1:
-                    st.image(st.session_state[f"CLAHE_img_array_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][image_frame_num_pro],use_column_width=True,clamp = True)
+                    st.image(st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][image_frame_num_pro],use_column_width=True,clamp = True)
             
                 st.markdown("**_The Collapsed Image_**")
                 #with st.expander("*_Show_*"):
-                st.image(st.session_state[f"super_im_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"], use_column_width=True,clamp = True) 
-                st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"]
+                st.image(st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"], use_column_width=True,clamp = True) 
+                st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"]
                 # _, binary_image = cv2.threshold(st.session_state['Collapsed_Image'], 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
                 # st.image(binary_image,use_column_width=True,clamp = True )
             
             if st.button("*_Segment and generate labels_*", key='frame_btn',on_click = callback_allframes) or st.session_state.button_clicked_allframes:
                 #st.image(super_im,use_column_width=True,clamp = True)   
                 #st.write(st.session_state.button_clicked_allframes)
-                if f"super_im_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_seg" not in st.session_state:
+                if f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_seg" not in st.session_state:
                 #st.write("It is not in session state")
-                    st.session_state[f"super_im_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"] = stardist_seg(st.session_state['Collapsed_Image'],model)
-                    label = st.session_state[f"super_im_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"] 
+                    st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"] = stardist_seg(st.session_state['Collapsed_Image'],model)
+                    label = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"] 
                 else:
-                    label = st.session_state[f"super_im_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"]
+                    label = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"]
                 
                 #p.write("Done!")  
                 props = measure.regionprops(label) 
@@ -428,7 +440,7 @@ def Segment():
                     #st.image(final_label,use_column_width=True,clamp = True)
                     #st.session_state['final_label_pg_2'] = final_label
                     #final_label_rgb = cv2.cvtColor(final_label, cv2.COLOR_GRAY2RGB)                                       
-                    super_im_rgb = cv2.cvtColor(st.session_state[f"super_im_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] , cv2.COLOR_GRAY2RGB)
+                    super_im_rgb = cv2.cvtColor(st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] , cv2.COLOR_GRAY2RGB)
                     label_list_len = len([prop['label'] for prop in props_to_sort if prop['label']])
                     label_list = list(range(1,label_list_len+1))
                     st.session_state['label_list_pg_2'] = label_list
@@ -441,7 +453,7 @@ def Segment():
                           #so simply ignore it
                             if label == 0:
                                 continue                
-                            mask = np.zeros(st.session_state[f"CLAHE_img_array_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0].shape, dtype="uint8")
+                            mask = np.zeros(st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0].shape, dtype="uint8")
                             mask[final_label == label] = 255
                             #detect contours in the mask and grab the largest one
                             cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
@@ -591,6 +603,7 @@ def apply_brightness_contrast(input_img, brightness = 0, contrast = 0):
        gamma_b = shadow
        
        buf = cv2.addWeighted(input_img, alpha_b, input_img, 0, gamma_b)
+       buf =  np.clip(buf, 0, 255).astype(np.uint8) 
    else:
        buf = input_img.copy()
    
@@ -600,7 +613,7 @@ def apply_brightness_contrast(input_img, brightness = 0, contrast = 0):
        gamma_c = 127*(1-f)
        
        buf = cv2.addWeighted(buf, alpha_c, buf, 0, gamma_c)
-
+       buf =  np.clip(buf, 0, 255).astype(np.uint8)
    return buf 
 
 
