@@ -342,7 +342,7 @@ def Segment():
                        blur_gauss = cv2.GaussianBlur(raw_image, (st.session_state.gauss_x, st.session_state.gauss_x), sigmaX=0)
                     #mean_of_mean.append(cv2.mean(raw_image[:,:,0])[0])  #find mean pixel value of each frame of the whole gray image
                     
-                    if st.session_state.gauss_x == -1:
+                    if st.session_state.med_x == -1:
                         blur_median_proc2 = blur_gauss
                     else:
                         blur_median_proc2 = cv2.medianBlur(blur_gauss, st.session_state.med_x)               
