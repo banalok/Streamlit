@@ -499,9 +499,9 @@ def Segment():
                                 st.session_state.canvas_data_2 = None
                             st.warning('Use left-click to assign points for the shape boundaries, and right-click to finalize the ROI. Undo, redo or delete the drawn regions as needed.')
                             canvas_result_2 = st_canvas(
-                                fill_color="rgba(255, 165, 0, 0.3)",  # Change this to your desired ROI color
-                                stroke_width=2,
-                                stroke_color="rgb(255, 165, 0)",
+                                fill_color="rgba(255, 0, 0, 0.3)",  # Change this to your desired ROI color
+                                stroke_width=1,
+                                stroke_color="rgb(255, 0, 0)",
                                 background_image=image_draw_2,
                                 display_toolbar=True,
                                 drawing_mode="polygon",
