@@ -37,7 +37,7 @@ from skimage import measure, color, io
 import plotly.express as px
 #from scipy import ndimage
 from skimage import (
-    filters,  morphology, img_as_float, img_as_ubyte, img_as_uint, exposure
+    filters,  morphology, img_as_float, img_as_ubyte, img_as_uint, exposure, restoration
 )
 from skimage.draw import polygon
 from stardist.models import StarDist2D
@@ -121,7 +121,8 @@ def callback_all_param_table():
     
 @st.cache_resource(max_entries=1, show_spinner=False, ttl = 2*60)
 def load_model():
-    model = StarDist2D.from_pretrained('2D_versatile_fluo')
+    model = StarDist2D.from_pretrained('2D_versatile_fluo') 
+    #model = StarDist2D.from_pretrained('2D_paper_dsb2018')
     return model
 
 @st.cache_data(max_entries=1, show_spinner=False, ttl = 2*60)
@@ -133,7 +134,7 @@ def load_image(images):
 
 @st.cache_data(max_entries=1, show_spinner=False, ttl = 2*60)
 def stardist_seg(im,_model):
-    img_labels, img_det = _model.predict_instances(normalize(im))
+    img_labels, img_det = _model.predict_instances(normalize(im), prob_thresh=0.6)
     return img_labels
 
 def main():
@@ -381,8 +382,15 @@ def Segment():
                 #with st.expander("*_Show_*"):
                 st.image(st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"], use_column_width=True,clamp = True) 
                 st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"]
-                # _, binary_image = cv2.threshold(st.session_state['Collapsed_Image'], 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-                # st.image(binary_image,use_column_width=True,clamp = True )
+                with st.expander("Inhomogeneous pixel distribution?"):
+                    rb_check = st.radio("Rolling ball background correction (RBBC)", ['No RBBC', 'RBBC'], help='Select "RBBC" for rolling ball background correction on the collapsed image, otherwise, select No "RBBC"', on_change=callback_off)
+                    if rb_check == 'No RBBC':
+                        st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"]
+                    elif rb_check == 'RBBC':
+                        radius_x = st.slider("Ball Radius", min_value = 1, max_value = 50, step=1, value = 25, on_change=callback_off)                        
+                        background_to_remove = restoration.rolling_ball(st.session_state['Collapsed_Image'], radius=radius_x)
+                        st.session_state['Collapsed_Image'] = st.session_state['Collapsed_Image'] - background_to_remove
+                        st.image(st.session_state['Collapsed_Image'], use_column_width=True,clamp = True )   
             else:
                 st.write('*_Processed Frames_*')
                 image_frame_num_pro = st.number_input(f"(0 - {raw_image_ani.shape[0]-1})", min_value = 0, max_value = raw_image_ani.shape[0]-1, step = 1,key='num_2')
@@ -397,6 +405,16 @@ def Segment():
                 st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"]
                 # _, binary_image = cv2.threshold(st.session_state['Collapsed_Image'], 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
                 # st.image(binary_image,use_column_width=True,clamp = True )
+                
+                with st.expander("Inhomogeneous pixel distribution?"):
+                    rb_check = st.radio("Rolling ball background correction (RBBC)", ['No RBBC', 'RBBC'], help='Select "RBBC" for rolling ball background correction on the collapsed image, otherwise, select No "RBBC"', on_change=callback_off)
+                    if rb_check == 'No RBBC':
+                        st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"]
+                    elif rb_check == 'RBBC':
+                        radius_x = st.slider("Ball Radius", min_value = 1, max_value = 50, step=1, value = 25, on_change=callback_off)                        
+                        background_to_remove = restoration.rolling_ball(st.session_state['Collapsed_Image'], radius=radius_x)
+                        st.session_state['Collapsed_Image'] = st.session_state['Collapsed_Image'] - background_to_remove
+                        st.image(st.session_state['Collapsed_Image'], use_column_width=True,clamp = True )            
             
             if st.button("*_Segment and generate labels_*", key='frame_btn',on_click = callback_allframes) or st.session_state.button_clicked_allframes:
                 #st.image(super_im,use_column_width=True,clamp = True)   
@@ -440,7 +458,7 @@ def Segment():
                     #st.image(final_label,use_column_width=True,clamp = True)
                     #st.session_state['final_label_pg_2'] = final_label
                     #final_label_rgb = cv2.cvtColor(final_label, cv2.COLOR_GRAY2RGB)                                       
-                    super_im_rgb = cv2.cvtColor(st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] , cv2.COLOR_GRAY2RGB)
+                    super_im_rgb = cv2.cvtColor(st.session_state['Collapsed_Image'] , cv2.COLOR_GRAY2RGB)
                     label_list_len = len([prop['label'] for prop in props_to_sort if prop['label']])
                     label_list = list(range(1,label_list_len+1))
                     st.session_state['label_list_pg_2'] = label_list
@@ -499,7 +517,7 @@ def Segment():
                                 st.session_state.canvas_data_2 = None
                             st.warning('Use left-click to assign points for the shape boundaries, and right-click to finalize the ROI. Undo, redo or delete the drawn regions as needed.')
                             canvas_result_2 = st_canvas(
-                                fill_color="rgba(255, 0, 0, 0.3)",  # Change this to your desired ROI color
+                                fill_color="rgba(255, 0, 0, 0.3)",  
                                 stroke_width=1,
                                 stroke_color="rgb(255, 0, 0)",
                                 background_image=image_draw_2,
