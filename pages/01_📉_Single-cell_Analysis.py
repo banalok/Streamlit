@@ -269,7 +269,7 @@ else:
                 #st.write(mask_label)
                 intensity_values = intensity_im[mask_label]
                 col.append(intensity_values)
-            col_arr.append((np.array(col)).ravel())
+            col_arr.append(np.array(col, dtype=object))
             df_single = props_pro
             #df_single['area'] = df_single[df_single['area']>df_single['intensity_mean'].mean()]['area']
             df_single.rename(columns = {frames_pro : f'intensity_mean_{frames_pro}'}, inplace=True)
@@ -333,7 +333,7 @@ else:
                     #st.write(mask_label)
                     intensity_values = intensity_im[mask_label]
                     col.append(intensity_values)
-                col_arr.append((np.array(col)).ravel())
+                col_arr.append(np.array(col, dtype=object))
                 df_single = props_pro
                 #df_single['area'] = df_single[df_single['area']>df_single['intensity_mean'].mean()]['area']
                 df_single.rename(columns = {frames_pro : f'intensity_mean_{frames_pro}'}, inplace=True)
