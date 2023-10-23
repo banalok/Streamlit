@@ -216,14 +216,14 @@ if 'Collapsed_Image' not in st.session_state:
     pass
 else:
     collapsed = st.session_state['Collapsed_Image']
-    st.write('*_The Collapsed Image_*')
+    st.write('*_The Selected Image_*')
     st.image(collapsed,use_column_width=True,clamp = True)
     
 if 'super_im_rgb_pg_2' not in st.session_state:
     pass
 else:
     super_im_pg_2 = st.session_state['super_im_rgb_pg_2']
-    st.write('*_Automatically labeled objects on the collapsed image_*')
+    st.write('*_Automatically labeled objects on the selected image_*')
     st.image(super_im_pg_2,use_column_width=True,clamp = True)
 
 if 'final_label_rgb_pg_2' not in st.session_state:
@@ -271,13 +271,14 @@ else:
                 intensity_values = intensity_im[mask_label]
                 col.append(intensity_values)
             col_arr.append(np.array(col, dtype=object))
+            
             df_single = props_pro
             #df_single['area'] = df_single[df_single['area']>df_single['intensity_mean'].mean()]['area']
             df_single.rename(columns = {frames_pro : f'intensity_mean_{frames_pro}'}, inplace=True)
             df_single[f'intensity_mean_{frames_pro}'] = np.round(df_single[f'intensity_mean_{frames_pro}'],3)
 
         st.session_state['df_pro'] = pd.merge(st.session_state['df_pro'], df_single, on = 'label', how = 'outer')                                                 
-        
+        #st.write((col_arr[0]))
         #df_pro.drop([0], inplace=True)
         
         ######## #################  ################# ###############Interactive table################################################################
@@ -334,6 +335,7 @@ else:
                     #st.write(mask_label)
                     intensity_values = intensity_im[mask_label]
                     col.append(intensity_values)
+                
                 col_arr.append(np.array(col, dtype=object))
                 df_single = props_pro
                 #df_single['area'] = df_single[df_single['area']>df_single['intensity_mean'].mean()]['area']
@@ -667,7 +669,7 @@ else:
                                 
                             signal_rise = (max(max_frame) - rise_df['Frame'].iloc[0])/frame_rate
                             amplitude_each = max_df_value - baseline_each
-                            if (amplitude_each > 0.1*baseline_each) and (pcov_decay is None) and (popt_decay is None):
+                            if (pcov_decay is None) and (popt_decay is None):
                                 nested_dict_pro["Label"].append(i)
                                 nested_dict_pro["Number of Events"].append(None)
                                 nested_dict_pro["Rise time"].append(signal_rise)
@@ -845,7 +847,7 @@ else:
                                     signal_decay = (int(signal_decay_frame)-int(peak_frame))/frame_rate
                                     signal_duration = (int(signal_decay_frame)-int(signal_start_frame))/frame_rate
         
-                                    if (amplitude_each > 0.1*baseline_each) and (popt_rise is not None) and (popt_decay is not None):
+                                    if (popt_rise is not None) and (popt_decay is not None):
                                         nested_dict_pro["Label"].append(i)
                                         nested_dict_pro["Number of Events"].append(event_num)
                                         nested_dict_pro["Rise time"].append(signal_rise)
@@ -1401,7 +1403,7 @@ else:
                                 
                             signal_rise = (max(max_frame) - rise_df['Frame'].iloc[0])/frame_rate
                             amplitude_each = max_df_value - baseline_corr_each
-                            if (amplitude_each > 0.1*baseline_corr_each) and (pcov_decay is None) and (popt_decay is None):
+                            if (pcov_decay is None) and (popt_decay is None):
                                 nested_dict_pro["Label"].append(i)
                                 nested_dict_pro["Number of Events"].append(None)
                                 nested_dict_pro["Rise time"].append(signal_rise)
@@ -1579,7 +1581,7 @@ else:
                                     signal_decay = (int(signal_decay_frame)-int(peak_frame))/frame_rate
                                     signal_duration = (int(signal_decay_frame)-int(signal_start_frame))/frame_rate
     
-                                    if (amplitude_each > 0.1*baseline_corr_each) and (popt_rise is not None) and (popt_decay is not None):
+                                    if (popt_rise is not None) and (popt_decay is not None):
                                         nested_dict_pro["Label"].append(i)
                                         nested_dict_pro["Number of Events"].append(event_num)
                                         nested_dict_pro["Rise time"].append(signal_rise)

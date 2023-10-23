@@ -382,15 +382,15 @@ def Segment():
                 #with st.expander("*_Show_*"):
                 st.image(st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"], use_column_width=True,clamp = True) 
                 st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"]
-                with st.expander("Inhomogeneous pixel distribution?"):
-                    rb_check = st.radio("Rolling ball background correction (RBBC)", ['No RBBC', 'RBBC'], help='Select "RBBC" for rolling ball background correction on the collapsed image, otherwise, select No "RBBC"', on_change=callback_off)
-                    if rb_check == 'No RBBC':
-                        st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"]
-                    elif rb_check == 'RBBC':
-                        radius_x = st.slider("Ball Radius", min_value = 1, max_value = 50, step=1, value = 25, on_change=callback_off)                        
-                        background_to_remove = restoration.rolling_ball(st.session_state['Collapsed_Image'], radius=radius_x)
-                        st.session_state['Collapsed_Image'] = st.session_state['Collapsed_Image'] - background_to_remove
-                        st.image(st.session_state['Collapsed_Image'], use_column_width=True,clamp = True )   
+                # with st.expander("Inhomogeneous pixel distribution?"):
+                #     rb_check = st.radio("Rolling ball background correction (RBBC)", ['No RBBC', 'RBBC'], help='Select "RBBC" for rolling ball background correction on the collapsed image, otherwise, select No "RBBC"', on_change=callback_off)
+                #     if rb_check == 'No RBBC':
+                #         st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"]
+                #     elif rb_check == 'RBBC':
+                #         radius_x = st.slider("Ball Radius", min_value = 1, max_value = 50, step=1, value = 25, on_change=callback_off)                        
+                #         background_to_remove = restoration.rolling_ball(st.session_state['Collapsed_Image'], radius=radius_x)
+                #         st.session_state['Collapsed_Image'] = st.session_state['Collapsed_Image'] - background_to_remove
+                #         st.image(st.session_state['Collapsed_Image'], use_column_width=True,clamp = True )   
             else:
                 st.write('*_Processed Frames_*')
                 image_frame_num_pro = st.number_input(f"(0 - {raw_image_ani.shape[0]-1})", min_value = 0, max_value = raw_image_ani.shape[0]-1, step = 1,key='num_2')
@@ -405,26 +405,35 @@ def Segment():
                 st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"]
                 # _, binary_image = cv2.threshold(st.session_state['Collapsed_Image'], 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
                 # st.image(binary_image,use_column_width=True,clamp = True )
-                
-                with st.expander("Inhomogeneous pixel distribution?"):
-                    rb_check = st.radio("Rolling ball background correction (RBBC)", ['No RBBC', 'RBBC'], help='Select "RBBC" for rolling ball background correction on the collapsed image, otherwise, select No "RBBC"', on_change=callback_off)
-                    if rb_check == 'No RBBC':
-                        st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"]
-                    elif rb_check == 'RBBC':
-                        radius_x = st.slider("Ball Radius", min_value = 1, max_value = 50, step=1, value = 25, on_change=callback_off)                        
-                        background_to_remove = restoration.rolling_ball(st.session_state['Collapsed_Image'], radius=radius_x)
-                        st.session_state['Collapsed_Image'] = st.session_state['Collapsed_Image'] - background_to_remove
-                        st.image(st.session_state['Collapsed_Image'], use_column_width=True,clamp = True )            
-            
+     
             if st.button("*_Segment and generate labels_*", key='frame_btn',on_click = callback_allframes) or st.session_state.button_clicked_allframes:
-                #st.image(super_im,use_column_width=True,clamp = True)   
-                #st.write(st.session_state.button_clicked_allframes)
-                if f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_seg" not in st.session_state:
-                #st.write("It is not in session state")
-                    st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"] = stardist_seg(st.session_state['Collapsed_Image'],model)
-                    label = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"] 
-                else:
-                    label = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"]
+                with st.expander("Inhomogeneous pixel distribution?"):
+                    segment_check = st.radio("Select one:", ["Segment on the collapsed image", "Segment on the first image"])
+                    rb_check = st.radio("Rolling ball background correction (RBBC)", ['No RBBC', 'RBBC'], help='Select "RBBC" for rolling ball background correction on the selected image, otherwise, select No "RBBC"')
+                    if f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_seg" not in st.session_state:
+                        if segment_check == "Segment on the collapsed image":
+                            if rb_check == 'No RBBC':
+                                st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"]
+                            elif rb_check == 'RBBC':
+                                radius_x = st.slider("Ball Radius", min_value = 1, max_value = 50, step=1, value = 25)                        
+                                background_to_remove = restoration.rolling_ball(st.session_state['Collapsed_Image'], radius=radius_x)
+                                st.session_state['Collapsed_Image'] = st.session_state['Collapsed_Image'] - background_to_remove
+                                st.image(st.session_state['Collapsed_Image'], use_column_width=True,clamp = True)  
+                            st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"] = stardist_seg(st.session_state['Collapsed_Image'],model)
+                            label = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"] 
+                        elif segment_check == "Segment on the first image":
+                            if rb_check == 'No RBBC':
+                                st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"]
+                            elif rb_check == 'RBBC':
+                                radius_x = st.slider("Ball Radius", min_value = 1, max_value = 50, step=1, value = 25)                        
+                                background_to_remove = restoration.rolling_ball(st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0], radius=radius_x)
+                                st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0] = st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0] - background_to_remove
+                        
+                            st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"] = stardist_seg(st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0],model)
+                            label = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"] 
+                            st.session_state['Collapsed_Image'] = st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0]          
+                    else:
+                        label = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"]
                 
                 #p.write("Done!")  
                 props = measure.regionprops(label) 
@@ -496,7 +505,7 @@ def Segment():
                             cv2.putText(super_im_rgb, "{}".format(label), (int(x) - 10, int(y)),
                              	cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)                        
                     #with st.expander("*_Show the segmented and labeled image_*"):
-                    st.write("*_Automatically labeled objects on the collapsed image_*")
+                    st.write("*_Automatically labeled objects on the selected image_*")
                     #overlay_image = super_im + final_label_rgb[:,:,0]
                     st.image(super_im_rgb,use_column_width=True,clamp = True)
                     st.write("*_Automatically segmented and labeled objects on a black background_*")

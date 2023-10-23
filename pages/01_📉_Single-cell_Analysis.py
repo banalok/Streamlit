@@ -207,7 +207,7 @@ if 'Collapsed_Image' not in st.session_state:
     pass
 else:
     collapsed = st.session_state['Collapsed_Image']
-    st.write('*_The Collapsed Image_*')
+    st.write('*_The Selected Image_*')
     st.image(collapsed,use_column_width=True,clamp = True)
     
 if 'label_list_pg_2' not in st.session_state:
@@ -229,7 +229,7 @@ if 'super_im_rgb_pg_2' not in st.session_state:
     pass
 else:
     super_im_pg_2 = st.session_state['super_im_rgb_pg_2']
-    st.write('*_Automatically labeled objects on the collapsed image_*')
+    st.write('*_Automatically labeled objects on the selected image_*')
     st.image(super_im_pg_2,use_column_width=True,clamp = True)
     
 if 'final_label_rgb_pg_2' not in st.session_state:
@@ -270,6 +270,7 @@ else:
                 intensity_values = intensity_im[mask_label]
                 col.append(intensity_values)
             col_arr.append(np.array(col, dtype=object))
+            
             df_single = props_pro
             #df_single['area'] = df_single[df_single['area']>df_single['intensity_mean'].mean()]['area']
             df_single.rename(columns = {frames_pro : f'intensity_mean_{frames_pro}'}, inplace=True)
@@ -1079,7 +1080,8 @@ else:
                 a_est_rise = rise_df['Rise intensity'].iloc[-1]
                 b_est_rise = find_b_est_rise(np.array(rise_df['Frame']), np.array(rise_df['Rise intensity']))
                 a_est = decay_df['Decay intensity'].iloc[0]
-                b_est = find_b_est_decay(np.array(decay_df['Frame']), np.array(decay_df['Decay intensity']))                    
+                b_est = find_b_est_decay(np.array(decay_df['Frame']), np.array(decay_df['Decay intensity'])) 
+                               
                 try:
                     popt_decay, pcov_decay = curve_fit(mono_exp_decay, decay_df['Frame'], decay_df['Decay intensity'], p0=[a_est,b_est])
                     
