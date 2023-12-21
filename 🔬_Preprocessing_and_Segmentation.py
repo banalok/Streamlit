@@ -64,6 +64,15 @@ os.makedirs('temp dir', exist_ok = True)
 
 if 'first_raw_image' not in st.session_state:
     st.session_state.first_raw_image = None
+    
+if 'overlayed_image' not in st.session_state:
+    st.session_state['overlayed_image'] = None
+                             
+if 'raw_file_overlay' not in st.session_state:
+    st.session_state['raw_file_overlay'] = None
+    
+if 'first_raw_overlay' not in st.session_state:
+    st.session_state['first_raw_overlay'] = None
 
 if "raw_file" not in st.session_state:
     st.session_state.raw_file = None
@@ -131,6 +140,13 @@ def load_image(images):
      # re, img = cv2.imreadmulti(images, flags=cv2.IMREAD_UNCHANGED)
      # img = np.array(img)
      return img
+ 
+@st.cache_data(max_entries=1, show_spinner=False, ttl = 2*60)
+def load_single_image(images):
+     img = io.imread(images)
+     # re, img = cv2.imreadmulti(images, flags=cv2.IMREAD_UNCHANGED)
+     # img = np.array(img)
+     return img
 
 @st.cache_data(max_entries=1, show_spinner=False, ttl = 2*60)
 def stardist_seg(im,_model):
@@ -170,6 +186,7 @@ def Segment():
             #st.write(raw_name)      #needs to be (none, none, 3)
             #raw_image = load_image(file_bytes) #use this script to load the image on the deployed app
             st.session_state['first_raw_image'] = load_image(raw_name)
+            f.close()
             shutil.rmtree("temp dir")
             raw_image = st.session_state['first_raw_image']
         else:
@@ -415,21 +432,26 @@ def Segment():
                             if rb_check == 'No RBBC':
                                 st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"]
                             elif rb_check == 'RBBC':
+                                st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"]
                                 radius_x = st.slider("Ball Radius", min_value = 1, max_value = 50, step=1, value = 25)                        
                                 background_to_remove = restoration.rolling_ball(st.session_state['Collapsed_Image'], radius=radius_x)
                                 st.session_state['Collapsed_Image'] = st.session_state['Collapsed_Image'] - background_to_remove
                                 st.image(st.session_state['Collapsed_Image'], use_column_width=True,clamp = True)  
                             st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"] = stardist_seg(st.session_state['Collapsed_Image'],model)
                             label = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"] 
+                            st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"]
                         elif segment_check == "Segment on the first image":
-                            if rb_check == 'No RBBC':
+                            if rb_check == 'No RBBC':                             
                                 st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"]
-                            elif rb_check == 'RBBC':
+                                seg_first = st.session_state['Collapsed_Image']
+                            elif rb_check == 'RBBC':                             
                                 radius_x = st.slider("Ball Radius", min_value = 1, max_value = 50, step=1, value = 25)                        
                                 background_to_remove = restoration.rolling_ball(st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0], radius=radius_x)
-                                st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0] = st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0] - background_to_remove
-                        
-                            st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"] = stardist_seg(st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0],model)
+                                #st.session_state[f"CLAHE_img_array_new_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0] = st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0] - background_to_remove
+                                seg_first = st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0] - background_to_remove
+                                st.session_state['Collapsed_Image'] = seg_first
+                                st.image(st.session_state['Collapsed_Image'], use_column_width=True,clamp = True) 
+                            st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"] = stardist_seg(seg_first,model)
                             label = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"] 
                             st.session_state['Collapsed_Image'] = st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0]          
                     else:
@@ -602,6 +624,36 @@ def Segment():
                                     st.session_state['label_list_pg_2'] = label_list + added_roi_list
                                     st.warning('This combination of automatic and manual object identification will be used to extract image properties. To continue only with the automatically generated labels, click "Segment and generate labels" above one more time.')   
                                                
+                    
+                    with st.expander("*_Cell-specific Analysis?_*"):
+                         #if st.button('Perform Cell-specific Analysis', key='overlay_btn',help = "Use this option to overlay a dye positive image on top of the labeled image for efficient cell selection", on_click = callback_roi) or st.session_state.button_clicked_roi:
+                        st.session_state['overlayed_image'] = None    # for now it is None all the time, but the code is prepared in case the session state needs to get applied to these parameters
+                        st.session_state['raw_file_overlay'] = None
+                        st.session_state['first_raw_overlay']= None
+                        if st.session_state['overlayed_image'] is None:
+                            os.makedirs('temp dir_2', exist_ok = True)
+                            if st.session_state['raw_file_overlay'] is None:
+                                st.session_state['raw_file_overlay'] = st.file_uploader('*_Upload a dye-positive image_*', help='Use this option to overlay a dye positive image on top of the labeled image for efficient cell selection', type=['jpeg', 'jpg', 'png', 'tif', 'tiff'])
+                                if st.session_state['raw_file_overlay'] is not None:                                    
+                                    overlay_file_path = os.path.join('temp dir_2', st.session_state.raw_file_overlay.name)
+                                    
+                                    with open(overlay_file_path, "wb") as fl:
+                                       fl.write(st.session_state['raw_file_overlay'].read())
+                                       raw_name_overlay=cwd+'temp dir_2/'+st.session_state['raw_file_overlay'].name
+                                       st.session_state['first_raw_overlay'] = load_single_image(raw_name_overlay)                                         
+                                       st.session_state['first_raw_overlay'] = cv2.resize(st.session_state['first_raw_overlay'], (st.session_state['final_label_rgb_pg_2'].shape[1], st.session_state['final_label_rgb_pg_2'].shape[0]))
+                                       if len(st.session_state['first_raw_overlay'].shape)==3 and st.session_state['first_raw_overlay'].shape[2] == 3:
+                                           st.session_state['overlayed_image'] = cv2.addWeighted(st.session_state['final_label_rgb_pg_2'], 0.2 , st.session_state['first_raw_overlay'], 1, 0)
+                                       elif len(st.session_state['first_raw_overlay'].shape)==2 or (len(st.session_state['first_raw_overlay'].shape)==3 and st.session_state['first_raw_overlay'].shape[2] == 1):
+                                           st.session_state['overlayed_image'] = cv2.addWeighted(st.session_state['final_label_rgb_pg_2'], 0.2 , cv2.cvtColor(st.session_state['first_raw_overlay'], cv2.COLOR_GRAY2RGB), 1, 0)
+                                       st.image(st.session_state['overlayed_image'],use_column_width=True,clamp = True) 
+                                       fl.close()
+                                       shutil.rmtree("temp dir_2")
+                            else:                                   
+                                st.image(st.session_state['overlayed_image'],use_column_width=True,clamp = True)                          
+                                    
+   
+                    
                     if 'df_pro' in st.session_state:   
                         st.session_state.pop('df_pro')
                         
