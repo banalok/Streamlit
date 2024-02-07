@@ -2,9 +2,7 @@
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
 from streamlit_drawable_canvas import st_canvas##############################new########################
-#from st_pages import Page, show_pages, hide_pages
 import plotly.io
-#import PIL 
 import math
 import tifffile
 from PIL import Image, ImageDraw
@@ -13,29 +11,15 @@ import seaborn as sns
 import statistics as stat
 import os
 import numpy as np
-#import segmentation_models as sm
 import cv2
 from io import BytesIO
-#import base64 
-#from skimage.feature import peak_local_max
-#from skimage.segmentation import watershed
 import imutils
-# Keras
-#from keras.applications.imagenet_utils import preprocess_input, decode_predictions
-#from keras.models import load_model
-#from keras.preprocessing import image
 from matplotlib import pyplot as plt
 import pandas as pd
-#from smooth_blending_functions import predict_img_with_smooth_windowing
-#import scipy as sp
-#from scipy.signal import medfilt
 from scipy import ndimage
 from scipy.optimize import curve_fit
 from skimage import measure, color, io
-#from skimage.segmentation import clear_border
-#from skimage import segmentation
 import plotly.express as px
-#from scipy import ndimage
 from skimage import (
     filters,  morphology, img_as_float, img_as_ubyte, img_as_uint, exposure, restoration
 )
@@ -48,17 +32,7 @@ import time
 import subprocess
 import shutil
 import re
-#st.set_page_config(initial_sidebar_state="collapsed")
 
-#hide_pages(['Multiple_Intensity_Traces'])
-#from streamlit_extras.stateful_button import button
-# for k, v in st.session_state.items():
-#     st.session_state[k] = v
-
-# if 'selected_row' not in st.session_state:
-#     st.session_state['selected_row'] = 0
-    
-#get current directory
 cwd=os.getcwd()+'/'
 os.makedirs('temp dir', exist_ok = True)
 
@@ -625,7 +599,7 @@ def Segment():
                                     st.warning('This combination of automatic and manual object identification will be used to extract image properties. To continue only with the automatically generated labels, click "Segment and generate labels" above one more time.')   
                                                
                     
-                    with st.expander("*_Cell-specific Analysis?_*"):
+                    with st.expander("*_Cell-specific Analysis? (Expand if needed to overlay a dye positive image (uint8) on top of the labeled image for efficient cell selection_*"):
                          #if st.button('Perform Cell-specific Analysis', key='overlay_btn',help = "Use this option to overlay a dye positive image on top of the labeled image for efficient cell selection", on_click = callback_roi) or st.session_state.button_clicked_roi:
                         st.session_state['overlayed_image'] = None    # for now it is None all the time, but the code is prepared in case the session state needs to get applied to these parameters
                         st.session_state['raw_file_overlay'] = None
@@ -640,7 +614,7 @@ def Segment():
                                     with open(overlay_file_path, "wb") as fl:
                                        fl.write(st.session_state['raw_file_overlay'].read())
                                        raw_name_overlay=cwd+'temp dir_2/'+st.session_state['raw_file_overlay'].name
-                                       st.session_state['first_raw_overlay'] = load_single_image(raw_name_overlay)                                         
+                                       st.session_state['first_raw_overlay'] = load_single_image(raw_name_overlay)                                  
                                        st.session_state['first_raw_overlay'] = cv2.resize(st.session_state['first_raw_overlay'], (st.session_state['final_label_rgb_pg_2'].shape[1], st.session_state['final_label_rgb_pg_2'].shape[0]))
                                        if len(st.session_state['first_raw_overlay'].shape)==3 and st.session_state['first_raw_overlay'].shape[2] == 3:
                                            st.session_state['overlayed_image'] = cv2.addWeighted(st.session_state['final_label_rgb_pg_2'], 0.2 , st.session_state['first_raw_overlay'], 1, 0)
@@ -711,12 +685,12 @@ def intensity(df_1, multi_tif_img, window):
     img_frames_list = list(range(0,multi_tif_img.shape[0]))
     img_frames = pd.DataFrame(img_frames_list, columns = ['Frame'])
     mean_intensity = []
-    p_count = []
+    #p_count = []
     #change_in_F = []
     for frames_pro in range(0,multi_tif_img.shape[0]):
             #new_df = pd.DataFrame(frames_pro, df_pro[f'intensity_mean_{frames_pro}'].mean(),  columns = ['Frames', 'Mean Intensity'])
         mean_intensity.append(df_1[f'intensity_mean_{frames_pro}'].mean()) #[0]
-        p_count.append(df_1[f'Bright_pixel_area_{frames_pro}'].mean()) #[0]
+        #p_count.append(df_1[f'Bright_pixel_area_{frames_pro}'].mean()) #[0]
             # new_df = pd.DataFrame.from_dict({'Frame': frames_pro, 'Mean Intensity': df_pro[f'intensity_mean_{frames_pro}'].mean()})
             # img_frames = pd.merge(img_frames, new_df, on = "Frame")
         #st.write(df_1[f'pixel_count_{frames_pro}'])
@@ -726,8 +700,8 @@ def intensity(df_1, multi_tif_img, window):
     #change_F_df = pd.DataFrame(change_in_F, columns = ['delta_F/F'])
     smooth_F_df = pd.DataFrame(smooth_plot(mean_intensity, window), columns = ['Smoothed Mean Intensity'] ) #pd.DataFrame(smooth_df, columns = ['smoothed mean intensity'])
     mean_inten_df = pd.DataFrame(mean_intensity)
-    pixel_count_df = pd.DataFrame(p_count, columns = ['Bright Pixel Area'])
-    new_d = pd.concat([img_frames, mean_inten_df, smooth_F_df, pixel_count_df],axis=1)
+    #pixel_count_df = pd.DataFrame(p_count, columns = ['Bright Pixel Area'])
+    new_d = pd.concat([img_frames, mean_inten_df, smooth_F_df],axis=1) #, pixel_count_df
     new_d.rename(columns = {0 : 'Mean Intensity'}, inplace=True)
     #new_d.rename(columns = {1 : 'Bright Pixel Number'}, inplace=True)
     return new_d 

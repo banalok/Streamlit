@@ -100,12 +100,12 @@ def intensity(df_1, multi_tif_img, window):
     img_frames_list = list(range(0,multi_tif_img.shape[0]))
     img_frames = pd.DataFrame(img_frames_list, columns = ['Frame'])
     mean_intensity = []
-    p_count = []
+    #p_count = []
     #change_in_F = []
     for frames_pro in range(0,multi_tif_img.shape[0]):
             #new_df = pd.DataFrame(frames_pro, df_pro[f'intensity_mean_{frames_pro}'].mean(),  columns = ['Frames', 'Mean Intensity'])
         mean_intensity.append(df_1[f'intensity_mean_{frames_pro}'].mean()) #[0]
-        p_count.append(np.flot64(df_1[f'Bright_pixel_area_{frames_pro}'].mean())) #[0]
+        #p_count.append(df_1[f'Bright_pixel_area_{frames_pro}'].mean()) #[0]
             # new_df = pd.DataFrame.from_dict({'Frame': frames_pro, 'Mean Intensity': df_pro[f'intensity_mean_{frames_pro}'].mean()})
             # img_frames = pd.merge(img_frames, new_df, on = "Frame")
         #st.write(df_1[f'pixel_count_{frames_pro}'])
@@ -115,10 +115,9 @@ def intensity(df_1, multi_tif_img, window):
     #change_F_df = pd.DataFrame(change_in_F, columns = ['delta_F/F'])
     smooth_F_df = pd.DataFrame(smooth_plot(mean_intensity, window), columns = ['Smoothed Mean Intensity'] ) #pd.DataFrame(smooth_df, columns = ['smoothed mean intensity'])
     mean_inten_df = pd.DataFrame(mean_intensity)
-    pixel_count_df = pd.DataFrame(p_count, columns = ['Bright Pixel Area'])
-    new_d = pd.concat([img_frames, mean_inten_df, smooth_F_df, pixel_count_df],axis=1)
+    #pixel_count_df = pd.DataFrame(p_count, columns = ['Bright Pixel Area'])
+    new_d = pd.concat([img_frames, mean_inten_df, smooth_F_df],axis=1) #, pixel_count_df
     new_d.rename(columns = {0 : 'Mean Intensity'}, inplace=True)
-    new_d['Mean Intensity'] = np.round(new_d["Mean Intensity"],3) 
     #new_d.rename(columns = {1 : 'Bright Pixel Number'}, inplace=True)
     return new_d 
 
@@ -300,6 +299,7 @@ else:
         #    st.session_state['df_pro'].drop([f'image_intensity_{drop_frame}'], axis=1, inplace=True) 
         #st.session_state['df_pro_pg_2'] = df_pro
         st.dataframe(st.session_state['df_pro'], 1000, 200)
+        dataframe_df = st.session_state['df_pro']
         get_data_indi = convert_df(st.session_state['df_pro'])
         st.download_button("Press to Download", get_data_indi, 'label_intensity_data.csv', "text/csv", key='label_download-get_data') 
     else:
@@ -307,6 +307,7 @@ else:
         area_thres_x = st.number_input("*_Choose the area threshold percentage_*", min_value=0.00, max_value=1.00, value=0.3,step = 0.01, format="%0.2f", help = f"Default is 0.3. Pixels below 30% of the maximum ({np.amax(raw_img_ani_pg_2)}) are not counted to get the bright area of labels", key='area_thres')
         if area_thres_x == st.session_state['area_thres_x']:
             st.dataframe(st.session_state['df_pro'], 1000, 200)
+            dataframe_df = st.session_state['df_pro']
             get_data_indi = convert_df(st.session_state['df_pro'])
             st.download_button("Press to Download", get_data_indi, 'label_intensity_data.csv', "text/csv", key='label_download-get_data') 
             st.session_state['area_thres_x'] = area_thres_x
@@ -365,11 +366,14 @@ else:
             #    st.session_state['df_pro'].drop([f'image_intensity_{drop_frame}'], axis=1, inplace=True) 
             #st.session_state['df_pro_pg_2'] = df_pro
             st.dataframe(st.session_state['df_pro'], 1000, 200)
+            dataframe_df = st.session_state['df_pro']
             get_data_indi = convert_df(st.session_state['df_pro'])
             st.download_button("Press to Download", get_data_indi, 'label_intensity_data.csv', "text/csv", key='label_download-get_data_st') 
     #st.dataframe(df_pro, 1000, 200)
-    st.write('*_Select label(s) to explore_*')    
-    gb = GridOptionsBuilder.from_dataframe(st.session_state['df_pro'])                       
+    st.write('*_Select label(s) to explore_*') 
+    area_columns_to_drop = dataframe_df.columns[dataframe_df.columns.str.contains('Bright_pixel_area')]
+    dataframe_df_pro = dataframe_df.drop(columns=area_columns_to_drop)
+    gb = GridOptionsBuilder.from_dataframe(dataframe_df_pro)                       
     gb.configure_pagination(paginationAutoPageSize=True) #Add pagination
     gb.configure_side_bar() #Add a sidebar
     #gb.configure_selection('multiple', use_checkbox=True, groupSelectsChildren="Group checkbox select children") #Enable multi-row selection
@@ -380,7 +384,7 @@ else:
     gridOptions["columnDefs"][0]["headerCheckboxSelection"]=True
     
     grid_response_m = AgGrid(
-        st.session_state['df_pro'],
+        dataframe_df_pro,
         gridOptions=gridOptions,
         data_return_mode='AS_INPUT', 
         update_mode=GridUpdateMode.SELECTION_CHANGED,    #'MODEL_CHANGED',
@@ -1224,7 +1228,7 @@ else:
                         plot_df_corr_intensity_min = min(plot_df_corr_intensity)                    
                         plot_df_corr_value = pd.DataFrame(np.round((plot_df_corr_intensity + abs(plot_df_corr_intensity_min)),3), columns = [f'smooth cell {i}'])
                         plot_df_corr = pd.concat([plot_df_corr.reset_index(drop=True), plot_df_corr_value] ,axis=1)
-                        
+                        plot_df_corr.loc[plot_df_corr[f'smooth cell {i}'] == 0, f'smooth cell {i}'] = plot_df_corr[f'smooth cell {i}'].replace(0, plot_df_corr[f'smooth cell {i}'][plot_df_corr[f'smooth cell {i}'] != 0].min())
                         #plot_df_corr['Smoothed Mean Intensity'][plot_df_corr['Smoothed Mean Intensity']<0] = 0
                         baseline_corr_each = plot_df_corr.loc[(plot_df_corr['Frame'] >= 0) & (plot_df_corr['Frame'] <= baseline_smooth_x), f'smooth cell {i}'].mean()
                         delta = np.round((plot_df_corr[f'smooth cell {i}']-baseline_corr_each)/baseline_corr_each,3)
@@ -1733,6 +1737,7 @@ else:
                         plot_df_corr_intensity_min = min(plot_df_corr_intensity)                    
                         plot_df_corr_value = pd.DataFrame(np.round((plot_df_corr_intensity + abs(plot_df_corr_intensity_min)),3), columns = [f'smooth cell {i}'])
                         plot_df_corr = pd.concat([plot_df_corr.reset_index(drop=True), plot_df_corr_value] ,axis=1)
+                        plot_df_corr.loc[plot_df_corr[f'smooth cell {i}'] == 0, f'smooth cell {i}'] = plot_df_corr[f'smooth cell {i}'].replace(0, plot_df_corr[f'smooth cell {i}'][plot_df_corr[f'smooth cell {i}'] != 0].min())
                         if baseline_recovery_frame_input ==   'Single Frame Value':                              
                             filtered_baseline_corr_each = plot_df_corr.query("Frame == @baseline__frame_static")
                             baseline_corr_each = filtered_baseline_corr_each[f'smooth cell {i}'].iloc[0]

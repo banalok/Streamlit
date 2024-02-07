@@ -113,12 +113,12 @@ def intensity(df_1, multi_tif_img, window):
     img_frames_list = list(range(0,multi_tif_img.shape[0]))
     img_frames = pd.DataFrame(img_frames_list, columns = ['Frame'])
     mean_intensity = []
-    p_count = []
+    #p_count = []
     #change_in_F = []
     for frames_pro in range(0,multi_tif_img.shape[0]):
             #new_df = pd.DataFrame(frames_pro, df_pro[f'intensity_mean_{frames_pro}'].mean(),  columns = ['Frames', 'Mean Intensity'])
         mean_intensity.append(df_1[f'intensity_mean_{frames_pro}'].mean()) #[0]
-        p_count.append(np.float64(df_1[f'Bright_pixel_area_{frames_pro}'].mean())) #[0]
+        #p_count.append(df_1[f'Bright_pixel_area_{frames_pro}'].mean()) #[0]
             # new_df = pd.DataFrame.from_dict({'Frame': frames_pro, 'Mean Intensity': df_pro[f'intensity_mean_{frames_pro}'].mean()})
             # img_frames = pd.merge(img_frames, new_df, on = "Frame")
         #st.write(df_1[f'pixel_count_{frames_pro}'])
@@ -128,10 +128,9 @@ def intensity(df_1, multi_tif_img, window):
     #change_F_df = pd.DataFrame(change_in_F, columns = ['delta_F/F'])
     smooth_F_df = pd.DataFrame(smooth_plot(mean_intensity, window), columns = ['Smoothed Mean Intensity'] ) #pd.DataFrame(smooth_df, columns = ['smoothed mean intensity'])
     mean_inten_df = pd.DataFrame(mean_intensity)
-    pixel_count_df = pd.DataFrame(p_count, columns = ['Bright Pixel Area'])
-    new_d = pd.concat([img_frames, mean_inten_df, smooth_F_df, pixel_count_df],axis=1)
+    #pixel_count_df = pd.DataFrame(p_count, columns = ['Bright Pixel Area'])
+    new_d = pd.concat([img_frames, mean_inten_df, smooth_F_df],axis=1) #, pixel_count_df
     new_d.rename(columns = {0 : 'Mean Intensity'}, inplace=True)
-    new_d['Mean Intensity'] = np.round(new_d["Mean Intensity"],3) 
     #new_d.rename(columns = {1 : 'Bright Pixel Number'}, inplace=True)
     return new_d 
 
@@ -299,13 +298,15 @@ else:
         #    st.session_state['df_pro'].drop([f'image_intensity_{drop_frame}'], axis=1, inplace=True) 
         #st.session_state['df_pro_pg_2'] = df_pro
         st.dataframe(st.session_state['df_pro'], 1000, 200)
+        dataframe_df = st.session_state['df_pro']
         get_data_indi = convert_df(st.session_state['df_pro'])
         st.download_button("Press to Download", get_data_indi, 'label_intensity_data.csv', "text/csv", key='label_download-get_data') 
     else:
         label_fin = st.session_state['final_label_pg_2']
         area_thres_x = st.number_input("*_Choose the area threshold percentage_*", min_value=0.00, max_value=1.00, value=0.3,step = 0.01, format="%0.2f", help = f"Default is 0.3. Pixels below 30% of the maximum ({np.amax(raw_img_ani_pg_2)}) are not counted to get the bright area of labels", key='area_thres')
         if area_thres_x == st.session_state['area_thres_x']:
-            st.dataframe(st.session_state['df_pro'], 1000, 200)
+            st.dataframe(st.session_state['df_pro'], 1000, 200)            
+            dataframe_df = st.session_state['df_pro']
             get_data_indi = convert_df(st.session_state['df_pro'])
             st.download_button("Press to Download", get_data_indi, 'label_intensity_data.csv', "text/csv", key='label_download-get_data') 
             st.session_state['area_thres_x'] = area_thres_x
@@ -363,28 +364,40 @@ else:
             #    st.session_state['df_pro'].drop([f'image_intensity_{drop_frame}'], axis=1, inplace=True) 
             #st.session_state['df_pro_pg_2'] = df_pro
             st.dataframe(st.session_state['df_pro'], 1000, 200)
+            dataframe_df = st.session_state['df_pro']
             get_data_indi = convert_df(st.session_state['df_pro'])
             st.download_button("Press to Download", get_data_indi, 'label_intensity_data.csv', "text/csv", key='label_download-get_data_st')                       
     st.write('*_Select a label to explore_*')
     #st.write(st.session_state['df_pro'].columns[0])
+    area_columns_to_drop = dataframe_df.columns[dataframe_df.columns.str.contains('Bright_pixel_area')]
+    dataframe_df_pro = dataframe_df.drop(columns=area_columns_to_drop)
+    intensity_columns_to_drop = dataframe_df.columns[dataframe_df.columns.str.contains('intensity_mean')]
+    dataframe_df_area = dataframe_df.drop(columns=intensity_columns_to_drop)
+    transpose_dataframe_df_area = dataframe_df_area.T
+    area_df = transpose_dataframe_df_area.iloc[1:, :]
+    area_df = area_df.reset_index()
+    area_df = area_df.drop(columns=['index'])
+    area_df = area_df.rename(columns={0: 'Bright Pixel Area'})
+    area_df["Frame"] = range(len(area_df))
     
     if "selected_aggrid" not in st.session_state:
         st.session_state["selected_aggrid"] = []
-    gb = GridOptionsBuilder.from_dataframe(st.session_state['df_pro'])                       
+    #st.write(f"rerunning aggrid {st.session_state['df_pro']['Bright_pixel_area_1']}")
+    gb = GridOptionsBuilder.from_dataframe(dataframe_df_pro)                       
     gb.configure_pagination(paginationAutoPageSize=True) #Add pagination
     gb.configure_side_bar() #Add a sidebar
     #gb.configure_selection('multiple', use_checkbox=True, groupSelectsChildren="Group checkbox select children") #Enable multi-row selection
     gb.configure_selection(selection_mode="single", use_checkbox=True, groupSelectsChildren="Group checkbox select children", pre_selected_rows=st.session_state["selected_aggrid"]) #list(range(0, len(df_pro))))  #[str(st.session_state.selected_row)]
-    gb.configure_columns(st.session_state['df_pro'].columns, editable=True)           
+    gb.configure_columns(dataframe_df_pro.columns, editable=False)           
     gridOptions = gb.build()
     #gridOptions["columnDefs"][0]["checkboxSelection"]=True
     #gridOptions["columnDefs"][0]["headerCheckboxSelection"]=True
     
     grid_response = AgGrid(
-        st.session_state['df_pro'],
+        dataframe_df_pro,
         gridOptions=gridOptions,
         data_return_mode='AS_INPUT', 
-        update_mode=GridUpdateMode.SELECTION_CHANGED,    #'MODEL_CHANGED',
+        update_mode=GridUpdateMode.MODEL_CHANGED,    #'MODEL_CHANGED',
         update_on='MANUAL',
         #data_return_mode=DataReturnMode.FILTERED_AND_SORTED,
         fit_columns_on_grid_load=False,
@@ -392,7 +405,7 @@ else:
         enable_enterprise_modules=True,
         height=350, 
         width='100%',
-        #reload_data=True,
+        #reload_data=False,
         key='table_key'
     )
     
@@ -465,6 +478,7 @@ else:
                 #baseline_each = plot_df_smooth_mode + baseline_smooth_x*plot_df_smooth_sd   
                 plot_df['delta_f/f_0'] = (plot_df['Smoothed Mean Intensity'] - baseline_each)/baseline_each 
                 plot_df['Time'] = plot_df['Frame']/frame_rate
+                area_df['Time']  =  area_df["Frame"]/frame_rate
                 #baseline_unsmooth_x = st.slider("*_Choose 'n' in n(S.D.) for Mean Intensity trace_*", min_value = 0.0, max_value = 3.0, step = 0.1, format="%.1f", value = 1.0, key='unsmooth')
                 #unsmooth_mode = stat.mode(plot_df['Mean Intensity'])
                 #sd_unsmooth = plot_df['Mean Intensity'].std()
@@ -562,7 +576,7 @@ else:
                                         xref='x',
                                         yref='y') 
                     unsmoothed_area_figure =  px.line(
-                                        plot_df,
+                                        area_df,
                                         x="Time",
                                         y="Bright Pixel Area"
                                         #color="sepal_length",
@@ -572,10 +586,7 @@ else:
             
             
                     csv = convert_df(plot_df)           
-                    st.download_button("Press to Download", csv, 'intensity_data.csv', "text/csv", key='download-csv_1')
-                    #st.plotly_chart(figure, theme="streamlit", use_container_width=True)
-                    #st.plotly_chart(figure_2, theme="streamlit", use_container_width=True)
-                    
+                    st.download_button("Press to Download", csv, 'intensity_data.csv', "text/csv", key='download-csv_1')                    
                     st.plotly_chart(unsmoothed_figure, theme="streamlit", use_container_width=True)
                     st.plotly_chart(smoothed_figure, theme="streamlit", use_container_width=True)         
                     st.plotly_chart(unsmoothed_area_figure, theme="streamlit", use_container_width=True)  
@@ -794,12 +805,12 @@ else:
                                             xref='x',
                                             yref='y') 
                         unsmoothed_area_figure =  px.line(
-                                            plot_df,
-                                            x="Time",
-                                            y="Bright Pixel Area"
-                                            #color="sepal_length",
-                                            #color=plot_df['Mean Intensity'],
-                                        )
+                                        area_df,
+                                        x="Time",
+                                        y="Bright Pixel Area"
+                                        #color="sepal_length",
+                                        #color=plot_df['Mean Intensity'],
+                                    )
                     
                             
                         csv = convert_df(plot_df)           
@@ -1002,12 +1013,12 @@ else:
                         #                 )           
                         
                         unsmoothed_area_figure =  px.line(
-                                            plot_df,
-                                            x="Time",
-                                            y="Bright Pixel Area"
-                                            #color="sepal_length",
-                                            #color=plot_df['Mean Intensity'],
-                                        )
+                                        area_df,
+                                        x="Time",
+                                        y="Bright Pixel Area"
+                                        #color="sepal_length",
+                                        #color=plot_df['Mean Intensity'],
+                                    )
                 
                         
                         csv = convert_df(plot_df)           
@@ -1047,6 +1058,7 @@ else:
                 #baseline_each = plot_df_smooth_mode + baseline_smooth_x*plot_df_smooth_sd   
                 plot_df['delta_f/f_0'] = (plot_df['Smoothed Mean Intensity'] - baseline_each)/baseline_each 
                 plot_df['Time'] = plot_df['Frame']/frame_rate
+                area_df['Time']  =  area_df["Frame"]/frame_rate
                 max_df_value = plot_df['Smoothed Mean Intensity'].max()
                 peak_default_value = max(plot_df.loc[plot_df['Smoothed Mean Intensity'] == max_df_value, 'Frame'])
                 
@@ -1132,8 +1144,8 @@ else:
                                         #color="sepal_length",
                                         #color=plot_df['Mean Intensity'],
                                     )
-                unsmoothed_area_fig = px.line(
-                                        plot_df,
+                unsmoothed_area_fig =  px.line(
+                                        area_df,
                                         x="Time",
                                         y="Bright Pixel Area"
                                         #color="sepal_length",
@@ -1296,15 +1308,19 @@ else:
                 #st.write(plot_df_corr_intensity_min)
                 plot_df_corr['Frame'] = plot_df['Frame']
                 plot_df_corr['Smoothed Mean Intensity'] = plot_df_corr_intensity + abs(plot_df_corr_intensity_min)
+                plot_df_corr.loc[plot_df_corr['Smoothed Mean Intensity'] == 0, 'Smoothed Mean Intensity'] = plot_df_corr['Smoothed Mean Intensity'].replace(0, plot_df_corr['Smoothed Mean Intensity'][plot_df_corr['Smoothed Mean Intensity'] != 0].min())
                 #plot_df_corr['Smoothed Mean Intensity'][plot_df_corr['Smoothed Mean Intensity']<0] = 0
-                plot_df_corr['Bright Pixel Area'] = plot_df['Bright Pixel Area']
+                #plot_df_corr['Bright Pixel Area'] = plot_df['Bright Pixel Area']
                 baseline_corr_each = plot_df_corr.loc[(plot_df_corr['Frame'] >= 0) & (plot_df_corr['Frame'] <= baseline_smooth_x), 'Smoothed Mean Intensity'].mean()
+                if baseline_corr_each == 0:
+                    st.warning("Error: The chosen frame number pixel value (corrected) to determine the baseline is 0.")
                 plot_df_corr['Smoothed Mean Intensity'] = plot_df_corr['Smoothed Mean Intensity']/baseline_corr_each
                 baseline_corr_each = baseline_corr_each/baseline_corr_each
                 
                 plot_df_corr['delta_f/f_0'] = (plot_df_corr['Smoothed Mean Intensity']-baseline_corr_each)/baseline_corr_each
                 plot_df_corr['Time'] = plot_df_corr['Frame']/frame_rate
                 plot_df['Time'] = plot_df['Frame']/frame_rate
+                area_df['Time']  =  area_df["Frame"]/frame_rate
                 # st.write(fit_params)
                 # st.write(fit_params_last)
                 # st.write(pcov_last)
@@ -1366,7 +1382,7 @@ else:
                                         xref='x',
                                         yref='y') 
                     unsmoothed_area_figure =  px.line(
-                                        plot_df,
+                                        area_df,
                                         x="Time",
                                         y="Bright Pixel Area"
                                         #color="sepal_length",
@@ -1538,7 +1554,7 @@ else:
                     
                     
                     unsmoothed_area_figure =  px.line(
-                                        plot_df,
+                                        area_df,
                                         x="Time",
                                         y="Bright Pixel Area"
                                         #color="sepal_length",
@@ -1719,12 +1735,12 @@ else:
                         
                         
                         unsmoothed_area_figure =  px.line(
-                                            plot_df,
-                                            x="Time",
-                                            y="Bright Pixel Area"
-                                            #color="sepal_length",
-                                            #color=plot_df['Mean Intensity'],
-                                        )
+                                        area_df,
+                                        x="Time",
+                                        y="Bright Pixel Area"
+                                        #color="sepal_length",
+                                        #color=plot_df['Mean Intensity'],
+                                    )
                 
                         
                         csv = convert_df(plot_df)           
@@ -1968,8 +1984,7 @@ else:
                 #st.write(photobleach_concat)
                 # st.write(fit_first_df)
                 # st.write(fit_last_df)
-                #st.write(fit_exp_df)
-                
+                #st.write(fit_exp_df)                
                 # interpol = interpolate.interp1d(frame_concat, photobleach_concat,'linear')
                 # frames_to_interpol = pd.Series(list(set(range(0,raw_img_ani_pg_2.shape[0])).difference(set(frame_concat))))        
                 # photobleach_interpol = interpol(plot_df['Frame'])
@@ -1977,11 +1992,12 @@ else:
                 plot_df_corr = pd.DataFrame()
                 plot_df_corr_intensity = plot_df['Smoothed Mean Intensity']-photobleach_curve_exp
                 plot_df_corr_intensity_min = min(plot_df_corr_intensity)
-                #st.write(plot_df_corr_intensity_min)
+                #st.write(plot_df_corr_intensity)
                 plot_df_corr['Frame'] = plot_df['Frame']
                 plot_df_corr['Smoothed Mean Intensity'] = plot_df_corr_intensity + abs(plot_df_corr_intensity_min)
+                plot_df_corr.loc[plot_df_corr['Smoothed Mean Intensity'] == 0, 'Smoothed Mean Intensity'] = plot_df_corr['Smoothed Mean Intensity'].replace(0, plot_df_corr['Smoothed Mean Intensity'][plot_df_corr['Smoothed Mean Intensity'] != 0].min())
                 #plot_df_corr['Smoothed Mean Intensity'][plot_df_corr['Smoothed Mean Intensity']<0] = 0
-                plot_df_corr['Bright Pixel Area'] = plot_df['Bright Pixel Area']
+                #plot_df_corr['Bright Pixel Area'] = plot_df['Bright Pixel Area']
                 
                 baseline_recovery_frame_input = st.radio("Select one", ('Single Frame Value', 'Average Frame Value'), help='Baseline value based on a single frame, or on multiple frames')
                 if baseline_recovery_frame_input ==   'Single Frame Value':                                     
@@ -2004,13 +2020,14 @@ else:
                     baseline_mean_each = plot_df.loc[(plot_df['Frame'] >= 0) & (plot_df['Frame'] <= baseline_smooth_x), 'Mean Intensity'].mean()                   
                     baseline__frame_static = int(sum(range(baseline_smooth_x + 1)) / (baseline_smooth_x + 1))
                     
-                #baseline_corr_each = plot_df_corr.loc[plot_df_corr['Frame'] == baseline__frame_static, 'Smoothed Mean Intensity'][0]                
+                #baseline_corr_each = plot_df_corr.loc[plot_df_corr['Frame'] == baseline__frame_static, 'Smoothed Mean Intensity'][0]                              
                 plot_df_corr['Smoothed Mean Intensity'] = plot_df_corr['Smoothed Mean Intensity']/baseline_corr_each
                 baseline_corr_each = baseline_corr_each/baseline_corr_each
                 #st.write(baseline_corr_each)
                 plot_df_corr['delta_f/f_0'] = (plot_df_corr['Smoothed Mean Intensity']-baseline_corr_each)/baseline_corr_each
                 plot_df_corr['Time'] = plot_df_corr['Frame']/frame_rate
-                plot_df['Time'] = plot_df['Frame']/frame_rate   
+                plot_df['Time'] = plot_df['Frame']/frame_rate
+                area_df['Time'] = area_df['Frame']/frame_rate
                 
                 st.write('*_The original intensity data_*')
                 st.dataframe(plot_df, 1000,200)
@@ -2041,12 +2058,12 @@ else:
                 smoothed_figure.add_trace(go.Scatter(x = plot_df['Frame']/frame_rate, y = photobleach_curve_exp, mode="lines", name='Fitted and Interpolated',fillcolor='green'))
                 smoothed_figure.add_trace(go.Scatter(x=[0, (raw_img_ani_pg_2.shape[0])/frame_rate], y=[baseline_each, baseline_each], mode='lines', name='Baseline', line=dict(color='Green', width=2)))
                 unsmoothed_area_figure =  px.line(
-                                    plot_df,
-                                    x="Time",
-                                    y="Bright Pixel Area"
-                                    #color="sepal_length",
-                                    #color=plot_df['Mean Intensity'],
-                                )            
+                                        area_df,
+                                        x="Time",
+                                        y="Bright Pixel Area"
+                                        #color="sepal_length",
+                                        #color=plot_df['Mean Intensity'],
+                                    )         
                 st.plotly_chart(unsmoothed_figure, theme="streamlit", use_container_width=True)
                 st.plotly_chart(smoothed_figure, theme="streamlit", use_container_width=True)  
                 
