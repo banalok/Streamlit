@@ -1179,8 +1179,7 @@ else:
                     #df_pro_pixel_remove = df_pro_pixel_remove.drop(columns=df_pro.filter(regex='^area').columns)
                     new_df_pro_transposed_smooth = df_pro_pixel_remove.transpose()
                     new_df_pro_transposed_smooth.columns = new_df_pro_transposed_smooth.iloc[0]
-                    new_df_pro_transposed_smooth.drop(new_df_pro_transposed_smooth.index[0], inplace=True)  
-                    
+                    new_df_pro_transposed_smooth.drop(new_df_pro_transposed_smooth.index[0], inplace=True)                     
                     
                     #smooth_plot_x = st.slider("*_Moving Average Window_*", min_value=1, max_value=5, help = "Select to smooth the intensity trace. Moving average of 1 would mean the original 'Mean Intensity' trace below", key = 'mov_av')
                     for i in df_selected['label']: 
@@ -1188,14 +1187,15 @@ else:
                         df_pro_transposed_smooth = pd.DataFrame(smooth_plot(new_df_pro_transposed_smooth[i],smooth_plot_x),columns = [f'smooth cell {i}'])
                         new_df_pro_transposed_smooth = pd.concat([new_df_pro_transposed_smooth.reset_index(drop=True), (np.round(df_pro_transposed_smooth[f'smooth cell {i}'],3)).reset_index(drop=True)],axis=1)
                         new_df_missing_values = pd.isna(new_df_pro_transposed_smooth[f"smooth cell {i}"])
-                        new_df_pro_transposed_smooth.loc[new_df_missing_values, f'smooth cell {i}'] = new_df_pro_transposed_smooth.loc[new_df_missing_values, i]                               
-    
-                        
+                        new_df_pro_transposed_smooth.loc[new_df_missing_values, f'smooth cell {i}'] = new_df_pro_transposed_smooth.loc[new_df_missing_values, i] 
+                        new_df_pro_transposed_smooth['Frame'] = pd.DataFrame(list(range(0, df_selected.shape[1])))      
+                        baseline_each = new_df_pro_transposed_smooth.loc[(new_df_pro_transposed_smooth['Frame'] >= 0) & (new_df_pro_transposed_smooth['Frame'] <= baseline_smooth_x), f'smooth cell {i}'].mean()
+                        new_df_pro_transposed_smooth[f"smooth cell {i}"] = new_df_pro_transposed_smooth[f"smooth cell {i}"]/baseline_each
                         #st.write(new_df_pro_transposed)
-                    new_df_pro_transposed_smooth['Frame'] = pd.DataFrame(list(range(0, df_selected.shape[1])))
+                    
                     new_df_pro_transposed_smooth = new_df_pro_transposed_smooth.iloc[:, [new_df_pro_transposed_smooth.shape[1] - 1] + list(range(new_df_pro_transposed_smooth.shape[1] - 1))]
-                    new_df_pro_transposed_smooth['Time'] = new_df_pro_transposed_smooth['Frame']/frame_rate
-     
+                    new_df_pro_transposed_smooth['Time'] = new_df_pro_transposed_smooth['Frame']/frame_rate                   
+             
                     #get_data_indi = convert_df(new_df_pro_transposed_smooth)
                     #st.download_button("Press to Download", get_data_indi, 'indi_intensity_data.csv', "text/csv", key='indi_download-get_data')
                     
@@ -1238,8 +1238,8 @@ else:
                         #plot_df_corr = pd.concat([plot_df_corr.reset_index(drop=True), (np.round(plot_df_corr[f'delta_f/f_0_{i}'],3)).reset_index(drop=True)],axis=1)
                         
                         #st.write(plot_df_corr)
-                        plot_df_corr[f'smooth cell {i}'] = plot_df_corr[f'smooth cell {i}']/baseline_corr_each
-                        baseline_corr_each = baseline_corr_each/baseline_corr_each 
+                        #plot_df_corr[f'smooth cell {i}'] = plot_df_corr[f'smooth cell {i}']/baseline_corr_each
+                        #baseline_corr_each = baseline_corr_each/baseline_corr_each 
                         
                         keyval = {}
                         amp_keyval = {}
@@ -1705,11 +1705,13 @@ else:
                         df_pro_transposed_smooth = pd.DataFrame(smooth_plot(new_df_pro_transposed_smooth[i],smooth_plot_x),columns = [f'smooth cell {i}'])
                         new_df_pro_transposed_smooth = pd.concat([new_df_pro_transposed_smooth.reset_index(drop=True), (np.round(df_pro_transposed_smooth[f'smooth cell {i}'],3)).reset_index(drop=True)],axis=1)
                         new_df_missing_values = pd.isna(new_df_pro_transposed_smooth[f"smooth cell {i}"])
-                        new_df_pro_transposed_smooth.loc[new_df_missing_values, f'smooth cell {i}'] = new_df_pro_transposed_smooth.loc[new_df_missing_values, i]                               
-    
-                        
-                        #st.write(new_df_pro_transposed)
-                    new_df_pro_transposed_smooth['Frame'] = pd.DataFrame(list(range(0, df_selected.shape[1])))
+                        new_df_pro_transposed_smooth.loc[new_df_missing_values, f'smooth cell {i}'] = new_df_pro_transposed_smooth.loc[new_df_missing_values, i] 
+                        new_df_pro_transposed_smooth['Frame'] = pd.DataFrame(list(range(0, df_selected.shape[1])))
+                        filtered_baseline_each =  new_df_pro_transposed_smooth.query("Frame == @baseline__frame_static")
+                        baseline_each = filtered_baseline_each[f'smooth cell {i}'].iloc[0]                              
+                        new_df_pro_transposed_smooth[f"smooth cell {i}"] = new_df_pro_transposed_smooth[f"smooth cell {i}"]/baseline_each
+                    
+                                        
                     new_df_pro_transposed_smooth = new_df_pro_transposed_smooth.iloc[:, [new_df_pro_transposed_smooth.shape[1] - 1] + list(range(new_df_pro_transposed_smooth.shape[1] - 1))]
                     new_df_pro_transposed_smooth['Time'] = new_df_pro_transposed_smooth['Frame']/frame_rate
      
@@ -1741,8 +1743,8 @@ else:
                         if baseline_recovery_frame_input ==   'Single Frame Value':                              
                             filtered_baseline_corr_each = plot_df_corr.query("Frame == @baseline__frame_static")
                             baseline_corr_each = filtered_baseline_corr_each[f'smooth cell {i}'].iloc[0]
-                            plot_df_corr[f'smooth cell {i}'] = plot_df_corr[f'smooth cell {i}']/baseline_corr_each
-                            baseline_corr_each = baseline_corr_each/baseline_corr_each                    
+                            #plot_df_corr[f'smooth cell {i}'] = plot_df_corr[f'smooth cell {i}']/baseline_corr_each
+                            #baseline_corr_each = baseline_corr_each/baseline_corr_each                    
                             plot_df_corr[f'delta_f/f_0_{i}'] = (plot_df_corr[f'smooth cell {i}'] - baseline_corr_each)/baseline_corr_each 
                             filtered_peak_each = plot_df_corr.query("Frame == @peak__frame_static")
                             max_df_value = filtered_peak_each[f'smooth cell {i}'].iloc[0]
@@ -1815,8 +1817,8 @@ else:
                             #baseline_smooth_x = st.slider("*_Choose 'n' in n(S.D.) for Smoothed Intensity trace_*", min_value = 0.0, max_value = 3.0, step = 0.1, format="%.1f", value = 1.0,help = "Slide to adjust the baseline on the 'Smoothed Mean Intensity' trace below. Baseline is calculated as: **_mode + n(S.D.)._**",  key='smooth')
                             baseline_corr_each = plot_df_corr.loc[(plot_df_corr['Frame'] >= 0) & (plot_df_corr['Frame'] <= baseline_smooth_x), f'smooth cell {i}'].mean()
                             baseline__frame_static = int(sum(range(baseline_smooth_x + 1)) / (baseline_smooth_x + 1))
-                            plot_df_corr[f'smooth cell {i}'] = plot_df_corr[f'smooth cell {i}']/baseline_corr_each
-                            baseline_corr_each = baseline_corr_each/baseline_corr_each                    
+                            #plot_df_corr[f'smooth cell {i}'] = plot_df_corr[f'smooth cell {i}']/baseline_corr_each
+                            #baseline_corr_each = baseline_corr_each/baseline_corr_each                    
                             plot_df_corr[f'delta_f/f_0_{i}'] = (plot_df_corr[f'smooth cell {i}'] - baseline_corr_each)/baseline_corr_each 
                             filtered_peak_each = plot_df_corr.query("Frame == @peak__frame_static")
                             max_df_value = filtered_peak_each[f'smooth cell {i}'].iloc[0]
