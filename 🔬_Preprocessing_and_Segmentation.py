@@ -32,6 +32,8 @@ import time
 import subprocess
 import shutil
 import re
+import trackpy as tp
+import pims
 
 cwd=os.getcwd()+'/'
 os.makedirs('temp dir', exist_ok = True)
@@ -414,6 +416,7 @@ def Segment():
                         if segment_check == "Segment on the collapsed image":
                             if rb_check == 'No RBBC':
                                 st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"]
+                                #st.image(st.session_state['Collapsed_Image'], use_column_width=True,clamp = True) 
                             elif rb_check == 'RBBC':
                                 st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"]
                                 radius_x = st.slider("Ball Radius", min_value = 1, max_value = 50, step=1, value = 25)                        
@@ -421,12 +424,14 @@ def Segment():
                                 st.session_state['Collapsed_Image'] = st.session_state['Collapsed_Image'] - background_to_remove
                                 st.image(st.session_state['Collapsed_Image'], use_column_width=True,clamp = True)  
                             st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}_seg"] = stardist_seg(st.session_state['Collapsed_Image'],model)
+                            st.image(render_label(st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}_seg"], img=st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"][0]), use_column_width=True,clamp = True)
                             label = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}_seg"] 
                             st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"]
                         elif segment_check == "Segment on the first image":
                             if rb_check == 'No RBBC':                             
                                 st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"]
-                                seg_first = st.session_state['Collapsed_Image']
+                                seg_first = st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"][0]
+                                #st.image(seg_first, use_column_width=True,clamp = True) 
                             elif rb_check == 'RBBC':                             
                                 radius_x = st.slider("Ball Radius", min_value = 1, max_value = 50, step=1, value = 25)                        
                                 background_to_remove = restoration.rolling_ball(st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"][0], radius=radius_x)
@@ -435,7 +440,7 @@ def Segment():
                                 st.session_state['Collapsed_Image'] = seg_first
                                 st.image(st.session_state['Collapsed_Image'], use_column_width=True,clamp = True) 
                             st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}_seg"] = stardist_seg(seg_first,model)
-                            st.image(render_label(st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}_seg"], img=seg_first))
+                            st.image(render_label(st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}_seg"], img=st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"][0]), use_column_width=True,clamp = True)
                             label = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}_seg"] 
                             st.session_state['Collapsed_Image'] = st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"][0]          
                     else:
@@ -689,6 +694,21 @@ def get_image_download_link(img,filename_with_extension):
     #href =  f'<a href="data:file/txt;base64,{img_str}" download="{filename}">{text}</a>'
     st.download_button("Press to Download", byte_im_2, filename_with_extension, "image/JPEG")
     #return href   
+
+def area(df_sel_orig, df_sel, multi_tif_img):
+    img_frames_list = list(range(0,multi_tif_img.shape[0]))
+    selected_row = df_sel_orig[df_sel_orig['label'] ==df_sel['label'][0]]
+    bright_pixel_cols = [col for col in df_sel_orig.columns if 'Bright_pixel' in col]
+    bright_pixel_values = selected_row[bright_pixel_cols].values
+    # df_1 = pd.DataFrame(list(range(0,multi_tif_img.shape[0])), columns = ['Frame'])         
+    # #p_count = []
+    # #change_in_F = []
+    # for frames_pro in range(0,multi_tif_img.shape[0]):
+    #         #new_df = pd.DataFrame(frames_pro, df_pro[f'intensity_mean_{frames_pro}'].mean(),  columns = ['Frames', 'Mean Intensity'])
+    #     df_1.loc[df_sel_orig['label'] == df_sel['label'].iloc[0], f'Bright_pixel_area_{frames_pro}'] = df_sel_orig[f'Bright_pixel_area_{frames_pro}']
+    area_dataframe = pd.DataFrame(img_frames_list, columns = ['Frame'])
+    area_dataframe['Bright Pixel Area'] = bright_pixel_values.T 
+    return area_dataframe
 
 
 def intensity(df_1, multi_tif_img, window):

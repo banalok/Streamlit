@@ -95,6 +95,20 @@ def get_image_download_link(img,filename_with_extension):
     st.download_button("Press to Download", byte_im_2, filename_with_extension, "image/JPEG")
     #return href   
 
+def area(df_sel_orig, df_sel, multi_tif_img):
+    img_frames_list = list(range(0,multi_tif_img.shape[0]))
+    selected_row = df_sel_orig[df_sel_orig['label'] ==df_sel['label'][0]]
+    bright_pixel_cols = [col for col in df_sel_orig.columns if 'Bright_pixel' in col]
+    bright_pixel_values = selected_row[bright_pixel_cols].values
+    # df_1 = pd.DataFrame(list(range(0,multi_tif_img.shape[0])), columns = ['Frame'])         
+    # #p_count = []
+    # #change_in_F = []
+    # for frames_pro in range(0,multi_tif_img.shape[0]):
+    #         #new_df = pd.DataFrame(frames_pro, df_pro[f'intensity_mean_{frames_pro}'].mean(),  columns = ['Frames', 'Mean Intensity'])
+    #     df_1.loc[df_sel_orig['label'] == df_sel['label'].iloc[0], f'Bright_pixel_area_{frames_pro}'] = df_sel_orig[f'Bright_pixel_area_{frames_pro}']
+    area_dataframe = pd.DataFrame(img_frames_list, columns = ['Frame'])
+    area_dataframe['Bright Pixel Area'] = bright_pixel_values.T 
+    return area_dataframe
 
 def intensity(df_1, multi_tif_img, window):
     img_frames_list = list(range(0,multi_tif_img.shape[0]))

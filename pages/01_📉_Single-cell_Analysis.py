@@ -108,6 +108,20 @@ def get_image_download_link(img,filename_with_extension):
     st.download_button("Press to Download", byte_im_2, filename_with_extension, "image/JPEG")
     #return href   
 
+def area(df_sel_orig, df_sel, multi_tif_img):
+    img_frames_list = list(range(0,multi_tif_img.shape[0]))
+    selected_row = df_sel_orig[df_sel_orig['label'] ==df_sel['label'][0]]
+    bright_pixel_cols = [col for col in df_sel_orig.columns if 'Bright_pixel' in col]
+    bright_pixel_values = selected_row[bright_pixel_cols].values
+    # df_1 = pd.DataFrame(list(range(0,multi_tif_img.shape[0])), columns = ['Frame'])         
+    # #p_count = []
+    # #change_in_F = []
+    # for frames_pro in range(0,multi_tif_img.shape[0]):
+    #         #new_df = pd.DataFrame(frames_pro, df_pro[f'intensity_mean_{frames_pro}'].mean(),  columns = ['Frames', 'Mean Intensity'])
+    #     df_1.loc[df_sel_orig['label'] == df_sel['label'].iloc[0], f'Bright_pixel_area_{frames_pro}'] = df_sel_orig[f'Bright_pixel_area_{frames_pro}']
+    area_dataframe = pd.DataFrame(img_frames_list, columns = ['Frame'])
+    area_dataframe['Bright Pixel Area'] = bright_pixel_values.T 
+    return area_dataframe
 
 def intensity(df_1, multi_tif_img, window):
     img_frames_list = list(range(0,multi_tif_img.shape[0]))
@@ -368,18 +382,10 @@ else:
             get_data_indi = convert_df(st.session_state['df_pro'])
             st.download_button("Press to Download", get_data_indi, 'label_intensity_data.csv', "text/csv", key='label_download-get_data_st')                       
     st.write('*_Select a label to explore_*')
-    #st.write(st.session_state['df_pro'].columns[0])
+    #st.write(st.session_state['df_pro'].columns[0])    
     area_columns_to_drop = dataframe_df.columns[dataframe_df.columns.str.contains('Bright_pixel_area')]
-    dataframe_df_pro = dataframe_df.drop(columns=area_columns_to_drop)
-    intensity_columns_to_drop = dataframe_df.columns[dataframe_df.columns.str.contains('intensity_mean')]
-    dataframe_df_area = dataframe_df.drop(columns=intensity_columns_to_drop)
-    transpose_dataframe_df_area = dataframe_df_area.T
-    area_df = transpose_dataframe_df_area.iloc[1:, :]
-    area_df = area_df.reset_index()
-    area_df = area_df.drop(columns=['index'])
-    area_df = area_df.rename(columns={0: 'Bright Pixel Area'})
-    area_df["Frame"] = range(len(area_df))
-    
+    dataframe_df_pro = dataframe_df.drop(columns=area_columns_to_drop)   
+  
     if "selected_aggrid" not in st.session_state:
         st.session_state["selected_aggrid"] = []
     #st.write(f"rerunning aggrid {st.session_state['df_pro']['Bright_pixel_area_1']}")
@@ -444,7 +450,7 @@ else:
         
         frame_rate = st.number_input("Frame Rate (frames per second/fps)", min_value = 0.1, max_value = 100.0, value = 1.0, step = 0.1, format = "%.1f", help = "Type the values between 0.1 and 100.0 (inclusive). Takes values in steps of 0.1. Default is 1.0")
         bleach_corr_check = st.radio("Select one", ('No bleaching correction', 'Bleaching correction'), help='Analyze the trace as is (No bleaching correction) or fit mono-exponential curves and interpolate to correct for bleaching (Bleaching correction)')
-        
+        area_df = area(dataframe_df, df_selected, raw_img_ani_pg_2)       
         
         if bleach_corr_check == 'No bleaching correction':
         
@@ -479,6 +485,7 @@ else:
                 plot_df['delta_f/f_0'] = (plot_df['Smoothed Mean Intensity'] - baseline_each)/baseline_each 
                 plot_df['Time'] = plot_df['Frame']/frame_rate
                 area_df['Time']  =  area_df["Frame"]/frame_rate
+                st.write(area_df)
                 #baseline_unsmooth_x = st.slider("*_Choose 'n' in n(S.D.) for Mean Intensity trace_*", min_value = 0.0, max_value = 3.0, step = 0.1, format="%.1f", value = 1.0, key='unsmooth')
                 #unsmooth_mode = stat.mode(plot_df['Mean Intensity'])
                 #sd_unsmooth = plot_df['Mean Intensity'].std()
