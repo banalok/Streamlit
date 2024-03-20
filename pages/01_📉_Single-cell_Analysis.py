@@ -152,8 +152,19 @@ def get_intensity_for_timepoint(intensity_image, label_layer):
     stats = measure.regionprops_table(label_layer, intensity_image=intensity_image, properties=['intensity_mean'])
     return stats['intensity_mean']
 
+def get_max_intensity_for_timepoint(intensity_image, label_layer):
+    stats = measure.regionprops_table(label_layer, intensity_image=intensity_image, properties=['intensity_max'])
+    return stats['intensity_max']
+
+
 def get_intensity(intensity_image_stack, labels_layer_stack):
     return [get_intensity_for_timepoint(intensity_image, label_layer) 
+            for intensity_image, label_layer 
+            in zip(intensity_image_stack, labels_layer_stack)]
+
+
+def get_max_intensity(intensity_image_stack, labels_layer_stack):
+    return [get_max_intensity_for_timepoint(intensity_image, label_layer) 
             for intensity_image, label_layer 
             in zip(intensity_image_stack, labels_layer_stack)]
 
@@ -263,7 +274,10 @@ else:
         data = list(np.unique(label_list_pg_2))        
         st.session_state['df_pro'] = pd.DataFrame(data, columns=['label'])
         col_arr = []
-        props_pro = get_intensity(background_corr_pg_2[:, :, :, 0], [label_fin] * raw_img_ani_pg_2.shape[0])  
+        props_pro = get_intensity(background_corr_pg_2[:, :, :, 0], [label_fin] * raw_img_ani_pg_2.shape[0]) 
+        max_intensity = get_max_intensity(background_corr_pg_2[:, :, :, 0], [label_fin] * raw_img_ani_pg_2.shape[0]) 
+        max_intensity_df = pd.DataFrame(max_intensity).T
+        #st.write(max_intensity_df)        
         props_pro = pd.DataFrame(props_pro).T
         props_pro['label'] = data
         
@@ -295,12 +309,11 @@ else:
         
         ######## #################  ################# ###############Interactive table################################################################
         #df_pro = df_pro.drop(df_pro[df_pro['label'] == 255].index)
-        for frame_col in range(0, raw_img_ani_pg_2.shape[0]):
-            
+        for frame_col in range(0, raw_img_ani_pg_2.shape[0]):            
             pixel_counts = []
             for label_val in st.session_state['df_pro']['label']:
-                intensity_image = col_arr[frame_col][label_val-1]
-                count = np.sum(np.greater(intensity_image, st.session_state['area_thres_x']*np.amax(raw_img_ani_pg_2[frame_col]))) #df_pro[f'intensity_mean_{frames_pro}'].mean()))
+                intensity_image = col_arr[frame_col][label_val-1]                
+                count = np.sum(np.greater(intensity_image, st.session_state['area_thres_x'] * max_intensity_df.iloc[label_val - 1][frame_col])) #np.amax(raw_img_ani_pg_2[frame_col]))) #df_pro[f'intensity_mean_{frames_pro}'].mean()))
                 pixel_counts.append(np.float64(count))
             #st.write(type(np.amax(raw_image_ani[frame_col])))
             pixel_var = f'Bright_pixel_area_{frame_col}'
@@ -317,6 +330,9 @@ else:
         st.download_button("Press to Download", get_data_indi, 'label_intensity_data.csv', "text/csv", key='label_download-get_data') 
     else:
         label_fin = st.session_state['final_label_pg_2']
+        max_intensity = get_max_intensity(background_corr_pg_2[:, :, :, 0], [label_fin] * raw_img_ani_pg_2.shape[0]) 
+        max_intensity_df = pd.DataFrame(max_intensity).T
+        #st.write(max_intensity_df)
         area_thres_x = st.number_input("*_Choose the area threshold percentage_*", min_value=0.00, max_value=1.00, value=0.3,step = 0.01, format="%0.2f", help = f"Default is 0.3. Pixels below 30% of the maximum ({np.amax(raw_img_ani_pg_2)}) are not counted to get the bright area of labels", key='area_thres')
         if area_thres_x == st.session_state['area_thres_x']:
             st.dataframe(st.session_state['df_pro'], 1000, 200)            
@@ -366,7 +382,7 @@ else:
                 pixel_counts = []
                 for label_val in st.session_state['df_pro']['label']:
                     intensity_image = col_arr[frame_col][label_val-1]
-                    count = np.sum(np.greater(intensity_image, st.session_state['area_thres_x']*np.amax(raw_img_ani_pg_2[frame_col]))) #df_pro[f'intensity_mean_{frames_pro}'].mean()))
+                    count = np.sum(np.greater(intensity_image, st.session_state['area_thres_x']* max_intensity_df.iloc[label_val - 1][frame_col])) #np.amax(raw_img_ani_pg_2[frame_col]))) #df_pro[f'intensity_mean_{frames_pro}'].mean()))
                     pixel_counts.append(np.float64(count))
                 #st.write(type(np.amax(raw_image_ani[frame_col])))
                 pixel_var = f'Bright_pixel_area_{frame_col}'
