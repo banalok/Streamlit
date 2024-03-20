@@ -32,8 +32,6 @@ import time
 import subprocess
 import shutil
 import re
-import trackpy as tp
-import pims
 
 cwd=os.getcwd()+'/'
 os.makedirs('temp dir', exist_ok = True)
