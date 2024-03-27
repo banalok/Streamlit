@@ -33,6 +33,11 @@ import subprocess
 import shutil
 import re
 
+from st_pages import show_pages_from_config
+
+show_pages_from_config()
+
+
 cwd=os.getcwd()+'/'
 os.makedirs('temp dir', exist_ok = True)
 
@@ -136,12 +141,12 @@ def main():
     Segment()
 
 def Segment():
-    st.title('**_Segmentation of a tiff stack_**')
+    st.title('**_DL-SCAN (Deep Learning- based Segmentation of Cells and Analysis)_**')
     
     if st.session_state.raw_file is not None:
         st.warning('Please reload the page to upload a new file')        
     else:
-        st.session_state.raw_file = st.file_uploader("*_Choose an image file_*")
+        st.session_state.raw_file = st.file_uploader("*_Choose a TIFF-stack file_*")
         
     #st.write(st.session_state.raw_file)
     if st.session_state.raw_file is not None:
