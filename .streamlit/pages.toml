@@ -5,10 +5,10 @@ name = "🔬_Preprocessing_and_Segmentation"
 
 [[pages]]
 path = "pages/01_📉_Single-cell_Analysis.py"
-name = "📉_Single-cell_Analysis"
+
 
 
 [[pages]]
 path = "pages/02_📈📉_Multi-cell_Analysis.py"
-name = "📈📉_Multi-cell_Analysis"
+
 
