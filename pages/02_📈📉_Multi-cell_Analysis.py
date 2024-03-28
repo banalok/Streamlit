@@ -1,8 +1,7 @@
 import streamlit as st
-from streamlit_extras.switch_page_button import switch_page   ########################newwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
-#from st_pages import Page, show_pages, hide_pages
+from streamlit_extras.switch_page_button import switch_page
 import plotly.io
-import plotly.graph_objs as go                  ########################newwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
+import plotly.graph_objs as go
 #import PIL 
 import math
 from PIL import Image
@@ -14,27 +13,14 @@ import numpy as np
 #import segmentation_models as sm
 import cv2
 from io import BytesIO
-#import base64 
-#from skimage.feature import peak_local_max
-#from skimage.segmentation import watershed
 import imutils
-# Keras
-#from keras.applications.imagenet_utils import preprocess_input, decode_predictions
-#from keras.models import load_model
-#from keras.preprocessing import image
 from matplotlib import pyplot as plt
 import pandas as pd
-#from smooth_blending_functions import predict_img_with_smooth_windowing
-#import scipy as sp
-#from scipy.signal import medfilt
 from scipy import ndimage
 from scipy.optimize import curve_fit
 from skimage import measure, color, io
-#from skimage.segmentation import clear_border
-#from skimage import segmentation
 import plotly.express as px
 import plotly.figure_factory as ff
-#from scipy import ndimage
 from skimage import (
     filters,  morphology, img_as_float, img_as_ubyte, exposure
 )
@@ -48,8 +34,6 @@ import subprocess
 import warnings
 
 st.warning('Navigating to another page from the sidebar will remove all selections from the current page')
-# for keys, v in st.session_state.items():
-#     st.session_state[keys] = v
 
 def convert_df(df):
    return df.to_csv(index=False).encode('utf-8')
@@ -101,12 +85,6 @@ def area(df_sel_orig, df_sel, multi_tif_img):
     selected_row = df_sel_orig[df_sel_orig['label'] ==df_sel['label'][0]]
     bright_pixel_cols = [col for col in df_sel_orig.columns if 'Bright_pixel' in col]
     bright_pixel_values = selected_row[bright_pixel_cols].values
-    # df_1 = pd.DataFrame(list(range(0,multi_tif_img.shape[0])), columns = ['Frame'])         
-    # #p_count = []
-    # #change_in_F = []
-    # for frames_pro in range(0,multi_tif_img.shape[0]):
-    #         #new_df = pd.DataFrame(frames_pro, df_pro[f'intensity_mean_{frames_pro}'].mean(),  columns = ['Frames', 'Mean Intensity'])
-    #     df_1.loc[df_sel_orig['label'] == df_sel['label'].iloc[0], f'Bright_pixel_area_{frames_pro}'] = df_sel_orig[f'Bright_pixel_area_{frames_pro}']
     area_dataframe = pd.DataFrame(img_frames_list, columns = ['Frame'])
     area_dataframe['Bright Pixel Area'] = bright_pixel_values.T 
     return area_dataframe
@@ -118,16 +96,8 @@ def intensity(df_1, multi_tif_img, window):
     #p_count = []
     #change_in_F = []
     for frames_pro in range(0,multi_tif_img.shape[0]):
-            #new_df = pd.DataFrame(frames_pro, df_pro[f'intensity_mean_{frames_pro}'].mean(),  columns = ['Frames', 'Mean Intensity'])
         mean_intensity.append(df_1[f'intensity_mean_{frames_pro}'].mean()) #[0]
-        #p_count.append(df_1[f'Bright_pixel_area_{frames_pro}'].mean()) #[0]
-            # new_df = pd.DataFrame.from_dict({'Frame': frames_pro, 'Mean Intensity': df_pro[f'intensity_mean_{frames_pro}'].mean()})
-            # img_frames = pd.merge(img_frames, new_df, on = "Frame")
-        #st.write(df_1[f'pixel_count_{frames_pro}'])
-        #change_f = fluo_change(mean_intensity[frames_pro], baseline)
-        #change_in_F.append(change_f)
-        
-    #change_F_df = pd.DataFrame(change_in_F, columns = ['delta_F/F'])
+
     smooth_F_df = pd.DataFrame(smooth_plot(mean_intensity, window), columns = ['Smoothed Mean Intensity'] ) #pd.DataFrame(smooth_df, columns = ['smoothed mean intensity'])
     mean_inten_df = pd.DataFrame(mean_intensity)
     #pixel_count_df = pd.DataFrame(p_count, columns = ['Bright Pixel Area'])
@@ -268,13 +238,8 @@ else:
         props_pro = get_intensity(background_corr_pg_2[:, :, :, 0], [label_fin] * raw_img_ani_pg_2.shape[0])  
         props_pro = pd.DataFrame(props_pro).T
         props_pro['label'] = data
-        
-        # for intensity_pro in range(0,raw_img_ani_pg_2.shape[0]):
-        #     props_pro.rename(columns = {intensity_pro : f'intensity_mean_{intensity_pro}'}, inplace=True)
-        #st.write(props_pro)
+
         for frames_pro in range(0,raw_img_ani_pg_2.shape[0]):
-            #props_pro = measure.regionprops_table(label_fin, intensity_image=background_corr_pg_2[frames_pro][:,:,0],   #markers
-                                                  #properties=['label','intensity_mean'])
             col = []
             label_array = props_pro['label']
             intensity_im = background_corr_pg_2[frames_pro][:,:,0]
@@ -292,8 +257,6 @@ else:
             df_single[f'intensity_mean_{frames_pro}'] = np.round(df_single[f'intensity_mean_{frames_pro}'],3)
 
         st.session_state['df_pro'] = pd.merge(st.session_state['df_pro'], df_single, on = 'label', how = 'outer')                                                 
-        #st.write((col_arr[0]))
-        #df_pro.drop([0], inplace=True)
         
         ######## #################  ################# ###############Interactive table################################################################
         #df_pro = df_pro.drop(df_pro[df_pro['label'] == 255].index)
@@ -310,9 +273,6 @@ else:
             pixel_counts_df = pd.DataFrame(pixel_counts,columns = [pixel_var],dtype = np.float64)
             st.session_state['df_pro'] = pd.concat((st.session_state['df_pro'], pixel_counts_df),axis=1)   
 
-        # for drop_frame in range(0, raw_img_ani_pg_2.shape[0]):  
-        #    st.session_state['df_pro'].drop([f'image_intensity_{drop_frame}'], axis=1, inplace=True) 
-        #st.session_state['df_pro_pg_2'] = df_pro
         st.dataframe(st.session_state['df_pro'], 1000, 200)
         dataframe_df = st.session_state['df_pro']
         get_data_indi = convert_df(st.session_state['df_pro'])
@@ -335,13 +295,8 @@ else:
             props_pro = get_intensity(background_corr_pg_2[:, :, :, 0], [label_fin] * raw_img_ani_pg_2.shape[0])  
             props_pro = pd.DataFrame(props_pro).T
             props_pro['label'] = data
-            
-            # for intensity_pro in range(0,raw_img_ani_pg_2.shape[0]):
-            #     props_pro.rename(columns = {intensity_pro : f'intensity_mean_{intensity_pro}'}, inplace=True)
-            #st.write(props_pro)
+
             for frames_pro in range(0,raw_img_ani_pg_2.shape[0]):
-                #props_pro = measure.regionprops_table(label_fin, intensity_image=background_corr_pg_2[frames_pro][:,:,0],   #markers
-                                                      #properties=['label','intensity_mean'])
                 col = []
                 label_array = props_pro['label']
                 intensity_im = background_corr_pg_2[frames_pro][:,:,0]
@@ -358,12 +313,10 @@ else:
                 df_single.rename(columns = {frames_pro : f'intensity_mean_{frames_pro}'}, inplace=True)
                 df_single[f'intensity_mean_{frames_pro}'] = np.round(df_single[f'intensity_mean_{frames_pro}'],3)
     
-            st.session_state['df_pro'] = pd.merge(st.session_state['df_pro'], df_single, on = 'label', how = 'outer')                                                 
-            
-            #df_pro.drop([0], inplace=True)
-            
+            st.session_state['df_pro'] = pd.merge(st.session_state['df_pro'], df_single, on = 'label', how = 'outer')                                              
+
             ######## #################  ################# ###############Interactive table################################################################
-            #df_pro = df_pro.drop(df_pro[df_pro['label'] == 255].index)
+
             for frame_col in range(0, raw_img_ani_pg_2.shape[0]):
                 
                 pixel_counts = []
@@ -376,15 +329,12 @@ else:
                 #df_pro[pixel_var] = pixel_counts
                 pixel_counts_df = pd.DataFrame(pixel_counts,columns = [pixel_var],dtype = np.float64)
                 st.session_state['df_pro'] = pd.concat((st.session_state['df_pro'], pixel_counts_df),axis=1)   
-    
-            # for drop_frame in range(0, raw_img_ani_pg_2.shape[0]):  
-            #    st.session_state['df_pro'].drop([f'image_intensity_{drop_frame}'], axis=1, inplace=True) 
-            #st.session_state['df_pro_pg_2'] = df_pro
+
             st.dataframe(st.session_state['df_pro'], 1000, 200)
             dataframe_df = st.session_state['df_pro']
             get_data_indi = convert_df(st.session_state['df_pro'])
             st.download_button("Press to Download", get_data_indi, 'label_intensity_data.csv', "text/csv", key='label_download-get_data_st') 
-    #st.dataframe(df_pro, 1000, 200)
+    
     st.write('*_Select label(s) to explore_*') 
     area_columns_to_drop = dataframe_df.columns[dataframe_df.columns.str.contains('Bright_pixel_area')]
     dataframe_df_pro = dataframe_df.drop(columns=area_columns_to_drop)
@@ -416,10 +366,7 @@ else:
     
     data = grid_response_m['data']
     selected_m = grid_response_m['selected_rows'] 
-    
-    # if len(selected) != 0:
-    #     st.write(selected[0])
-        # st.session_state.selected_row = selected_rows[0]['_selectedRowNodeInfo']['nodeRowIndex']
+
     df_selected = pd.DataFrame(selected_m)
     labels_rgb = np.expand_dims(label_fin, axis=2)
     labels_rgbb_m = cv2.cvtColor(img_as_ubyte(labels_rgb), cv2.COLOR_GRAY2RGB)
@@ -501,13 +448,8 @@ else:
                         #st.write(new_df_pro_transposed)
                     new_df_pro_transposed_smooth['Frame'] = pd.DataFrame(list(range(0, df_selected.shape[1])))
                     new_df_pro_transposed_smooth = new_df_pro_transposed_smooth.iloc[:, [new_df_pro_transposed_smooth.shape[1] - 1] + list(range(new_df_pro_transposed_smooth.shape[1] - 1))]
-                    new_df_pro_transposed_smooth['Time'] = new_df_pro_transposed_smooth['Frame']/frame_rate
-                    
-                    #get_data_indi = convert_df(new_df_pro_transposed_smooth)
-                    #st.download_button("Press to Download", get_data_indi, 'indi_intensity_data.csv', "text/csv", key='indi_download-get_data')
-                    
-                    #baseline_smooth_x = st.slider("*_Choose 'n' in n(S.D.) for Smoothed Intensity trace_*", min_value = 0.0, max_value = 3.0, step = 0.1, format="%.1f", value = 1.0,help = "Slide to adjust the baseline on the 'Smoothed Mean Intensity' trace below. Baseline is calculated as: **_mode + n(S.D.)._**",  key='smooth')
-                    
+                    new_df_pro_transposed_smooth['Time'] = new_df_pro_transposed_smooth['Frame']/frame_rate                    
+
                     nested_dict_final = {}           
                     nested_dict_pro = {'Label':[], "Number of Events":[], "Rise time":[], "Rise Rate":[], "Decay time":[], "Decay Rate":[], "Duration":[], "Amplitude":[]}
     
@@ -591,7 +533,7 @@ else:
                         
                         
                         max_df_value = new_df_pro_transposed_smooth[f'smooth cell {i}'].max()
-                        #st.write(plot_df.dtypes)
+
                         #####test by setting a some equal high values#########plot_df.loc[plot_df['Frame'] == 39, 'Smoothed Mean Intensity'] = max_df_value ##plot_df.loc[plot_df['Frame'] == 69, 'Smoothed Mean Intensity'] = baseline_each
                         count_max = new_df_pro_transposed_smooth[f'smooth cell {i}'].eq(max_df_value).sum()
                         max_frame = new_df_pro_transposed_smooth.loc[new_df_pro_transposed_smooth[f'smooth cell {i}'] == max_df_value, 'Frame']
@@ -751,8 +693,7 @@ else:
                                 #st.write(missing_value_df)
                                 
                             if count_max > 1: 
-                                avg_frame = int(np.floor(max_frame.mean()))
-                                st.write(avg_frame)
+                                avg_frame = int(np.floor(max_frame.mean()))                                
                                 decay_df['Decay intensity'] = new_df_pro_transposed_smooth.loc[(new_df_pro_transposed_smooth[f'smooth cell {i}'] <= max_df_value) & (new_df_pro_transposed_smooth[f'smooth cell {i}'] >= baseline_each) & (new_df_pro_transposed_smooth['Frame'] >= max(max_frame)) , f'smooth cell {i}']
                                 last_index = decay_df.loc[decay_df['Decay intensity'] == max_df_value].index[-1]
                                 rise_df['Rise intensity'] = new_df_pro_transposed_smooth.loc[(new_df_pro_transposed_smooth[f'smooth cell {i}'] <= max_df_value) & (new_df_pro_transposed_smooth[f'smooth cell {i}'] >= baseline_each) & (new_df_pro_transposed_smooth['Frame'] <= min(max_frame)) , f'smooth cell {i}']
@@ -953,26 +894,10 @@ else:
                         fig_2.update_yaxes(title_text='Number of selected cells')
                         st.plotly_chart(fig)
                         st.plotly_chart(fig_1)
-                        st.plotly_chart(fig_2)                            
-                        # st.subheader("Distribution plots based on selected labels")    
-                        # col_9, col_10 = st.columns(2)  
-                        # col_11, col_12 = st.columns(2) 
-                        # with col_9:
-                        #     sns.displot(data = nested_dict_final, x="Rise time")
-                        #     st.pyplot(plt.gcf())
-                        # with col_10:
-                        #     sns.displot(data = nested_dict_final, x="Decay time")
-                        #     st.pyplot(plt.gcf())
-                        # with col_11:
-                        #     sns.displot(data = nested_dict_final, x="Duration")
-                        #     st.pyplot(plt.gcf())
-                        # with col_12:    
-                        #     sns.displot(data = nested_dict_final, x="Amplitude")
-                        #     st.pyplot(plt.gcf())
+                        st.plotly_chart(fig_2)                           
+
                         st.warning('Navigating to another page from the sidebar will remove all selections from the current page')
-                        # if st.button("**_Go to Single Intensity Traces_**", help = 'Clicking on this switches to a new page and all selection in the current page will be lost'):
-                        #     switch_page('Single_Intensity_Trace') 
-                        
+
             if baseline_peak_selection == "Static": 
                 baseline_recovery_frame_input = st.radio("Select one", ('Single Frame Value', 'Average Frame Value'), help='Baseline value based on a single frame, or on multiple frames')
                 if baseline_recovery_frame_input ==   'Single Frame Value':                                     
@@ -1010,9 +935,6 @@ else:
                         for i in df_selected['label']:                                     
                             filtered_baseline_each = new_df_pro_transposed_smooth.query("Frame == @baseline__frame_static")
                             baseline_each = filtered_baseline_each[f'smooth cell {i}'].iloc[0]
-                            #st.write(baseline__frame_static)
-                            #baseline_each = plot_df.loc[plot_df['Frame'] == 5, 'Smoothed Mean Intensity'][0]
-                            #st.write(baseline_each)
                             filtered_baseline_mean_each = new_df_pro_transposed_smooth.query("Frame == @baseline__frame_static")
                             baseline_mean_each = filtered_baseline_mean_each[float(f'{i}.0')].iloc[0]  
                             new_df_pro_transposed_smooth[f'smooth cell {i}'] = new_df_pro_transposed_smooth[f'smooth cell {i}']/baseline_each
@@ -1261,15 +1183,9 @@ else:
                     
                     new_df_pro_transposed_smooth = new_df_pro_transposed_smooth.iloc[:, [new_df_pro_transposed_smooth.shape[1] - 1] + list(range(new_df_pro_transposed_smooth.shape[1] - 1))]
                     new_df_pro_transposed_smooth['Time'] = new_df_pro_transposed_smooth['Frame']/frame_rate                   
-             
-                    #get_data_indi = convert_df(new_df_pro_transposed_smooth)
-                    #st.download_button("Press to Download", get_data_indi, 'indi_intensity_data.csv', "text/csv", key='indi_download-get_data')
-                    
-                    #baseline_smooth_x = st.slider("*_Choose 'n' in n(S.D.) for Smoothed Intensity trace_*", min_value = 0.0, max_value = 3.0, step = 0.1, format="%.1f", value = 1.0,help = "Slide to adjust the baseline on the 'Smoothed Mean Intensity' trace below. Baseline is calculated as: **_mode + n(S.D.)._**",  key='smooth')
-                    
+
                     nested_dict_final = {}           
                     nested_dict_pro = {'Label':[], "Number of Events":[], "Rise time":[], "Rise Rate":[], "Decay time":[], "Decay Rate":[], "Duration":[], "Amplitude":[]}  
-                    #st.write(new_df_pro_transposed_smooth)
                     
                     plot_df_corr = pd.DataFrame()
                     plot_df_corr['Frame'] = new_df_pro_transposed_smooth['Frame']
@@ -1300,13 +1216,7 @@ else:
                         delta = np.round((plot_df_corr[f'smooth cell {i}']-baseline_corr_each)/baseline_corr_each,3)
                         plot_df_corr_value_delta = pd.DataFrame(list(delta), columns = [f'delta_f/f_0_{i}'])
                         plot_df_corr = pd.concat([plot_df_corr.reset_index(drop=True), plot_df_corr_value_delta],axis=1)
-                        #plot_df_corr = pd.concat([plot_df_corr.reset_index(drop=True), (np.round(plot_df_corr[f'smooth cell {i}'],3)).reset_index(drop=True)],axis=1)
-                        #plot_df_corr = pd.concat([plot_df_corr.reset_index(drop=True), (np.round(plot_df_corr[f'delta_f/f_0_{i}'],3)).reset_index(drop=True)],axis=1)
-                        
-                        #st.write(plot_df_corr)
-                        #plot_df_corr[f'smooth cell {i}'] = plot_df_corr[f'smooth cell {i}']/baseline_corr_each
-                        #baseline_corr_each = baseline_corr_each/baseline_corr_each 
-                        
+
                         keyval = {}
                         amp_keyval = {}
                         prev_intensity = 0
@@ -1629,11 +1539,7 @@ else:
                             else:
                                 popt_rise, pcov_rise = curve_fit(mono_exp_rise, rise_df['Frame'], rise_df['Rise intensity'], p0=[a_est_rise,b_est_rise])
                                 rise_curve_exp = np.round((mono_exp_rise(rise_df['Frame'], *popt_rise)),3)                
-                                #st.write(popt_decay)
-                                #st.write(popt_rise)
-                                
-                                # st.write(i)
-                                # st.write(nested_dict_final)
+
                             count_items = 0
                             for item in amp_keyval.items():
                                 #st.write(item[0].split('-')) 
@@ -1746,24 +1652,8 @@ else:
                         st.plotly_chart(fig)
                         st.plotly_chart(fig_1)
                         st.plotly_chart(fig_2)                                        
-                        # st.subheader("Distribution plots based on selected labels")    
-                        # col_9, col_10 = st.columns(2)  
-                        # col_11, col_12 = st.columns(2) 
-                        # with col_9:
-                        #     sns.displot(data = nested_dict_final, x="Rise time")
-                        #     st.pyplot(plt.gcf())
-                        # with col_10:
-                        #     sns.displot(data = nested_dict_final, x="Decay time")
-                        #     st.pyplot(plt.gcf())
-                        # with col_11:
-                        #     sns.displot(data = nested_dict_final, x="Duration")
-                        #     st.pyplot(plt.gcf())
-                        # with col_12:    
-                        #     sns.displot(data = nested_dict_final, x="Amplitude")
-                        #     st.pyplot(plt.gcf())
+
                         st.warning('Navigating to another page from the sidebar will remove all selections from the current page')
-                    # if st.button("**_Go to Single Intensity Traces_**", help = 'Clicking on this switches to a new page and all selection in the current page will be lost'):
-                    #     switch_page('Single_Intensity_Trace')  
                     
             if baseline_peak_selection == "Static": 
                 nested_dict_final = {}           
@@ -2052,4 +1942,3 @@ else:
                         st.plotly_chart(fig_1)
                         st.plotly_chart(fig_2)                                        
                         st.warning('Navigating to another page from the sidebar will remove all selections from the current page')
-                    #st.write(new_df_pro_transposed_smooth)

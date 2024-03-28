@@ -56,8 +56,6 @@ if 'first_raw_overlay' not in st.session_state:
 if "raw_file" not in st.session_state:
     st.session_state.raw_file = None
 
-# for keys, v in st.session_state.items():
-#     st.session_state[keys] = v
 if "multi" not in st.session_state:
     st.session_state.multi = False
 
@@ -82,11 +80,8 @@ if 'all_param_table' not in st.session_state:
 def callback_off():
     st.session_state.button_clicked = False
     st.session_state.button_clicked_allframes = False
-    st.session_state.display_table = False
-    
-# def callback_show():
-#      st.session_state.show_frames = True  
- 
+    st.session_state.display_table = False    
+
 def callback_allframes():
      st.session_state.button_clicked_allframes = True
      st.session_state.button_clicked_roi = False
@@ -133,11 +128,6 @@ def stardist_seg(im,_model):
     return img_labels
 
 def main():
-    # selected_box = st.sidebar.selectbox(
-    #     'Segment the images',
-    #     ('Process a single file', 'Process multiple frames' )
-    #     )
-    # if selected_box == 'Process multiple frames':
     Segment()
 
 def Segment():
@@ -146,24 +136,16 @@ def Segment():
     if st.session_state.raw_file is not None:
         st.warning('Please reload the page to upload a new file')        
     else:
-        st.session_state.raw_file = st.file_uploader("*_Choose a TIFF-stack file_*")
-        
-    #st.write(st.session_state.raw_file)
+        st.session_state.raw_file = st.file_uploader("*_Choose a TIFF-stack file_*")        
+    
     if st.session_state.raw_file is not None:
         if st.session_state['first_raw_image'] is None:
             file_path = os.path.join('temp dir', st.session_state.raw_file.name)
     
             with open(file_path, "wb") as f:
                 f.write(st.session_state.raw_file.read())
-            #plt.save(raw_file, cwd)
-            ######use this script to load the image on the deployed app############
-            #file_bytes = BytesIO(raw_file.read())
-            #st.image(file_bytes,use_column_width=True,clamp = True) 
-            ############use this script to load the image on the deployed app############################
-            #st.image(raw_file,use_column_width=True,clamp = True) 
+
             raw_name=cwd+'temp dir/'+st.session_state['raw_file'].name
-            #st.write(raw_name)      #needs to be (none, none, 3)
-            #raw_image = load_image(file_bytes) #use this script to load the image on the deployed app
             st.session_state['first_raw_image'] = load_image(raw_name)
             f.close()
             shutil.rmtree("temp dir")
@@ -171,14 +153,13 @@ def Segment():
         else:
             raw_image = st.session_state['first_raw_image']
             shutil.rmtree("temp dir")
-        #raw_image = io.imread(raw_name) 
+         
         if raw_image.dtype != 'uint8':
             img_list = []
             for frames_64 in range(0, raw_image.shape[0]):
                 frame_rescale = exposure.rescale_intensity(raw_image[frames_64], out_range=(0, 255)).astype('uint8')
                 img_list.append(frame_rescale)
-            raw_image = np.array(img_list)
-            #raw_image = exposure.rescale_intensity(raw_image, out_range=(0, 255)).astype('uint8')
+            raw_image = np.array(img_list)            
             
         if (len(raw_image.shape) == 2):
             st.warning("Please upload a tiff stack with multiple frames")
@@ -186,19 +167,15 @@ def Segment():
         if (len(raw_image.shape) ==3 and raw_image.shape[-1]!=3) or (len(raw_image.shape) ==4 and raw_image.shape[-1]!=3):
             raw_image_1D = raw_image
             raw_image = np.zeros((raw_image_1D.shape[0], raw_image_1D.shape[1], raw_image_1D.shape[2], 3), dtype=np.uint8)
-            # convert each 2D image from grayscale to RGB and stack them into the 4D array
             for i in range(raw_image.shape[0]):
                 raw_image[i] = cv2.cvtColor(img_as_ubyte(raw_image_1D[i]), cv2.COLOR_GRAY2RGB)
 
         model = load_model()        
-        extension = st.session_state['raw_file'].name.split(".")[-1]
-        # if raw_file.name.split(".")[1] == 'tif':
-        raw_image_ani = raw_image
-        #st.write(raw_image_ani.shape)
+        extension = st.session_state['raw_file'].name.split(".")[-1]        
+        raw_image_ani = raw_image       
         st.session_state['raw_img_ani_pg_2'] = raw_image_ani        
             
-        if extension == 'tif' and len(raw_image_ani.shape)==4:
-            #with st.expander("**_Show Frames_**"):
+        if extension == 'tif' and len(raw_image_ani.shape)==4:            
             st.write("*_Original Frames_*")
             image_frame_num = st.number_input(f"(0 - {raw_image_ani.shape[0]-1})", min_value = 0,max_value = raw_image_ani.shape[0]-1, value = 0, step = 1, key='num_1')
             if image_frame_num==0:
@@ -217,8 +194,7 @@ def Segment():
             
             if st.session_state.bc_corr_check == 'No background correction':
                 background_corr_img = raw_image_ani
-                st.session_state['bg_mean'] = 300
-                #st.write(background_corr_img.shape)                    
+                st.session_state['bg_mean'] = 300                                   
             # Load the image
             elif st.session_state.bc_corr_check == 'Background correction':
                 background_corr_img = np.zeros(raw_image_ani.shape,dtype=np.int32)  
@@ -227,7 +203,7 @@ def Segment():
                     st.session_state.canvas_data = None
                                                  
                 st.markdown("Draw one region on the image below", help= "The original stack is background corrected based on the drawn region. This corrected stack is not used for segmentation")
-                image_draw = Image.fromarray(raw_image_ani[0])  # Replace 'image.jpg' with the path to your image
+                image_draw = Image.fromarray(raw_image_ani[0])  
                 canvas_height = raw_image_ani.shape[1]
                 canvas_width = raw_image_ani.shape[2]
                 
@@ -251,7 +227,7 @@ def Segment():
                     #rerun_flag = False
                     #if canvas_result.json_data is not None:
                     if st.session_state.canvas_data is not None:
-                        objects = pd.json_normalize(st.session_state.canvas_data["objects"]) # need to convert obj to str because PyArrow
+                        objects = pd.json_normalize(st.session_state.canvas_data["objects"])
                         
                         if len(objects) == 0:
                             background_corr_img = raw_image_ani
@@ -268,10 +244,8 @@ def Segment():
                             st.session_state['bg_mean'] = 300
                             break
                 background_corr_img = background_corr_img.astype(np.uint8)
-                #st.write(np.clip(np.subtract(raw_image_ani[0,2:10,2:10], (np.mean(bc_selected_region))), 0, 255).astype(np.uint8))
-                #st.write(background_corr_img[0,2:10,2:10])
-                if len(objects) > 1:
-                    # Delete the first drawn rectangle by removing it from the JSON data
+                
+                if len(objects) > 1:                    
                     st.error('Please select only one region. Use the toolbar to either undo or delete the selected region(s)')                
                 if len(objects) == 1:
                     st.write("*_Background Corrected Image_*")
@@ -334,28 +308,20 @@ def Segment():
                 st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"] = np.zeros_like(raw_image_ani[0][:,:,0])   #size of one of the images
                 
                 weight = 1/raw_image_ani.shape[0]                      
-                for frame_num in range(0,raw_image_ani.shape[0]):
-                        
-                    #diam_s = [props_final[obj_s]['equivalent_diameter_area'] for obj_s in range(0,len(props_final))]
-                    #raw_image_f = raw_image_ani[frame_num]  
+                for frame_num in range(0,raw_image_ani.shape[0]):                       
                     raw_image = raw_image_ani[frame_num]
-                    # raw_second_pixels = min(raw_image_f[:,:,0][raw_image_f[:,:,0][:,:]!=0])            
-                    # raw_image_f[raw_image_f > (255 - raw_second_pixels)] = 255 - raw_second_pixels
-                    # raw_image = raw_image_f + raw_second_pixels
                     if st.session_state.gauss_x == -1:
                        blur_gauss = raw_image 
                     else:
                        blur_gauss = cv2.GaussianBlur(raw_image, (st.session_state.gauss_x, st.session_state.gauss_x), sigmaX=0)
-                    #mean_of_mean.append(cv2.mean(raw_image[:,:,0])[0])  #find mean pixel value of each frame of the whole gray image
-                    
+                                        
                     if st.session_state.med_x == -1:
                         blur_median_proc2 = blur_gauss
                     else:
                         blur_median_proc2 = cv2.medianBlur(blur_gauss, st.session_state.med_x)               
                                 
                     bri_con2 = apply_brightness_contrast(blur_median_proc2, st.session_state.bri_x, st.session_state.con_x)
-                    #st.image(bri_con2,use_column_width=True,clamp = True)
-                    
+                                        
                     lab_img2= cv2.cvtColor(bri_con2, cv2.COLOR_RGB2LAB)
                     l2, a2, b2 = cv2.split(lab_img2)
                     equ2 = cv2.equalizeHist(l2)
@@ -368,14 +334,12 @@ def Segment():
                     CLAHE_img = cv2.cvtColor(updated_lab_img22, cv2.COLOR_LAB2RGB)
                     CLAHE_img = CLAHE_img[:,:,0] 
                     st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"].append(CLAHE_img) 
-                    
-                    #super_im = super_im + weight*CLAHE_img 
                     st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"] = np.maximum(st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"], CLAHE_img)    
                 
                 st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"].astype(np.int32)
                 st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"][st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"]>255]=255
                 st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"].astype(np.uint8)
-                #with st.expander("**_Show Processed Frames_**"):
+                
                 st.write('*_Processed Frames_*')
                 image_frame_num_pro = st.number_input(f"(0 - {raw_image_ani.shape[0]-1})", min_value = 0, max_value = raw_image_ani.shape[0]-1, step = 1,key='num_2')
                 if image_frame_num==0:
@@ -384,18 +348,10 @@ def Segment():
                     st.image(st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"] [image_frame_num_pro],use_column_width=True,clamp = True)
             
                 st.markdown("**_The Collapsed Image_**")
-                #with st.expander("*_Show_*"):
+                
                 st.image(st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"], use_column_width=True,clamp = True) 
                 st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"]
-                # with st.expander("Inhomogeneous pixel distribution?"):
-                #     rb_check = st.radio("Rolling ball background correction (RBBC)", ['No RBBC', 'RBBC'], help='Select "RBBC" for rolling ball background correction on the collapsed image, otherwise, select No "RBBC"', on_change=callback_off)
-                #     if rb_check == 'No RBBC':
-                #         st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"]
-                #     elif rb_check == 'RBBC':
-                #         radius_x = st.slider("Ball Radius", min_value = 1, max_value = 50, step=1, value = 25, on_change=callback_off)                        
-                #         background_to_remove = restoration.rolling_ball(st.session_state['Collapsed_Image'], radius=radius_x)
-                #         st.session_state['Collapsed_Image'] = st.session_state['Collapsed_Image'] - background_to_remove
-                #         st.image(st.session_state['Collapsed_Image'], use_column_width=True,clamp = True )   
+ 
             else:
                 st.write('*_Processed Frames_*')
                 image_frame_num_pro = st.number_input(f"(0 - {raw_image_ani.shape[0]-1})", min_value = 0, max_value = raw_image_ani.shape[0]-1, step = 1,key='num_2')
@@ -405,11 +361,9 @@ def Segment():
                     st.image(st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"][image_frame_num_pro],use_column_width=True,clamp = True)
             
                 st.markdown("**_The Collapsed Image_**")
-                #with st.expander("*_Show_*"):
+                
                 st.image(st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"], use_column_width=True,clamp = True) 
                 st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"]
-                # _, binary_image = cv2.threshold(st.session_state['Collapsed_Image'], 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-                # st.image(binary_image,use_column_width=True,clamp = True )
      
             if st.button("*_Segment and generate labels_*", key='frame_btn',on_click = callback_allframes) or st.session_state.button_clicked_allframes:
                 with st.expander("Inhomogeneous pixel distribution?"):
@@ -419,7 +373,7 @@ def Segment():
                         if segment_check == "Segment on the collapsed image":
                             if rb_check == 'No RBBC':
                                 st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"]
-                                #st.image(st.session_state['Collapsed_Image'], use_column_width=True,clamp = True) 
+                                
                             elif rb_check == 'RBBC':
                                 st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"]
                                 radius_x = st.slider("Ball Radius", min_value = 1, max_value = 50, step=1, value = 25)                        
@@ -434,11 +388,10 @@ def Segment():
                             if rb_check == 'No RBBC':                             
                                 st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"]
                                 seg_first = st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"][0]
-                                #st.image(seg_first, use_column_width=True,clamp = True) 
+                                
                             elif rb_check == 'RBBC':                             
                                 radius_x = st.slider("Ball Radius", min_value = 1, max_value = 50, step=1, value = 25)                        
                                 background_to_remove = restoration.rolling_ball(st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"][0], radius=radius_x)
-                                #st.session_state[f"CLAHE_img_array_new_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0] = st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0] - background_to_remove
                                 seg_first = st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"][0] - background_to_remove
                                 st.session_state['Collapsed_Image'] = seg_first
                                 st.image(st.session_state['Collapsed_Image'], use_column_width=True,clamp = True) 
@@ -449,7 +402,6 @@ def Segment():
                     else:
                         label = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}_seg"]
                 
-                #p.write("Done!")  
                 props = measure.regionprops(label) 
                
                 if len(props) == 0:
@@ -461,37 +413,23 @@ def Segment():
                     label_f = np.zeros_like(label, dtype= 'uint8')
                     for labels in labels_to_keep:
                         label_f[label==labels] = labels    
-                    #st.image(label_f,use_column_width=True,clamp = True)
+                    
                     props_to_sort = measure.regionprops(label_f)
                     centroid_positions = [prop_sort.centroid for prop_sort in props_to_sort]
                     sorted_indices = np.lexsort((np.array(centroid_positions)[:, 1], np.array(centroid_positions)[:, 0]))
-                    # label the regions based on the sorted indices
+                    
                     final_label = np.zeros_like(label_f, dtype= 'uint8')
                     for i, idx in enumerate(sorted_indices, start=1):
-                        final_label[label_f == (idx + 1)] = i
-    
-                        # st.write(seg_im.shape)
-                        # st.write("Segmented image")
-                        # st.image(seg_im,use_column_width=True,clamp = True) 
-                        # rgba_image = Image.fromarray(seg_im, "RGB")
-                        # #rgb_image = seg_im.convert("RGB")
-                        # rgb_image = np.array(rgba_image)
-                        # get_image_download_link(rgb_image,"segmented.png")
-                    #st.write(final_label.shape)
-                    #st.image(final_label,use_column_width=True,clamp = True)
-                    #st.session_state['final_label_pg_2'] = final_label
-                    #final_label_rgb = cv2.cvtColor(final_label, cv2.COLOR_GRAY2RGB)                                       
+                        final_label[label_f == (idx + 1)] = i                                                      
                     super_im_rgb = cv2.cvtColor(st.session_state['Collapsed_Image'] , cv2.COLOR_GRAY2RGB)
                     label_list_len = len([prop['label'] for prop in props_to_sort if prop['label']])
                     label_list = list(range(1,label_list_len+1))
                     st.session_state['label_list_pg_2'] = label_list
-                    # ####new to display red labeled image#################
+                    
                     st.session_state['final_label_pg_2'] = final_label
                     labels_rgb = np.expand_dims(final_label, axis=2)
                     final_label_rgb = cv2.cvtColor(img_as_ubyte(labels_rgb), cv2.COLOR_GRAY2RGB)
-                    for label in np.unique(label_list):                                 ####chek label list####                            
-                      	 #if the label is zero, we are examining the 'background'
-                          #so simply ignore it
+                    for label in np.unique(label_list):                                                           
                             if label == 0:
                                 continue                
                             mask = np.zeros(st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"][0].shape, dtype="uint8")
@@ -504,8 +442,7 @@ def Segment():
                             # draw a circle enclosing the object
                             ((x, y), r) = cv2.minEnclosingCircle(c)
                             #cv2.circle(final_label_rgb, (int(x), int(y)), int(r), (255, 0, 0), 1)
-                            coords = np.argwhere(final_label==label)
-                            #st.write(coords)
+                            coords = np.argwhere(final_label==label)                            
                             # Create a polygon from the coordinates
                             poly = polygon(coords[:, 0], coords[:, 1])
                             # Set the color of the polygon to red
@@ -518,22 +455,18 @@ def Segment():
                             cv2.circle(super_im_rgb, (int(x), int(y)), int(r), (255, 0, 0), 1)
                             cv2.putText(super_im_rgb, "{}".format(label), (int(x) - 10, int(y)),
                              	cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)                        
-                    #with st.expander("*_Show the segmented and labeled image_*"):
-                    st.write("*_Automatically labeled objects on the selected image_*")
-                    #overlay_image = super_im + final_label_rgb[:,:,0]
+                    
+                    st.write("*_Automatically labeled objects on the selected image_*")                    
                     st.image(super_im_rgb,use_column_width=True,clamp = True)
                     st.write("*_Automatically segmented and labeled objects on a black background_*")
                     st.image(final_label_rgb,use_column_width=True,clamp = True)
                     st.session_state['final_label_rgb_pg_2'] = final_label_rgb
                     st.session_state['super_im_rgb_pg_2'] = super_im_rgb
                    
-                    with st.expander("*_Object(s) not detected?_*"):
-                        #st.write(raw_image.shape)
-                        # Add a button to allow the user to start drawing the ROI
+                    with st.expander("*_Object(s) not detected?_*"):                        
                         if st.button('Draw ROI', key='roi_btn',help = "Use this option (only when it's absolutely necessary) to draw ROI on the labeled collapsed image", on_click = callback_roi) or st.session_state.button_clicked_roi:
                             
-                            image_draw_2 = Image.fromarray(super_im_rgb)  # Replace 'image.jpg' with the path to your image
-                            #st.write(image_draw_2.size)
+                            image_draw_2 = Image.fromarray(super_im_rgb) 
                             canvas_height_s = super_im_rgb.shape[1]
                             canvas_width_s = super_im_rgb.shape[2]
                             if 'canvas_data_2' not in st.session_state:
@@ -560,7 +493,7 @@ def Segment():
                                 
                                                    
                             if st.session_state.canvas_data_2 is not None:
-                                # Get the JSON data from canvas_result (replace with your variable name)
+                                # Get the JSON data from canvas_result 
                                 objects = pd.json_normalize(st.session_state.canvas_data_2["objects"])
                                 for col in objects.select_dtypes(include=['object']).columns:
                                     objects[col] = objects[col].astype("str")
@@ -572,36 +505,25 @@ def Segment():
                                     final_label_rgb_with_outline = final_label_rgb.copy()
                                     added_roi_list = []
                                     # Iterate through the data to extract consecutive pairs of numbers
-                                    for roi_num in range(0, len(objects)):
-                                        #st.write(f"roi:{roi_num}")
+                                    for roi_num in range(0, len(objects)):                                        
                                         roi_list = eval(objects['path'][roi_num])
                                         coordinates_roi = extract_coordinates(roi_list)
-                                        #roi_label = len(np.unique(label_list))+len(objects)
-                                        #label_list.append(roi_label)
-                                        # #st.write(label_list)
                                         array_0 = np.array([coordinates_roi[i][0] for i in range(len(coordinates_roi))], dtype=np.int64)
                                         array_1 = np.array([coordinates_roi[i][1] for i in range(len(coordinates_roi))], dtype=np.int64)
-                                        #st.write(array_0)
-                                        #st.write(array_1)
                                         poly = list(zip(array_0, array_1))
-                                        #st.write(array_0)
                                         # Create a mask for the polygon outline
                                         polygon_mask = Image.new('L', (final_label_rgb_with_outline.shape[1], final_label_rgb_with_outline.shape[0]) , 0)
                                         draw = ImageDraw.Draw(polygon_mask)
                                         polygon_points = poly
-                                        draw.polygon(polygon_points, outline=1, fill=1)
-        
+                                        draw.polygon(polygon_points, outline=1, fill=1)        
                                         # Convert the mask to a NumPy array
-                                        polygon_mask_np = np.array(polygon_mask)
-                                        #st.write(polygon_mask_np.shape)
+                                        polygon_mask_np = np.array(polygon_mask)                                        
                                         # Create a boolean mask for points inside the polygon
-                                        points_inside_polygon = polygon_mask_np != 0
-        
+                                        points_inside_polygon = polygon_mask_np != 0        
                                         # Color the outline in the color image (final_label_rgb)
                                         color_outline = (255, 0, 0)
                                         final_label_rgb_with_outline = final_label_rgb_with_outline
-                                        final_label_rgb_with_outline[polygon_mask_np > 0] = color_outline
-        
+                                        final_label_rgb_with_outline[polygon_mask_np > 0] = color_outline        
                                         # Color the points inside the polygon
                                         color_points_inside = (255, 0, 0)  # Green color for points inside
                                         final_label_rgb_with_outline[points_inside_polygon] = color_points_inside
@@ -618,7 +540,7 @@ def Segment():
                                                
                     
                     with st.expander("*_Cell-specific Analysis? (Expand if needed to overlay a dye positive image (uint8) on top of the labeled image for efficient cell selection_*"):
-                         #if st.button('Perform Cell-specific Analysis', key='overlay_btn',help = "Use this option to overlay a dye positive image on top of the labeled image for efficient cell selection", on_click = callback_roi) or st.session_state.button_clicked_roi:
+                         
                         st.session_state['overlayed_image'] = None    # for now it is None all the time, but the code is prepared in case the session state needs to get applied to these parameters
                         st.session_state['raw_file_overlay'] = None
                         st.session_state['first_raw_overlay']= None
@@ -643,9 +565,7 @@ def Segment():
                                        shutil.rmtree("temp dir_2")
                             else:                                   
                                 st.image(st.session_state['overlayed_image'],use_column_width=True,clamp = True)                          
-                                    
-   
-                    
+                                                        
                     if 'df_pro' in st.session_state:   
                         st.session_state.pop('df_pro')
                         
