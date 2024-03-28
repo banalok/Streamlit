@@ -33,6 +33,7 @@ from skimage import measure, color, io
 #from skimage.segmentation import clear_border
 #from skimage import segmentation
 import plotly.express as px
+import plotly.figure_factory as ff
 #from scipy import ndimage
 from skimage import (
     filters,  morphology, img_as_float, img_as_ubyte, exposure
@@ -926,7 +927,33 @@ else:
                             st.write(f"The average duration based on selected labels across all frames is {average_duration} s")
                             average_amplitude = np.round(nested_dict_final['Amplitude'].mean(),4)
                             st.write(f"The average amplitude based on selected labels across all frames is {average_amplitude}")
-                            
+                        
+                        nested_dict_final['Amplitude'] = np.round(nested_dict_final['Amplitude'], 2)    
+                        nested_dict_final['Duration'] = np.round(nested_dict_final['Duration'], 2)   
+                        nested_dict_final['Decay time'] = np.round(nested_dict_final['Decay time'], 2)  
+                        nested_dict_final['Rise time'] = np.round(nested_dict_final['Rise time'], 2) 
+                        nested_dict_final['Rise Rate'] = np.round(nested_dict_final['Rise Rate'], 2)
+                        nested_dict_final['Decay Rate'] = np.round(nested_dict_final['Decay Rate'], 2)
+                        
+                        dist_columns = ["Decay time", "Duration", "Rise time"]
+                        dist_rate = ["Decay Rate", "Rise Rate"]
+                        dist_df = nested_dict_final[dist_columns]
+                        dist_rate_df = nested_dict_final[dist_rate]
+                        fig = px.histogram(nested_dict_final, x='Amplitude')
+                        fig.update_traces(marker=dict(line=dict(color='black', width=1)))                         
+                        fig_1 = px.histogram(nested_dict_final, x=dist_df.columns, barmode='stack')
+                        fig_1.update_traces(marker=dict(line=dict(color='black', width=1)))
+                        fig_2 = px.histogram(nested_dict_final, x=dist_rate_df.columns, barmode='stack')
+                        fig_2.update_traces(marker=dict(line=dict(color='black', width=1)))
+                        fig.update_xaxes(title_text='Normalized Amplitude')
+                        fig.update_yaxes(title_text='Number of selected cells')
+                        fig_1.update_xaxes(title_text='Time (s)')
+                        fig_1.update_yaxes(title_text='Number of selected cells')
+                        fig_2.update_xaxes(title_text='Rate (s⁻¹)')
+                        fig_2.update_yaxes(title_text='Number of selected cells')
+                        st.plotly_chart(fig)
+                        st.plotly_chart(fig_1)
+                        st.plotly_chart(fig_2)                            
                         # st.subheader("Distribution plots based on selected labels")    
                         # col_9, col_10 = st.columns(2)  
                         # col_11, col_12 = st.columns(2) 
@@ -1176,8 +1203,33 @@ else:
                             st.write(f"The average duration based on selected labels across all frames is {average_duration} s")
                             average_amplitude = np.round(nested_dict_final['Amplitude'].mean(),4)
                             st.write(f"The average amplitude based on selected labels across all frames is {average_amplitude}")                
-             
-                
+                        nested_dict_final['Amplitude'] = np.round(nested_dict_final['Amplitude'], 2)    
+                        nested_dict_final['Duration'] = np.round(nested_dict_final['Duration'], 2)   
+                        nested_dict_final['Decay time'] = np.round(nested_dict_final['Decay time'], 2)  
+                        nested_dict_final['Rise time'] = np.round(nested_dict_final['Rise time'], 2) 
+                        nested_dict_final['Rise Rate'] = np.round(nested_dict_final['Rise Rate'], 2)
+                        nested_dict_final['Decay Rate'] = np.round(nested_dict_final['Decay Rate'], 2)
+                        
+                        dist_columns = ["Decay time", "Duration", "Rise time"]
+                        dist_rate = ["Decay Rate", "Rise Rate"]
+                        dist_df = nested_dict_final[dist_columns]
+                        dist_rate_df = nested_dict_final[dist_rate]
+                        fig = px.histogram(nested_dict_final, x='Amplitude')
+                        fig.update_traces(marker=dict(line=dict(color='black', width=1)))                         
+                        fig_1 = px.histogram(nested_dict_final, x=dist_df.columns, barmode='stack')
+                        fig_1.update_traces(marker=dict(line=dict(color='black', width=1)))
+                        fig_2 = px.histogram(nested_dict_final, x=dist_rate_df.columns, barmode='stack')
+                        fig_2.update_traces(marker=dict(line=dict(color='black', width=1)))
+                        fig.update_xaxes(title_text='Normalized Amplitude')
+                        fig.update_yaxes(title_text='Number of selected cells')
+                        fig_1.update_xaxes(title_text='Time (s)')
+                        fig_1.update_yaxes(title_text='Number of selected cells')
+                        fig_2.update_xaxes(title_text='Rate (s⁻¹)')
+                        fig_2.update_yaxes(title_text='Number of selected cells')
+                        st.plotly_chart(fig)
+                        st.plotly_chart(fig_1)
+                        st.plotly_chart(fig_2)                                    
+                        st.warning('Navigating to another page from the sidebar will remove all selections from the current page')
         if bleach_corr_check == 'Bleaching correction':
             baseline_peak_selection = st.radio("Select one", ('Static', 'Dynamic'), help='Select "Static" to manually select single values for the baseline, peak and recovery frames; otherwise, select "Dynamic"')
             smooth_plot_x = st.number_input("*_Moving Average Window_*", min_value=1, max_value=5, help = "Adjust to smooth the mean intensity trace below. Moving average of 1 would mean the original 'Mean Intensity' trace")
@@ -1667,7 +1719,33 @@ else:
                             st.write(f"The average duration based on selected labels across all frames is {average_duration} s")
                             average_amplitude = np.round(nested_dict_final['Amplitude'].mean(),4)
                             st.write(f"The average amplitude based on selected labels across all frames is {average_amplitude}")
-                            
+
+                        nested_dict_final['Amplitude'] = np.round(nested_dict_final['Amplitude'], 2)    
+                        nested_dict_final['Duration'] = np.round(nested_dict_final['Duration'], 2)   
+                        nested_dict_final['Decay time'] = np.round(nested_dict_final['Decay time'], 2)  
+                        nested_dict_final['Rise time'] = np.round(nested_dict_final['Rise time'], 2) 
+                        nested_dict_final['Rise Rate'] = np.round(nested_dict_final['Rise Rate'], 2)
+                        nested_dict_final['Decay Rate'] = np.round(nested_dict_final['Decay Rate'], 2)
+                        
+                        dist_columns = ["Decay time", "Duration", "Rise time"]
+                        dist_rate = ["Decay Rate", "Rise Rate"]
+                        dist_df = nested_dict_final[dist_columns]
+                        dist_rate_df = nested_dict_final[dist_rate]
+                        fig = px.histogram(nested_dict_final, x='Amplitude')
+                        fig.update_traces(marker=dict(line=dict(color='black', width=1)))                         
+                        fig_1 = px.histogram(nested_dict_final, x=dist_df.columns, barmode='stack')
+                        fig_1.update_traces(marker=dict(line=dict(color='black', width=1)))
+                        fig_2 = px.histogram(nested_dict_final, x=dist_rate_df.columns, barmode='stack')
+                        fig_2.update_traces(marker=dict(line=dict(color='black', width=1)))
+                        fig.update_xaxes(title_text='Normalized Amplitude')
+                        fig.update_yaxes(title_text='Number of selected cells')
+                        fig_1.update_xaxes(title_text='Time (s)')
+                        fig_1.update_yaxes(title_text='Number of selected cells')
+                        fig_2.update_xaxes(title_text='Rate (s⁻¹)')
+                        fig_2.update_yaxes(title_text='Number of selected cells')
+                        st.plotly_chart(fig)
+                        st.plotly_chart(fig_1)
+                        st.plotly_chart(fig_2)                                        
                         # st.subheader("Distribution plots based on selected labels")    
                         # col_9, col_10 = st.columns(2)  
                         # col_11, col_12 = st.columns(2) 
@@ -1945,6 +2023,33 @@ else:
                             average_duration = np.round(nested_dict_final['Duration'].mean(),4)
                             st.write(f"The average duration based on selected labels across all frames is {average_duration} s")
                             average_amplitude = np.round(nested_dict_final['Amplitude'].mean(),4)
-                            st.write(f"The average amplitude based on selected labels across all frames is {average_amplitude}")      
+                            st.write(f"The average amplitude based on selected labels across all frames is {average_amplitude}") 
+                            
+                        nested_dict_final['Amplitude'] = np.round(nested_dict_final['Amplitude'], 2)    
+                        nested_dict_final['Duration'] = np.round(nested_dict_final['Duration'], 2)   
+                        nested_dict_final['Decay time'] = np.round(nested_dict_final['Decay time'], 2)  
+                        nested_dict_final['Rise time'] = np.round(nested_dict_final['Rise time'], 2) 
+                        nested_dict_final['Rise Rate'] = np.round(nested_dict_final['Rise Rate'], 2)
+                        nested_dict_final['Decay Rate'] = np.round(nested_dict_final['Decay Rate'], 2)
+                        
+                        dist_columns = ["Decay time", "Duration", "Rise time"]
+                        dist_rate = ["Decay Rate", "Rise Rate"]
+                        dist_df = nested_dict_final[dist_columns]
+                        dist_rate_df = nested_dict_final[dist_rate]
+                        fig = px.histogram(nested_dict_final, x='Amplitude')
+                        fig.update_traces(marker=dict(line=dict(color='black', width=1)))                        
+                        fig_1 = px.histogram(nested_dict_final, x=dist_df.columns, barmode='stack')
+                        fig_1.update_traces(marker=dict(line=dict(color='black', width=1)))
+                        fig_2 = px.histogram(nested_dict_final, x=dist_rate_df.columns, barmode='stack')
+                        fig_2.update_traces(marker=dict(line=dict(color='black', width=1)))
+                        fig.update_xaxes(title_text='Normalized Amplitude')
+                        fig.update_yaxes(title_text='Number of selected cells')
+                        fig_1.update_xaxes(title_text='Time (s)')
+                        fig_1.update_yaxes(title_text='Number of selected cells')
+                        fig_2.update_xaxes(title_text='Rate (s⁻¹)')
+                        fig_2.update_yaxes(title_text='Number of selected cells')
+                        st.plotly_chart(fig) 
+                        st.plotly_chart(fig_1)
+                        st.plotly_chart(fig_2)                                        
                         st.warning('Navigating to another page from the sidebar will remove all selections from the current page')
                     #st.write(new_df_pro_transposed_smooth)
