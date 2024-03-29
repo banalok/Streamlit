@@ -1,7 +1,6 @@
   
 import streamlit as st
 from utils import * 
-from streamlit_extras.switch_page_button import switch_page
 from streamlit_drawable_canvas import st_canvas##############################new########################
 import plotly.io
 import math

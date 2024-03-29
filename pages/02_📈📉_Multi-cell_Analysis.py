@@ -1,6 +1,5 @@
 import streamlit as st
 from utils import * 
-from streamlit_extras.switch_page_button import switch_page
 import plotly.io
 import plotly.graph_objs as go
 #import PIL 
