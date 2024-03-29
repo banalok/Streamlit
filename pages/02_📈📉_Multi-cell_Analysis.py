@@ -1,4 +1,5 @@
 import streamlit as st
+from utils import * 
 from streamlit_extras.switch_page_button import switch_page
 import plotly.io
 import plotly.graph_objs as go
@@ -33,137 +34,8 @@ import time
 import subprocess 
 import warnings
 
+
 st.warning('Navigating to another page from the sidebar will remove all selections from the current page')
-
-def convert_df(df):
-   return df.to_csv(index=False).encode('utf-8')
-
-def image_stdev(region, intensities):
-    return np.std(intensities[region])
-
-def image_mode(region, intensities):
-    return stat.mode(intensities[region])
-
-def apply_brightness_contrast(input_img, brightness = 0, contrast = 0):
-   
-   if brightness != 0:
-       if brightness > 0:
-           shadow = brightness
-           highlight = 255
-       else:
-           shadow = 0
-           highlight = 255 + brightness
-       alpha_b = (highlight - shadow)/255
-       gamma_b = shadow
-       
-       buf = cv2.addWeighted(input_img, alpha_b, input_img, 0, gamma_b)
-   else:
-       buf = input_img.copy()
-   
-   if contrast != 0:
-       f = 131*(contrast + 127)/(127*(131-contrast))
-       alpha_c = f
-       gamma_c = 127*(1-f)
-       
-       buf = cv2.addWeighted(buf, alpha_c, buf, 0, gamma_c)
-
-   return buf 
-
-
-def get_image_download_link(img,filename_with_extension):
-    result = Image.fromarray(img.astype(np.uint8))
-    buffered = BytesIO()
-    result.save(buffered, format="PNG")
-    byte_im_2 = buffered.getvalue()
-    #img_str = base64.b64encode(buffered.getvalue()).decode()
-    #href =  f'<a href="data:file/txt;base64,{img_str}" download="{filename}">{text}</a>'
-    st.download_button("Press to Download", byte_im_2, filename_with_extension, "image/JPEG")
-    #return href   
-
-def area(df_sel_orig, df_sel, multi_tif_img):
-    img_frames_list = list(range(0,multi_tif_img.shape[0]))
-    selected_row = df_sel_orig[df_sel_orig['label'] ==df_sel['label'][0]]
-    bright_pixel_cols = [col for col in df_sel_orig.columns if 'Bright_pixel' in col]
-    bright_pixel_values = selected_row[bright_pixel_cols].values
-    area_dataframe = pd.DataFrame(img_frames_list, columns = ['Frame'])
-    area_dataframe['Bright Pixel Area'] = bright_pixel_values.T 
-    return area_dataframe
-
-def intensity(df_1, multi_tif_img, window):
-    img_frames_list = list(range(0,multi_tif_img.shape[0]))
-    img_frames = pd.DataFrame(img_frames_list, columns = ['Frame'])
-    mean_intensity = []
-    #p_count = []
-    #change_in_F = []
-    for frames_pro in range(0,multi_tif_img.shape[0]):
-        mean_intensity.append(df_1[f'intensity_mean_{frames_pro}'].mean()) #[0]
-
-    smooth_F_df = pd.DataFrame(smooth_plot(mean_intensity, window), columns = ['Smoothed Mean Intensity'] ) #pd.DataFrame(smooth_df, columns = ['smoothed mean intensity'])
-    mean_inten_df = pd.DataFrame(mean_intensity)
-    #pixel_count_df = pd.DataFrame(p_count, columns = ['Bright Pixel Area'])
-    new_d = pd.concat([img_frames, mean_inten_df, smooth_F_df],axis=1) #, pixel_count_df
-    new_d.rename(columns = {0 : 'Mean Intensity'}, inplace=True)
-    #new_d.rename(columns = {1 : 'Bright Pixel Number'}, inplace=True)
-    return new_d 
-
-def get_intensity_for_timepoint(intensity_image, label_layer):
-    stats = measure.regionprops_table(label_layer, intensity_image=intensity_image, properties=['intensity_mean'])
-    return stats['intensity_mean']
-
-def get_intensity(intensity_image_stack, labels_layer_stack):
-    return [get_intensity_for_timepoint(intensity_image, label_layer) 
-            for intensity_image, label_layer 
-            in zip(intensity_image_stack, labels_layer_stack)]
-
-def fluo_change(intensity_mean, baseline):
-    delta_F = intensity_mean - baseline
-    change_f = delta_F/baseline
-    return change_f
-
-def smooth_plot(unsmoothed_intensity, window):
-    smooth_df = (np.convolve(unsmoothed_intensity, np.ones((window)), mode = 'valid'))/window #ndimage.median_filter(unsmoothed_intensity,7)
-    return smooth_df
-
-def mono_exp_decay(t, a, b):
-    return a * np.exp(-b * t)
-
-def mono_exp_rise(t, a, b):
-    return a * np.exp(b * t)
-
-def find_b_est_decay(x_data, y_data):
-    decay_constants = []
-    for i in range(len(x_data)-1):
-        x1, y1 = x_data[i], y_data[i]
-        x2, y2 = x_data[i+1], y_data[i+1]
-        try:
-            if y1 > 0 and y2 > 0 and x2 != x1:
-                k = -math.log(y2/y1) / (x2-x1)
-                decay_constants.append(k)
-        except ValueError as e:
-            decay_constants.append(0)
-    
-    # Calculate average decay rate
-    avg_decay_rate = np.mean(decay_constants)
-    
-    return avg_decay_rate
-
-def find_b_est_rise(x_data, y_data):
-    
-    rise_constants = []
-    for i in range(len(x_data)-1):
-        x1, y1 = x_data[i], y_data[i]
-        x2, y2 = x_data[i+1], y_data[i+1]
-        try:
-            if y1 > 0 and y2 > 0 and x2 != x1:
-                k = math.log(y2/y1) / (x2-x1)
-                rise_constants.append(k)
-        except ValueError as e:
-            rise_constants.append(0)
-    
-    # Calculate average decay rate
-    avg_rise_rate = np.mean(rise_constants)
-    
-    return avg_rise_rate
 
 if "button_clicked_movav" not in st.session_state:
     st.session_state.button_clicked_movav = False
