@@ -23,3 +23,5 @@ Option 1 (if the dataset is less than 1 GB)
 Option 2 (if the dataset is larger than 1 GB)
 
 	streamlit run DL_SCAN.py --server.maxUploadSize 2000
+
+The application now runs locally in the browser using localhost.
