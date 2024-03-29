@@ -5,6 +5,7 @@ imutils==0.5.4
 keras==2.9.0
 Keras-Applications==1.0.8
 Keras-Preprocessing==1.1.2
+numba==0.57.1
 numpy==1.21.5
 opencv-python-headless==4.6.0.66
 pandas==1.4.4
