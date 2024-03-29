@@ -15,7 +15,7 @@ https://www.anaconda.com/download
 
 	pip install -r requirements.txt 
 
-Please allow some time for the installation process to complete.
+                     Please allow some time for the installation process to complete.
 
 3. Once all the dependencies are installed, navigate to the directory where the Application is located (if not already in the directory), and activate the environment (if not already activated), and launch DL-SCAN by entering the following commands
 
