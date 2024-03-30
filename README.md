@@ -15,16 +15,16 @@ https://www.anaconda.com/download
 
 	pip install -r requirements.txt 
 
--Please allow some time for the installation process to complete.
+> Please allow some time for the installation process to complete.
 
 3. Once all the dependencies are installed, navigate to the directory where the Application is located (if not already in the directory), and activate the environment (if not already activated), and launch DL-SCAN by entering the following commands
 
--Option 1 (if the dataset is less than 1 GB)
+> Option 1 (if the dataset is less than 1 GB)
 
 	streamlit run DL_SCAN.py
 
--Option 2 (if the dataset is larger than 1 GB)
+> Option 2 (if the dataset is larger than 1 GB)
 
 	streamlit run DL_SCAN.py --server.maxUploadSize 2000
 
--The application now runs locally in the browser using localhost.
+> The application now runs locally in the browser using localhost.
