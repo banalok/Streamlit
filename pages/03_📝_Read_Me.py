@@ -1,7 +1,7 @@
 import streamlit as st
 
 def load_readme():
-    with open("README.md", "r", encoding="utf-8") as file:
+    with open("READ_TEXT.md", "r", encoding="utf-8") as file:
         readme_text = file.read()
     return readme_text
 
