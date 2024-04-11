@@ -21,6 +21,7 @@ from scipy.optimize import curve_fit
 from skimage import measure, color, io
 import plotly.express as px
 import plotly.figure_factory as ff
+from plotly.subplots import make_subplots
 from skimage import (
     filters,  morphology, img_as_float, img_as_ubyte, exposure
 )
@@ -747,25 +748,25 @@ else:
                         nested_dict_final['Rise Rate'] = np.round(nested_dict_final['Rise Rate'], 2)
                         nested_dict_final['Decay Rate'] = np.round(nested_dict_final['Decay Rate'], 2)
                         
-                        dist_columns = ["Decay time", "Duration", "Rise time"]
-                        dist_rate = ["Decay Rate", "Rise Rate"]
-                        dist_df = nested_dict_final[dist_columns]
-                        dist_rate_df = nested_dict_final[dist_rate]
-                        fig = px.histogram(nested_dict_final, x='Amplitude')
-                        fig.update_traces(marker=dict(line=dict(color='black', width=1)))                         
-                        fig_1 = px.histogram(nested_dict_final, x=dist_df.columns, barmode='stack')
-                        fig_1.update_traces(marker=dict(line=dict(color='black', width=1)))
-                        fig_2 = px.histogram(nested_dict_final, x=dist_rate_df.columns, barmode='stack')
-                        fig_2.update_traces(marker=dict(line=dict(color='black', width=1)))
-                        fig.update_xaxes(title_text='Normalized Amplitude')
-                        fig.update_yaxes(title_text='Number of selected cells')
-                        fig_1.update_xaxes(title_text='Time (s)')
-                        fig_1.update_yaxes(title_text='Number of selected cells')
-                        fig_2.update_xaxes(title_text='Rate (s⁻¹)')
-                        fig_2.update_yaxes(title_text='Number of selected cells')
-                        st.plotly_chart(fig)
-                        st.plotly_chart(fig_1)
-                        st.plotly_chart(fig_2)                           
+                        exclude_columns = ['Label', 'Number of Events']
+                        columns_to_plot = [col for col in nested_dict_final.columns if col not in exclude_columns]
+                        
+                        fig = make_subplots(rows=3, cols=2, subplot_titles = ["A", "B", "C", "D", "E", "F"])                      
+                        for i, colu in enumerate(columns_to_plot):
+                            row = i // 2 + 1
+                            col = i % 2 + 1                            
+                            fig.add_trace(go.Histogram(x=nested_dict_final[colu], name=colu, nbinsx=20, marker_line_color='black', marker_line_width=1), row=row, col=col)                                   
+                        fig.update_layout(title="Histograms",height=1000, width=800, showlegend=False)
+                        fig.update_xaxes(title_text="Rise time (s)", row=1, col=1)
+                        fig.update_xaxes(title_text="Rise Rate (s⁻¹)", row=1, col=2)
+                        fig.update_xaxes(title_text="Decay time (s)", row=2, col=1)
+                        fig.update_xaxes(title_text="Decay Rate (s⁻¹)", row=2, col=2)
+                        fig.update_xaxes(title_text="Duration (s)", row=3, col=1)
+                        fig.update_xaxes(title_text="Amplitude", row=3, col=2)
+                        fig.update_yaxes(title_text="Number of selected cells", row=1, col=1)
+                        fig.update_yaxes(title_text="Number of selected cells", row=2, col=1)
+                        fig.update_yaxes(title_text="Number of selected cells", row=3, col=1)
+                        st.plotly_chart(fig)                
 
                         st.warning('Navigating to another page from the sidebar will remove all selections from the current page')
 
@@ -1003,25 +1004,26 @@ else:
                         nested_dict_final['Rise Rate'] = np.round(nested_dict_final['Rise Rate'], 2)
                         nested_dict_final['Decay Rate'] = np.round(nested_dict_final['Decay Rate'], 2)
                         
-                        dist_columns = ["Decay time", "Duration", "Rise time"]
-                        dist_rate = ["Decay Rate", "Rise Rate"]
-                        dist_df = nested_dict_final[dist_columns]
-                        dist_rate_df = nested_dict_final[dist_rate]
-                        fig = px.histogram(nested_dict_final, x='Amplitude')
-                        fig.update_traces(marker=dict(line=dict(color='black', width=1)))                         
-                        fig_1 = px.histogram(nested_dict_final, x=dist_df.columns, barmode='stack')
-                        fig_1.update_traces(marker=dict(line=dict(color='black', width=1)))
-                        fig_2 = px.histogram(nested_dict_final, x=dist_rate_df.columns, barmode='stack')
-                        fig_2.update_traces(marker=dict(line=dict(color='black', width=1)))
-                        fig.update_xaxes(title_text='Normalized Amplitude')
-                        fig.update_yaxes(title_text='Number of selected cells')
-                        fig_1.update_xaxes(title_text='Time (s)')
-                        fig_1.update_yaxes(title_text='Number of selected cells')
-                        fig_2.update_xaxes(title_text='Rate (s⁻¹)')
-                        fig_2.update_yaxes(title_text='Number of selected cells')
-                        st.plotly_chart(fig)
-                        st.plotly_chart(fig_1)
-                        st.plotly_chart(fig_2)                                    
+                        exclude_columns = ['Label', 'Number of Events']
+                        columns_to_plot = [col for col in nested_dict_final.columns if col not in exclude_columns]
+                        
+                        fig = make_subplots(rows=3, cols=2, subplot_titles = ["A", "B", "C", "D", "E", "F"])                      
+                        for i, colu in enumerate(columns_to_plot):
+                            row = i // 2 + 1
+                            col = i % 2 + 1                            
+                            fig.add_trace(go.Histogram(x=nested_dict_final[colu], name=colu, nbinsx=20, marker_line_color='black', marker_line_width=1), row=row, col=col)                                   
+                        fig.update_layout(title="Histograms",height=1000, width=800, showlegend=False)
+                        fig.update_xaxes(title_text="Rise time (s)", row=1, col=1)
+                        fig.update_xaxes(title_text="Rise Rate (s⁻¹)", row=1, col=2)
+                        fig.update_xaxes(title_text="Decay time (s)", row=2, col=1)
+                        fig.update_xaxes(title_text="Decay Rate (s⁻¹)", row=2, col=2)
+                        fig.update_xaxes(title_text="Duration (s)", row=3, col=1)
+                        fig.update_xaxes(title_text="Amplitude", row=3, col=2)
+                        fig.update_yaxes(title_text="Number of selected cells", row=1, col=1)
+                        fig.update_yaxes(title_text="Number of selected cells", row=2, col=1)
+                        fig.update_yaxes(title_text="Number of selected cells", row=3, col=1)
+                        st.plotly_chart(fig)  
+                               
                         st.warning('Navigating to another page from the sidebar will remove all selections from the current page')
         if bleach_corr_check == 'Bleaching correction':
             baseline_peak_selection = st.radio("Select one", ('Static', 'Dynamic'), help='Select "Static" to manually select single values for the baseline, peak and recovery frames; otherwise, select "Dynamic"')
@@ -1504,26 +1506,26 @@ else:
                         nested_dict_final['Rise Rate'] = np.round(nested_dict_final['Rise Rate'], 2)
                         nested_dict_final['Decay Rate'] = np.round(nested_dict_final['Decay Rate'], 2)
                         
-                        dist_columns = ["Decay time", "Duration", "Rise time"]
-                        dist_rate = ["Decay Rate", "Rise Rate"]
-                        dist_df = nested_dict_final[dist_columns]
-                        dist_rate_df = nested_dict_final[dist_rate]
-                        fig = px.histogram(nested_dict_final, x='Amplitude')
-                        fig.update_traces(marker=dict(line=dict(color='black', width=1)))                         
-                        fig_1 = px.histogram(nested_dict_final, x=dist_df.columns, barmode='stack')
-                        fig_1.update_traces(marker=dict(line=dict(color='black', width=1)))
-                        fig_2 = px.histogram(nested_dict_final, x=dist_rate_df.columns, barmode='stack')
-                        fig_2.update_traces(marker=dict(line=dict(color='black', width=1)))
-                        fig.update_xaxes(title_text='Normalized Amplitude')
-                        fig.update_yaxes(title_text='Number of selected cells')
-                        fig_1.update_xaxes(title_text='Time (s)')
-                        fig_1.update_yaxes(title_text='Number of selected cells')
-                        fig_2.update_xaxes(title_text='Rate (s⁻¹)')
-                        fig_2.update_yaxes(title_text='Number of selected cells')
-                        st.plotly_chart(fig)
-                        st.plotly_chart(fig_1)
-                        st.plotly_chart(fig_2)                                        
-
+                        exclude_columns = ['Label', 'Number of Events']
+                        columns_to_plot = [col for col in nested_dict_final.columns if col not in exclude_columns]
+                        
+                        fig = make_subplots(rows=3, cols=2, subplot_titles = ["A", "B", "C", "D", "E", "F"])                      
+                        for i, colu in enumerate(columns_to_plot):
+                            row = i // 2 + 1
+                            col = i % 2 + 1                            
+                            fig.add_trace(go.Histogram(x=nested_dict_final[colu], name=colu, nbinsx=20, marker_line_color='black', marker_line_width=1), row=row, col=col)                                   
+                        fig.update_layout(title="Histograms",height=1000, width=800, showlegend=False)
+                        fig.update_xaxes(title_text="Rise time (s)", row=1, col=1)
+                        fig.update_xaxes(title_text="Rise Rate (s⁻¹)", row=1, col=2)
+                        fig.update_xaxes(title_text="Decay time (s)", row=2, col=1)
+                        fig.update_xaxes(title_text="Decay Rate (s⁻¹)", row=2, col=2)
+                        fig.update_xaxes(title_text="Duration (s)", row=3, col=1)
+                        fig.update_xaxes(title_text="Amplitude", row=3, col=2)
+                        fig.update_yaxes(title_text="Number of selected cells", row=1, col=1)
+                        fig.update_yaxes(title_text="Number of selected cells", row=2, col=1)
+                        fig.update_yaxes(title_text="Number of selected cells", row=3, col=1)
+                        st.plotly_chart(fig)   
+                        
                         st.warning('Navigating to another page from the sidebar will remove all selections from the current page')
                     
             if baseline_peak_selection == "Static": 
@@ -1793,23 +1795,24 @@ else:
                         nested_dict_final['Rise Rate'] = np.round(nested_dict_final['Rise Rate'], 2)
                         nested_dict_final['Decay Rate'] = np.round(nested_dict_final['Decay Rate'], 2)
                         
-                        dist_columns = ["Decay time", "Duration", "Rise time"]
-                        dist_rate = ["Decay Rate", "Rise Rate"]
-                        dist_df = nested_dict_final[dist_columns]
-                        dist_rate_df = nested_dict_final[dist_rate]
-                        fig = px.histogram(nested_dict_final, x='Amplitude')
-                        fig.update_traces(marker=dict(line=dict(color='black', width=1)))                        
-                        fig_1 = px.histogram(nested_dict_final, x=dist_df.columns, barmode='stack')
-                        fig_1.update_traces(marker=dict(line=dict(color='black', width=1)))
-                        fig_2 = px.histogram(nested_dict_final, x=dist_rate_df.columns, barmode='stack')
-                        fig_2.update_traces(marker=dict(line=dict(color='black', width=1)))
-                        fig.update_xaxes(title_text='Normalized Amplitude')
-                        fig.update_yaxes(title_text='Number of selected cells')
-                        fig_1.update_xaxes(title_text='Time (s)')
-                        fig_1.update_yaxes(title_text='Number of selected cells')
-                        fig_2.update_xaxes(title_text='Rate (s⁻¹)')
-                        fig_2.update_yaxes(title_text='Number of selected cells')
-                        st.plotly_chart(fig) 
-                        st.plotly_chart(fig_1)
-                        st.plotly_chart(fig_2)                                        
+                        exclude_columns = ['Label', 'Number of Events']
+                        columns_to_plot = [col for col in nested_dict_final.columns if col not in exclude_columns]
+                        
+                        fig = make_subplots(rows=3, cols=2, subplot_titles = ["A", "B", "C", "D", "E", "F"])                      
+                        for i, colu in enumerate(columns_to_plot):
+                            row = i // 2 + 1
+                            col = i % 2 + 1                            
+                            fig.add_trace(go.Histogram(x=nested_dict_final[colu], name=colu, nbinsx=20, marker_line_color='black', marker_line_width=1), row=row, col=col)                                   
+                        fig.update_layout(title="Histograms",height=1000, width=800, showlegend=False)
+                        fig.update_xaxes(title_text="Rise time (s)", row=1, col=1)
+                        fig.update_xaxes(title_text="Rise Rate (s⁻¹)", row=1, col=2)
+                        fig.update_xaxes(title_text="Decay time (s)", row=2, col=1)
+                        fig.update_xaxes(title_text="Decay Rate (s⁻¹)", row=2, col=2)
+                        fig.update_xaxes(title_text="Duration (s)", row=3, col=1)
+                        fig.update_xaxes(title_text="Amplitude", row=3, col=2)
+                        fig.update_yaxes(title_text="Number of selected cells", row=1, col=1)
+                        fig.update_yaxes(title_text="Number of selected cells", row=2, col=1)
+                        fig.update_yaxes(title_text="Number of selected cells", row=3, col=1)
+                        st.plotly_chart(fig)  
+                                     
                         st.warning('Navigating to another page from the sidebar will remove all selections from the current page')
