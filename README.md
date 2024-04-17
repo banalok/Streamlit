@@ -2,7 +2,9 @@ DL-SCAN is a user-friendy Streamlit tool that automatically segments cells from 
 
 Launching the Application:
 
-Note: Using the Anaconda distribution is recommended for setting up and running the program. 
+Note: DL-SCAN is also available online on Hugging Face Spaces. This web application can be accessed from: https://huggingface.co/spaces/dlscan/dlscan. 
+
+For larger files, faster performance, and customization, running DL-SCAN locally is recommended. Using the Anaconda distribution is recommended for setting up and running the program. 
 https://www.anaconda.com/download
 
 1. Clone this Github repository to the local machine.
