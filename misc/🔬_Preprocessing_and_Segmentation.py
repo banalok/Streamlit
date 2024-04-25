@@ -248,7 +248,7 @@ def Segment():
                 
             if st.session_state.bc_corr_check == 'No background correction':
                 background_corr_img = raw_image_ani
-                st.write(background_corr_img.shape)                    
+                #st.write(background_corr_img.shape)                    
             # Load the image
             elif st.session_state.bc_corr_check == 'Background correction':
                 background_corr_img = np.zeros(raw_image_ani.shape,dtype=np.int32)                

@@ -32,10 +32,9 @@ import time
 import subprocess
 import shutil
 import re   
-from st_pages import show_pages_from_config
+#from st_pages import show_pages_from_config
 
-show_pages_from_config()
-
+#show_pages_from_config()
 
 cwd=os.getcwd()+'/'
 os.makedirs('temp dir', exist_ok = True)
@@ -163,12 +162,10 @@ def Segment():
             else:
                 st.session_state.bc_corr_check = st.radio("Select an option", ['No background correction', 'Background correction'], index=0 if st.session_state.bc_corr_check == 'No background correction' else 1)
             
-            if 'bg_mean' not in st.session_state:
-                st.session_state['bg_mean'] = None
             
             if st.session_state.bc_corr_check == 'No background correction':
                 background_corr_img = raw_image_ani
-                st.session_state['bg_mean'] = 300                                   
+                                                   
             # Load the image
             elif st.session_state.bc_corr_check == 'Background correction':
                 background_corr_img = np.zeros(raw_image_ani.shape,dtype=np.int32)  
@@ -204,18 +201,16 @@ def Segment():
                         objects = pd.json_normalize(st.session_state.canvas_data["objects"])
                         
                         if len(objects) == 0:
-                            background_corr_img = raw_image_ani
-                            st.session_state['bg_mean'] = 300
+                            background_corr_img = raw_image_ani                            
                             break
                                             
                         elif len(objects) == 1:
                             bc_selected_region = raw_image_ani[bc][int(objects['top']):int(objects['top'])+int(objects['height']), int(objects['left']):int(objects['left'])+ int(objects['width'])]
                             background_corr_img[bc] = np.subtract((raw_image_ani[bc]).astype(np.int32), (np.mean(bc_selected_region)).astype(np.int32))
                             background_corr_img[bc] = np.clip(background_corr_img[bc], 0, 255)
-                            st.session_state['bg_mean'] = np.mean(bc_selected_region)
+                            
                         elif len(objects) > 1: 
-                            background_corr_img = raw_image_ani
-                            st.session_state['bg_mean'] = 300
+                            background_corr_img = raw_image_ani                            
                             break
                 background_corr_img = background_corr_img.astype(np.uint8)
                 
@@ -229,7 +224,7 @@ def Segment():
                     elif bc_image_frame_num >= 1:
                         st.image(background_corr_img[bc_image_frame_num],use_column_width=True,clamp = True)
                    
-            raw_image_ani = background_corr_img
+            #raw_image_ani = background_corr_img
             st.session_state['background_corr_pg_2'] = background_corr_img
 
             if 'gauss_x' not in st.session_state:
@@ -272,14 +267,14 @@ def Segment():
             else:
                 st.session_state.hist_x = st.slider("*_Histogram Equalization cliplimit factor (CLAHE)_*", min_value = 1,max_value = 20, step = 1, value = st.session_state.hist_x, on_change=callback_off)
             
-            if f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}" not in st.session_state and f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}" not in st.session_state:
-                st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"] = None
-                st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"] = None
+            if f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}" not in st.session_state and f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}" not in st.session_state:
+                st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] = None
+                st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] = None
                             
-            if (st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"] is None) and (st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"] is None):
+            if (st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] is None) and (st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] is None):
                 
-                st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"] = []
-                st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"] = np.zeros_like(raw_image_ani[0][:,:,0])   #size of one of the images
+                st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] = []
+                st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] = np.zeros_like(raw_image_ani[0][:,:,0])   #size of one of the images
                 
                 weight = 1/raw_image_ani.shape[0]                      
                 for frame_num in range(0,raw_image_ani.shape[0]):                       
@@ -307,74 +302,84 @@ def Segment():
                     updated_lab_img22 = cv2.merge((clahe_img2,a2,b2))
                     CLAHE_img = cv2.cvtColor(updated_lab_img22, cv2.COLOR_LAB2RGB)
                     CLAHE_img = CLAHE_img[:,:,0] 
-                    st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"].append(CLAHE_img) 
-                    st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"] = np.maximum(st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"], CLAHE_img)    
+                    st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"].append(CLAHE_img) 
+                    st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] = np.maximum(st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"], CLAHE_img)    
                 
-                st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"].astype(np.int32)
-                st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"][st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"]>255]=255
-                st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"].astype(np.uint8)
+                st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"].astype(np.int32)
+                st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"]>255]=255
+                st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"].astype(np.uint8)
                 
                 st.write('*_Processed Frames_*')
                 image_frame_num_pro = st.number_input(f"(0 - {raw_image_ani.shape[0]-1})", min_value = 0, max_value = raw_image_ani.shape[0]-1, step = 1,key='num_2')
                 if image_frame_num==0:
-                    st.image(st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"] [0],use_column_width=True,clamp = True)
+                    st.image(st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] [0],use_column_width=True,clamp = True)
                 elif image_frame_num >= 1:
-                    st.image(st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"] [image_frame_num_pro],use_column_width=True,clamp = True)
+                    st.image(st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"] [image_frame_num_pro],use_column_width=True,clamp = True)
             
                 st.markdown("**_The Collapsed Image_**")
                 
-                st.image(st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"], use_column_width=True,clamp = True) 
-                st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"]
+                st.image(st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"], use_column_width=True,clamp = True) 
+                st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"]
  
             else:
                 st.write('*_Processed Frames_*')
                 image_frame_num_pro = st.number_input(f"(0 - {raw_image_ani.shape[0]-1})", min_value = 0, max_value = raw_image_ani.shape[0]-1, step = 1,key='num_2')
                 if image_frame_num==0:
-                    st.image(st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"][0],use_column_width=True,clamp = True)
+                    st.image(st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0],use_column_width=True,clamp = True)
                 elif image_frame_num >= 1:
-                    st.image(st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"][image_frame_num_pro],use_column_width=True,clamp = True)
+                    st.image(st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][image_frame_num_pro],use_column_width=True,clamp = True)
             
                 st.markdown("**_The Collapsed Image_**")
                 
-                st.image(st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"], use_column_width=True,clamp = True) 
-                st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"]
+                st.image(st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"], use_column_width=True,clamp = True) 
+                st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"]
      
             if st.button("*_Segment and generate labels_*", key='frame_btn',on_click = callback_allframes) or st.session_state.button_clicked_allframes:
                 with st.expander("Inhomogeneous pixel distribution?"):
                     segment_check = st.radio("Select one:", ["Segment on the collapsed image", "Segment on the first image"])
                     rb_check = st.radio("Rolling ball background correction (RBBC)", ['No RBBC', 'RBBC'], help='Select "RBBC" for rolling ball background correction on the selected image, otherwise, select No "RBBC"')
-                    if f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_seg" not in st.session_state:
-                        if segment_check == "Segment on the collapsed image":
-                            if rb_check == 'No RBBC':
-                                st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"]
-                                
-                            elif rb_check == 'RBBC':
-                                st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"]
-                                radius_x = st.slider("Ball Radius", min_value = 1, max_value = 50, step=1, value = 25)                        
-                                background_to_remove = restoration.rolling_ball(st.session_state['Collapsed_Image'], radius=radius_x)
-                                st.session_state['Collapsed_Image'] = st.session_state['Collapsed_Image'] - background_to_remove
-                                st.image(st.session_state['Collapsed_Image'], use_column_width=True,clamp = True)  
-                            st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}_seg"] = stardist_seg(st.session_state['Collapsed_Image'],model)
-                            st.image(render_label(st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}_seg"], img=st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"][0]), use_column_width=True,clamp = True)
-                            label = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}_seg"] 
-                            st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"]
-                        elif segment_check == "Segment on the first image":
-                            if rb_check == 'No RBBC':                             
-                                st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"]
-                                seg_first = st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"][0]
-                                
-                            elif rb_check == 'RBBC':                             
-                                radius_x = st.slider("Ball Radius", min_value = 1, max_value = 50, step=1, value = 25)                        
-                                background_to_remove = restoration.rolling_ball(st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"][0], radius=radius_x)
-                                seg_first = st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"][0] - background_to_remove
-                                st.session_state['Collapsed_Image'] = seg_first
-                                st.image(st.session_state['Collapsed_Image'], use_column_width=True,clamp = True) 
-                            st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}_seg"] = stardist_seg(seg_first,model)
-                            st.image(render_label(st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}_seg"], img=st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"][0]), use_column_width=True,clamp = True)
-                            label = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}_seg"] 
-                            st.session_state['Collapsed_Image'] = st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"][0]          
-                    else:
-                        label = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}_seg"]
+                    #if f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg" not in st.session_state:
+                    if segment_check == "Segment on the collapsed image":
+                        if rb_check == 'No RBBC':
+                            st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"]
+                            seg_im = stardist_seg(st.session_state['Collapsed_Image'],model)
+                            #st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"] = stardist_seg(st.session_state['Collapsed_Image'],model)
+                        elif rb_check == 'RBBC':
+                            st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"]
+                            radius_x = st.slider("Ball Radius", min_value = 1, max_value = 50, step=1, value = 25)                        
+                            background_to_remove = restoration.rolling_ball(st.session_state['Collapsed_Image'], radius=radius_x)
+                            st.session_state['Collapsed_Image'] = st.session_state['Collapsed_Image'] - background_to_remove
+                            st.image(st.session_state['Collapsed_Image'], use_column_width=True,clamp = True)  
+                            seg_im = stardist_seg(st.session_state['Collapsed_Image'],model)
+                            #st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"] = stardist_seg(st.session_state['Collapsed_Image'],model)
+                        #st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"] = stardist_seg(st.session_state['Collapsed_Image'],model)
+                        st.image(render_label(seg_im, img=st.session_state['Collapsed_Image']), use_column_width=True,clamp = True)
+                        #st.image(render_label(st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"], img=st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0]), use_column_width=True,clamp = True)
+                        label = seg_im
+                        #label = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"] 
+                        st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"]
+                    elif segment_check == "Segment on the first image":
+                        if rb_check == 'No RBBC':                             
+                            #st.session_state['Collapsed_Image'] = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"]
+                            seg_first = st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0]
+                            #st.session_state['Collapsed_Image'] = seg_first
+                            seg_first_im = stardist_seg(seg_first, model)
+                        elif rb_check == 'RBBC':                             
+                            radius_x = st.slider("Ball Radius", min_value = 1, max_value = 50, step=1, value = 25)                        
+                            background_to_remove = restoration.rolling_ball(st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0], radius=radius_x)
+                            seg_first = st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0] - background_to_remove
+                            #st.session_state['Collapsed_Image'] = seg_first
+                            seg_first_im = stardist_seg(seg_first, model)
+                            #st.image(seg_first, use_column_width=True,clamp = True) 
+                        #st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"] = stardist_seg(seg_first,model)
+                        
+                        st.image(render_label(seg_first_im, img=st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0]), use_column_width=True,clamp = True)
+                        label = seg_first_im
+                        #label = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"] 
+                        st.session_state['Collapsed_Image'] = st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0]          
+                    # else:
+                    #     st.write("ff")
+                    #     label = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"]
                 
                 props = measure.regionprops(label) 
                
@@ -406,7 +411,7 @@ def Segment():
                     for label in np.unique(label_list):                                                           
                             if label == 0:
                                 continue                
-                            mask = np.zeros(st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_{st.session_state.bg_mean}"][0].shape, dtype="uint8")
+                            mask = np.zeros(st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0].shape, dtype="uint8")
                             mask[final_label == label] = 255
                             #detect contours in the mask and grab the largest one
                             cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
