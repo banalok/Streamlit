@@ -353,7 +353,7 @@ def Segment():
                             seg_im = stardist_seg(st.session_state['Collapsed_Image'],model)
                             #st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"] = stardist_seg(st.session_state['Collapsed_Image'],model)
                         #st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"] = stardist_seg(st.session_state['Collapsed_Image'],model)
-                        st.image(render_label(seg_im, img=st.session_state['Collapsed_Image']), use_column_width=True,clamp = True)
+                        #st.image(render_label(seg_im, img=st.session_state['Collapsed_Image']), use_column_width=True,clamp = True)
                         #st.image(render_label(st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"], img=st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0]), use_column_width=True,clamp = True)
                         label = seg_im
                         #label = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"] 
@@ -370,10 +370,10 @@ def Segment():
                             seg_first = st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0] - background_to_remove
                             #st.session_state['Collapsed_Image'] = seg_first
                             seg_first_im = stardist_seg(seg_first, model)
-                            #st.image(seg_first, use_column_width=True,clamp = True) 
+                            st.image(seg_first, use_column_width=True,clamp = True) 
                         #st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"] = stardist_seg(seg_first,model)
                         
-                        st.image(render_label(seg_first_im, img=st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0]), use_column_width=True,clamp = True)
+                        #st.image(render_label(seg_first_im, img=st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0]), use_column_width=True,clamp = True)
                         label = seg_first_im
                         #label = st.session_state[f"super_im_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}_seg"] 
                         st.session_state['Collapsed_Image'] = st.session_state[f"CLAHE_img_array_{st.session_state.gauss_x}_{st.session_state.med_x}_{st.session_state.bri_x}_{st.session_state.con_x}_{st.session_state.hist_x}"][0]          
