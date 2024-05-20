@@ -32,9 +32,9 @@ import time
 import subprocess
 import shutil
 import re   
-#from st_pages import show_pages_from_config
+from st_pages import show_pages_from_config
 
-#show_pages_from_config()
+show_pages_from_config()
 
 cwd=os.getcwd()+'/'
 os.makedirs('temp dir', exist_ok = True)

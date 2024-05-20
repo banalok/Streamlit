@@ -1,14 +1,12 @@
 [[pages]]
-path = "DL_SCAN.py"
-name = "🔬_Preprocessing_and_Segmentation"
+path =  "DL_SCAN.py"
+name =  "🔬_Preprocessing_and_Segmentation"
 
 [[pages]]
-path = "pages/01_📉_Single-cell_Analysis.py"
+path =  "pages/01_📉_Single-cell_Analysis.py"
 
 [[pages]]
-path = "pages/02_📈📉_Multi-cell_Analysis.py"
+path =  "pages/02_📈📉_Multi-cell_Analysis.py"
 
 [[pages]]
-path = "pages/03_📝_Read_Me.py"
-
-
+path =  "pages/03_📝_Read_Me.py"
