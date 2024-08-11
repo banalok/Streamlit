@@ -435,6 +435,8 @@ def Segment():
                             cv2.putText(super_im_rgb, "{}".format(label), (int(x) - 10, int(y)),
                              	cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)                        
                     
+                    st.write("*_Automatically detected objects highlighted on the selected image_*") 
+                    st.image(render_label(final_label, img=st.session_state['Collapsed_Image']), use_column_width=True,clamp = True) 
                     st.write("*_Automatically labeled objects on the selected image_*")                    
                     st.image(super_im_rgb,use_column_width=True,clamp = True)
                     st.write("*_Automatically segmented and labeled objects on a black background_*")
