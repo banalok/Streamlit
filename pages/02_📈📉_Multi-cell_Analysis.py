@@ -107,7 +107,7 @@ else:
         data = list(np.unique(label_list_pg_2))        
         st.session_state['df_pro'] = pd.DataFrame(data, columns=['label'])
         col_arr = []
-        props_pro = get_intensity(background_corr_pg_2[:, :, :, 0], [label_fin] * raw_img_ani_pg_2.shape[0])  
+        props_pro = get_intensity(background_corr_pg_2[:, :, :, 0], [label_fin] * raw_img_ani_pg_2.shape[0])         
         props_pro = pd.DataFrame(props_pro).T
         props_pro['label'] = data
 
@@ -247,6 +247,56 @@ else:
         #st.write(selected_m)
         csv_selected = convert_df(df_selected)           
         st.download_button("Press to Download the Selected Data", csv_selected, 'selected_intensity_data.csv', "text/csv", key='download-selected-csv')
+        with st.expander("*_Show the correlation between cells_*"):          
+            df_selected_trans_hmap = df_selected.iloc[:,2:].transpose()
+            #st.write(df_selected_trans_hmap)
+            correlation_matrix = df_selected_trans_hmap.corr(method='pearson')
+            selected_labels = list(df_selected['label'])
+            roi_labels = [f"ROI number {i+1}" for i in range(len(selected_labels))]
+            correlation_matrix.columns = roi_labels
+            correlation_matrix.index = roi_labels
+            props_centroid = get_centroid(background_corr_pg_2[:, :, :, 0], [label_fin])
+            # st.write(props_centroid) 
+            centroid_x = []
+            centroid_y = []
+            for values in props_centroid:
+                centroid_0_str = values["centroid-0"]  
+                centroid_1_str = values["centroid-1"]
+              # Convert the cleaned string to a NumPy array
+                if isinstance(centroid_0_str, str):
+                    centroid_0 = np.fromstring(centroid_0_str.replace("array(", "").replace(")", ""), sep=',')
+                else:
+                    centroid_0 = centroid_0_str  # If it's already a numpy array
+
+                if isinstance(centroid_1_str, str):
+                    centroid_1 = np.fromstring(centroid_1_str.replace("array(", "").replace(")", ""), sep=',')
+                else:
+                    centroid_1 = centroid_1_str  # If it's already a numpy array
+
+                centroid_x.append(centroid_0) 
+                centroid_y.append(centroid_1)
+            centroid_col_x = pd.DataFrame(np.array(centroid_x)).T
+            centroid_col_y = pd.DataFrame(np.array(centroid_y)).T
+            ROI_centroid_df = pd.DataFrame()
+            ROI_centroid_df["ROI Number"] = pd.DataFrame(selected_labels)
+            ROI_centroid_df["x"] = centroid_col_x
+            ROI_centroid_df["y"] = centroid_col_y
+
+            st.write("ROI Centroid Coordinates")
+            st.write(ROI_centroid_df)
+
+            st.write("The Correlation Matrix")
+            st.write(correlation_matrix)
+            fig = px.imshow(correlation_matrix, color_continuous_scale='viridis', text_auto=True)
+            fig.update_xaxes(tickvals=list(range(len(selected_labels))), ticktext=selected_labels)
+            fig.update_yaxes(tickvals=list(range(len(selected_labels))), ticktext=selected_labels)
+            # # Adding title to the heatmap
+            # ax_hmap.set_title("Correlation Matrix Heatmap")        
+            # # Displaying the heatmap in Streamlit
+            st.write("The Correlation Heatmap")
+            st.plotly_chart(fig)          
+           
+            
         #st.write(df_selected)# Loop over the selected indices and draw polygons on the color image
         for i in df_selected['label']:
             # Extract the coordinates of the region boundary

@@ -1,4 +1,5 @@
 import streamlit as st
+from streamlit_extras.switch_page_button import switch_page
 from streamlit_drawable_canvas import st_canvas##############################new########################
 import plotly.io
 import math
@@ -144,12 +145,21 @@ def get_intensity_for_timepoint(intensity_image, label_layer):
     stats = measure.regionprops_table(label_layer, intensity_image=intensity_image, properties=['intensity_mean'])
     return stats['intensity_mean']
 
+def get_centroid_for_timepoint(intensity_image, label_layer):
+    stats = measure.regionprops_table(label_layer, intensity_image=intensity_image, properties=['centroid'])
+    return stats
+
 def get_max_intensity_for_timepoint(intensity_image, label_layer):
     stats = measure.regionprops_table(label_layer, intensity_image=intensity_image, properties=['intensity_max'])
     return stats['intensity_max']
 
 def get_intensity(intensity_image_stack, labels_layer_stack):
     return [get_intensity_for_timepoint(intensity_image, label_layer) 
+            for intensity_image, label_layer 
+            in zip(intensity_image_stack, labels_layer_stack)]
+
+def get_centroid(intensity_image_stack, labels_layer_stack):
+    return [get_centroid_for_timepoint(intensity_image, label_layer) 
             for intensity_image, label_layer 
             in zip(intensity_image_stack, labels_layer_stack)]
 
