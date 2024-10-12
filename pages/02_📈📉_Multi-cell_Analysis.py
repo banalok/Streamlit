@@ -284,9 +284,13 @@ else:
 
             st.write("ROI Centroid Coordinates")
             st.write(ROI_centroid_df)
+            get_data_centroid = convert_df(ROI_centroid_df)
+            st.download_button("Press to Download", get_data_centroid, 'ROI_centroid_data.csv', "text/csv", key='label_download-get_centroid_st') 
 
             st.write("The Correlation Matrix")
             st.write(correlation_matrix)
+            get_data_correlation = convert_df(correlation_matrix)
+            st.download_button("Press to Download", get_data_correlation, 'ROI_correlation_data.csv', "text/csv", key='label_download-get_correlation_st') 
             fig = px.imshow(correlation_matrix, color_continuous_scale='viridis', text_auto=True)
             fig.update_xaxes(tickvals=list(range(len(selected_labels))), ticktext=selected_labels)
             fig.update_yaxes(tickvals=list(range(len(selected_labels))), ticktext=selected_labels)
