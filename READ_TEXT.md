@@ -1,8 +1,8 @@
-**DL-SCAN**, which effectively segments and analyzes cells in images from fluorescent microscopy (in TIFF format), is developed using Streamlit library (version 1.21.0) in Python 3.8.8. The user-friendly graphical user interface (GUI) displayed immediately after the tool is launched.
+**DL-SCAN**, which effectively segments and analyzes cells in images from fluorescent microscopy (in TIFF format), is developed using Streamlit library (version 1.21.0) in Python 3.8.8. The user-friendly graphical user interface (GUI) is displayed immediately after the tool is launched.
 
-**1. Uploading Files**
+**1. Loading Files**
 
-A microscopy image stack in TIFF format can be uploaded by clicking “Browse” on the homepage of the program. The original frame of the uploaded file is displayed. This is followed by the option to incorporate background correction. In case the user wishes to discard the current file and upload a new one, a simple page refresh will let them do that.
+A microscopy image stack in TIFF format can be loaded by clicking “Browse” on the homepage of the program. The original frame of the loaded file is displayed. This is followed by the option to incorporate background correction. In case the user wishes to discard the current file and load a new one, a simple page refresh will let them do that.
 
 
 **2. Preprocessing options**
@@ -39,17 +39,17 @@ The preprocessed frames, as a result of any of the applied preprocessing options
 
 *Collapsed Image*
 
-To account for cells appearing in subsequent frames, the entire stack of images is collapsed into a single image. In this process, pixels with higher values are retained during pixel-by-pixel comparison between frames. Therefore, it is crucial to upload a TIFF stack where cells are represented by higher pixel values and the background by lower pixel values.
+To account for cells appearing in subsequent frames, the entire stack of images is collapsed into a single image. In this process, pixels with higher values are retained during pixel-by-pixel comparison between frames. Therefore, it is crucial to load a TIFF stack where cells are represented by higher pixel values and the background by lower pixel values.
 
 
 **3. Segmentation**
 
 The collapsed image is now ready for segmentation. Clicking “Segment and generate labels” outputs a segmented image and labeled image and is ready for analysis. 
 
-At times, the pixel distribution in uploaded images can be uneven due to differences in the experimental setup, resulting in overexposure in some areas and underexposure in others. To address this, we offer a Rolling Ball Background Correction (RBBC) option, which helps mitigate this problem. A ball of a user-selected radius rolls across the image, fitting into its valleys and crevices. The minimum pixel value within the region covered by the ball is subtracted from the pixel value at the center of the ball, effectively smoothing out the background when unevenly illuminated. 
+At times, the pixel distribution in loaded images can be uneven due to differences in the experimental setup, resulting in overexposure in some areas and underexposure in others. To address this, we offer a Rolling Ball Background Correction (RBBC) option, which helps mitigate this problem. A ball of a user-selected radius rolls across the image, fitting into its valleys and crevices. The minimum pixel value within the region covered by the ball is subtracted from the pixel value at the center of the ball, effectively smoothing out the background when unevenly illuminated. 
 
 Additionally, users also have the choice to segment based on the first image rather than the collapsed image.
-In case needed, users have an option to manually draw regions of interest (ROI) that get added to the list of cells to be analyzed.  Once segmented, a dye-positive image can be uploaded and overlaid on top of the segmented image for efficient cell selection as needed.
+In case needed, users have an option to manually draw regions of interest (ROI) that get added to the list of cells to be analyzed.  Once segmented, a dye-positive image can be loaded and overlaid on top of the segmented image for efficient cell selection as needed.
 
 **4. Single-cell Analysis**
 
